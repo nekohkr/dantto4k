@@ -8,9 +8,9 @@ mmtsから復号化およびMPEG TSへの変換を行います。
 dantto4k.exe <input.mmts> <output.ts>
 ```
 
-### bondriver_dantto4k.dll
+### BonDriver_dantto4k.dll
 リアルタイムで復号化とMPEG TSへの変換を行うBonDriverです。
-dantto4kdll.iniで設定されたBonDriverをロードして、復号化とMPEG TSへの変換を行います。
+BonDriver_dantto4k.iniで設定されたBonDriverをロードして、復号化とMPEG TSへの変換を行います。
 dantto4kは64bitで配布しており、BonRecTestおよびBonDriver_BDAは64bitである必要があります。
 
 #### mirakurunでの動作
