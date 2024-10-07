@@ -41,8 +41,8 @@ Config parseConfig(const std::string& filename)
                  if (key == "bondriverPath") {
                      config.bondriverPath = value;
                  }
-                 if (key == "dumpMmtsPath") {
-                     config.dumpMmtsPath = value;
+                 if (key == "mmtsDumpPath") {
+                     config.mmtsDumpPath = value;
                  }
              }
          }

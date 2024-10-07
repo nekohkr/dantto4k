@@ -5,7 +5,7 @@
 class Config {
 public:
     std::string bondriverPath;
-    std::string dumpMmtsPath;
+    std::string mmtsDumpPath;
 
 };
 

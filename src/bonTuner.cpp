@@ -46,8 +46,8 @@ bool CBonTuner::init(Config& config)
 		return false;
 	}
 
-	if (config.dumpMmtsPath != "") {
-		fp = fopen(config.dumpMmtsPath.c_str(), "wb");
+	if (config.mmtsDumpPath != "") {
+		fp = fopen(config.mmtsDumpPath.c_str(), "wb");
 	}
 	
 	std::thread danttoThread([&]() {
