@@ -7,8 +7,7 @@
 class CBonTuner : public IBonDriver2
 {
 public:
-	CBonTuner();
-	virtual ~CBonTuner();
+	virtual ~CBonTuner() {};
 
 	// Initialize channel
 	bool init(Config& config);
@@ -28,7 +27,7 @@ public:
 
 	void PurgeTsStream(void);
 
-	// IBonDriver2(эеяв)
+	// IBonDriver2
 	const char* GetTunerName(void);
 
 	const bool IsTunerOpening(void);

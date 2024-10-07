@@ -18,8 +18,6 @@ extern "C" {
 
 #include "bonTuner.h"
 #include "config.h"
-#include "logger.h"
-
 #include "dantto4k.h"
 
 AVFormatContext* outputFormatContext = nullptr;
@@ -31,7 +29,7 @@ MmtMessageHandler handler(&outputFormatContext);
 std::mutex outputMutex;
 std::mutex inputMutex;
 
-bool bStreamInit = false;
+bool streamInitialized = false;
 
 class ByteArrayInput {
 public:
@@ -128,7 +126,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
             bonTuner.init(config);
         }
         catch (const std::runtime_error& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
+            std::cerr << e.what() << std::endl;
         }
         break;
     }
@@ -171,7 +169,6 @@ int main(int argc, char* argv[]) {
     int stream_idx = 0;
     while (!input.isEOF()) {
         int n = demuxer.processPacket(input);
-
         processMuxing();
 
         outputMutex.lock();
@@ -192,11 +189,12 @@ int main(int argc, char* argv[]) {
     outputMutex.unlock();
 
     fclose(fp);
+
     return 0;
 }
 
 void processMuxing() {
-    if (!bStreamInit) {
+    if (!streamInitialized) {
         if (demuxer.streamMap.size() == 0) {
             return;
         }
@@ -228,7 +226,7 @@ void processMuxing() {
             return;
         }
 
-        bStreamInit = true;
+        streamInitialized = true;
         return;
     }
 

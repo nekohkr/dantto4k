@@ -93,7 +93,6 @@
     <ClCompile Include="mmttlvdemuxer.h">
       <Filter>mmttlv</Filter>
     </ClCompile>
-    <ClCompile Include="logger.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mmtMessageHandler.h" />

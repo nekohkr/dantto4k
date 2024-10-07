@@ -163,7 +163,6 @@
     <ClCompile Include="config.cpp" />
     <ClCompile Include="ecm.cpp" />
     <ClCompile Include="IBonDriver2.h" />
-    <ClCompile Include="logger.h" />
     <ClCompile Include="mhAudioComponentDescriptor.cpp" />
     <ClCompile Include="dantto4k.cpp" />
     <ClCompile Include="mhContentDescriptor.cpp" />

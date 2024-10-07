@@ -9,14 +9,6 @@ std::vector<uint8_t> outputBuffer;
 Stream inputStream;
 FILE* fp;
 
-CBonTuner::CBonTuner()
-{
-}
-
-CBonTuner::~CBonTuner()
-{
-}
-
 bool CBonTuner::init(Config& config)
 {
 	HINSTANCE hBonDriverDLL = LoadLibraryA(config.bondriverPath.c_str());
@@ -191,6 +183,8 @@ const char* CBonTuner::EnumChannelName(const uint32_t dwSpace, const uint32_t dw
 
 const bool CBonTuner::SetChannel(const uint32_t dwSpace, const uint32_t dwChannel)
 {
+	streamInitialized = false;
+
 	return pBonDriver2->SetChannel(dwSpace, dwChannel);
 }
 

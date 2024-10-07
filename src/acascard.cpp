@@ -32,8 +32,7 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
     ApduCommand apdu(0x90, 0xA0, 0x00, 0x01);
     auto response = smartcard->transmit(apdu.case4short(data, 0x00));
 
-    if (!response.isSuccess())
-    {
+    if (!response.isSuccess()) {
         throw std::runtime_error("A0 auth failed");
     }
 
@@ -41,7 +40,6 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
     std::vector<uint8_t> a0response(a0data.begin() + 0x06, a0data.begin() + 0x06 + 0x08);
     std::vector<uint8_t> a0hash(a0data.begin() + 0x0e, a0data.end());
 
-    //std::vector<uint8_t> kcl(32);
     std::vector<uint8_t> painKcl;
     painKcl.insert(painKcl.end(), std::begin(masterKey), std::end(masterKey));
     painKcl.insert(painKcl.end(), a0init.begin(), a0init.end());
@@ -73,8 +71,7 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
         EVP_MD_CTX_free(mdctx);
     }
 
-    if (hash != a0hash)
-    {
+    if (hash != a0hash) {
         throw std::runtime_error("A0 hash did not match");
     }
 
@@ -83,6 +80,10 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
 
 DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
 {
+    if (!smartcard->isConnected()) {
+        throw std::runtime_error("Smart card not connected");
+    }
+
     if (decryptedEcmMap.find(ecm) != decryptedEcmMap.end()) {
         return decryptedEcmMap[ecm];
     }
@@ -126,5 +127,6 @@ DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
     decryptedEcmMap[ecm] = decryptedEcm;
     lastDecryptedEcm = decryptedEcm;
     ready = true;
+
     return decryptedEcm;
 }

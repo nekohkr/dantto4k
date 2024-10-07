@@ -8,5 +8,6 @@ extern std::vector<uint8_t> muxedOutput;
 extern MmtMessageHandler handler;
 extern std::mutex inputMutex;
 extern std::mutex outputMutex;
+extern bool streamInitialized;
 
 void processMuxing();

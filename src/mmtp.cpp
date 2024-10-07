@@ -172,6 +172,7 @@ bool Mpu::unpack(Stream& stream)
 
 	payload.resize(payloadLength - 6);
 	stream.read((char*)payload.data(), payloadLength - 6);
+
 	return true;
 }
 
@@ -256,6 +257,7 @@ bool PaMessage::unpack(Stream& stream)
 
 	table.resize(stream.leftBytes());
 	stream.read((char*)table.data(), stream.leftBytes());
+
 	return false;
 }
 

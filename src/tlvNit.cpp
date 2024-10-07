@@ -128,10 +128,9 @@ bool TlvNitItem::unpack(Stream& stream)
     tlvStreamId = stream.getBe16U();
     originalNetworkId = stream.getBe16U();
 
-
     uint16_t uint16 = stream.getBe16U();
-
     tlvStreamDescriptorsLength = uint16 & 0b0000111111111111;
+
     Stream nstream(stream, tlvStreamDescriptorsLength);
     while (!nstream.isEOF()) {
         uint8_t descriptorTag = nstream.peek8U();

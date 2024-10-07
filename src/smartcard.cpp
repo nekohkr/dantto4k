@@ -11,6 +11,15 @@ bool SmartCard::initializeCard() {
     return result == SCARD_S_SUCCESS;
 }
 
+bool SmartCard::isConnected()
+{
+    if (hCard) {
+        return true;
+    }
+
+    return false;
+}
+
 void SmartCard::connect() {
     LONG result;
 

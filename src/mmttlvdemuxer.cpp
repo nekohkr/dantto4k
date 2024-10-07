@@ -20,8 +20,9 @@ bool MmtTlvDemuxer::init()
         smartCard->connect();
     }
     catch (const std::runtime_error& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
+
     return true;
 }
 
@@ -71,15 +72,7 @@ int MmtTlvDemuxer::processPacket(Stream& stream)
     mmtp.unpack(tlvDataStream);
 
     if (mmtp.hasExtensionHeaderScrambling) {
-    }
-    else {
-    }
-
-    if (mmtp.hasExtensionHeaderScrambling) {
-        if (mmtp.extensionHeaderScrambling.encryptionFlag == ENCRYPTION_FLAG::UNSCRAMBLED) {
-
-        }
-        else if (mmtp.extensionHeaderScrambling.encryptionFlag == ENCRYPTION_FLAG::ODD ||
+        if (mmtp.extensionHeaderScrambling.encryptionFlag == ENCRYPTION_FLAG::ODD ||
             mmtp.extensionHeaderScrambling.encryptionFlag == ENCRYPTION_FLAG::EVEN) {
             if (!acasCard->ready) {
                 return true;
@@ -89,7 +82,6 @@ int MmtTlvDemuxer::processPacket(Stream& stream)
             }
         }
     }
-
 
     Stream mmtpPayloadStream(mmtp.payload);
     switch (mmtp.payloadType) {
@@ -384,7 +376,7 @@ void MmtTlvDemuxer::processEcm(Ecm* ecm)
         acasCard->decryptEcm(ecm->ecmData);
     }
     catch (const std::runtime_error& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -490,8 +482,6 @@ void MmtTlvDemuxer::processMpu(Stream& stream)
 
         while (!nstream.isEOF()) {
             DataUnit dataUnit;
-
-
             if (!dataUnit.unpack(nstream, mpu.timedFlag, mpu.aggregateFlag)) {
                 return;
             }
@@ -733,8 +723,9 @@ void MmtTlvDemuxer::processSignalingMessages(Stream& stream)
 
     auto assembler = getAssembler(mmtp.packetId);
 
-    signalingMessage.unpack(stream);
-
+    if (!signalingMessage.unpack(stream)) {
+        return;
+    }
 
     assembler->checkState(mmtp.packetSequenceNumber);
 
