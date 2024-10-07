@@ -47,7 +47,7 @@ ApduResponse SmartCard::transmit(const std::vector<uint8_t>& sendData) {
 
     LONG result = SCardTransmit(hCard, &pioSendPci, sendData.data(), sendData.size(), nullptr, recvBuffer.data(), &recvLength);
     if (result != SCARD_S_SUCCESS) {
-        throw std::runtime_error("Failed to transmit data to smart card.");
+        throw std::runtime_error("Failed to transmit data to smart card. (error code: " + std::to_string(result) + ")");
     }
     if (recvLength > 255) {
         throw std::runtime_error("Wrong recvLength.");

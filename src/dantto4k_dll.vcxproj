@@ -79,7 +79,7 @@
     <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\bin\Release-x64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MT;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>dantto4kdll</TargetName>
+    <TargetName>bondriver_dantto4k</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>dantto4kdll</TargetName>
@@ -88,7 +88,7 @@
     <TargetName>dantto4kdll</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>dantto4kdll</TargetName>
+    <TargetName>bondriver_dantto4k</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

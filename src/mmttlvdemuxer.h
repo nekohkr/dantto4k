@@ -60,7 +60,6 @@ public:
 	uint16_t pid = 0;
 
 	int flags = 0;
-	int offset = 0;
 
 	std::vector<MpuTimestamp> mpuTimestamps;
 	std::vector<MpuExtendedTimestamp> mpuExtendedTimestamps;
@@ -110,34 +109,24 @@ protected:
 	void clearTables();
 
 protected:
-	SmartCard* smartCard;
-	AcasCard* acasCard;
-	AVPacket* packet;
+	FragmentAssembler* getAssembler(uint16_t pid);
+	MmtpStream* getStream(uint16_t pid, bool create = false);
+
+	SmartCard* smartCard = nullptr;
+	AcasCard* acasCard = nullptr;
 	Stream* outputStream = nullptr;
 	DecryptedEcm* decryptedEcm = nullptr;
 	std::map<uint16_t, FragmentAssembler*> assemblerMap;
 	
-	FragmentAssembler* getAssembler(uint16_t pid);
-	MmtpStream* getStream(uint16_t pid, bool create=false);
-
 	TLVPacket tlv;
 	CompressedIPPacket compressedIPPacket;
 	Mmtp mmtp;
 	Mpu mpu;
 
 	FILE* fp;
-	uint32_t last_sequence_number;
-	uint32_t au_count;
 
 	ts::DuckContext duck;
 	uint32_t streamIndex = 0;
-
-	uint8_t cc_pes = 0;
-	uint32_t packetIdx = 0;
-
-	uint64_t lastPts;
-	uint64_t lastDts;
-
 
 public:
 	std::map<uint16_t, std::vector<uint8_t>> mpuData;
