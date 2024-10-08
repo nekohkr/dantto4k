@@ -30,13 +30,14 @@ bool MhSdt::unpack(Stream& stream)
     lastSectionNumber = stream.get8U();
     originalNetworkId = stream.getBe16U();
     stream.skip(1);
+
     while (stream.leftBytes() > 4) {
         MhSdtService* service = new MhSdtService();
-        service->unpack(stream);
-        services.push_back(service);
+        if (!service->unpack(stream)) {
+            return false;
+        }
 
-        int a = stream.leftBytes();
-        a = 0;
+        services.push_back(service);
     }
 
     crc32 = stream.getBe32U();

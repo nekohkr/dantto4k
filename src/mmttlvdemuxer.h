@@ -49,15 +49,13 @@ public:
 	enum AVMediaType codecType;
 	enum AVCodecID codecId = AV_CODEC_ID_NONE;
 	uint32_t codecTag = 0;
+
 	uint32_t lastMpuSequenceNumber = 0;
-
-	AVRational timeBase;
-	uint32_t time_base_num = 0;
-	uint32_t time_base_den = 0;
-
 	uint32_t auIndex = 0;
 	uint32_t streamIndex = 0;
 	uint16_t pid = 0;
+
+	AVRational timeBase;
 
 	int flags = 0;
 
@@ -108,14 +106,14 @@ protected:
 
 	void clearTables();
 
+	
 protected:
 	FragmentAssembler* getAssembler(uint16_t pid);
 	MmtpStream* getStream(uint16_t pid, bool create = false);
+	std::pair<int64_t, int64_t> calcPtsDts(MmtpStream* mmtpStream, MpuTimestamp& timestamp, MpuExtendedTimestamp& extendedTimestamp);
 
 	SmartCard* smartCard = nullptr;
 	AcasCard* acasCard = nullptr;
-	Stream* outputStream = nullptr;
-	DecryptedEcm* decryptedEcm = nullptr;
 	std::map<uint16_t, FragmentAssembler*> assemblerMap;
 	
 	TLVPacket tlv;

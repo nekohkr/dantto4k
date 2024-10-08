@@ -20,10 +20,6 @@ bool MpuExtendedTimestamp::unpack(Stream& stream, uint8_t ptsOffsetType, uint16_
 		}
 	}
 
-	if (numOfAu == 32 && dtsPtsOffsets.size() == 16) {
-		int a = 1;
-	}
-
 	return true;
 }
 

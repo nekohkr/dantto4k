@@ -376,7 +376,7 @@ void MmtTlvDemuxer::processEcm(Ecm* ecm)
         acasCard->decryptEcm(ecm->ecmData);
     }
     catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
+
     }
 }
 
@@ -391,6 +391,24 @@ void MmtTlvDemuxer::clearTables()
         delete table;
     }
     tlvTables.clear();
+}
+
+std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(MmtpStream* mmtpStream, MpuTimestamp& timestamp, MpuExtendedTimestamp& extendedTimestamp)
+{
+    int64_t ptime = av_rescale(timestamp.mpuPresentationTime, mmtpStream->timeBase.den,
+        1000000ll * mmtpStream->timeBase.num);
+
+    if (mmtpStream->auIndex >= extendedTimestamp.numOfAu) {
+        throw std::out_of_range("au index out of bounds");
+    }
+
+    int64_t dts = ptime - extendedTimestamp.mpuDecodingTimeOffset;
+    for (int j = 0; j < mmtpStream->auIndex; ++j)
+        dts += extendedTimestamp.ptsOffsets[j];
+
+    int64_t pts = dts + extendedTimestamp.dtsPtsOffsets[mmtpStream->auIndex];
+
+    return std::pair<int64_t, int64_t>(pts, dts);
 }
 
 FragmentAssembler* MmtTlvDemuxer::getAssembler(uint16_t pid)
@@ -433,18 +451,22 @@ void MmtTlvDemuxer::processMpu(Stream& stream)
     auto assembler = getAssembler(mmtp.packetId);
     Stream nstream(mpu.payload);
     MmtpStream* mmtpStream = getStream(mmtp.packetId);
+
     if (!mmtpStream) {
         return;
     }
-    if (mpu.aggregateFlag && mpu.fragmentationIndicator != NOT_FRAGMENTED)
-        return;
 
-    //skip
-    if (mpu.fragmentType != MPU_FRAGMENT_TYPE::MPU)
+    if (mpu.aggregateFlag && mpu.fragmentationIndicator != NOT_FRAGMENTED) {
         return;
+    }
 
-    if (assembler->state == ASSEMBLER_STATE::INIT && !mmtp.rapFlag)
+    if (mpu.fragmentType != MPU_FRAGMENT_TYPE::MPU) {
         return;
+    }
+
+    if (assembler->state == ASSEMBLER_STATE::INIT && !mmtp.rapFlag) {
+        return;
+    }
 
     if (assembler->state == ASSEMBLER_STATE::INIT) {
         mmtpStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
@@ -464,6 +486,7 @@ void MmtTlvDemuxer::processMpu(Stream& stream)
     if (mmtp.rapFlag) {
         mmtpStream->flags |= AV_PKT_FLAG_KEY;
     }
+
     if (mpu.aggregateFlag == 0) {
         DataUnit dataUnit;
         if (!dataUnit.unpack(nstream, mpu.timedFlag, mpu.aggregateFlag)) {
@@ -479,7 +502,6 @@ void MmtTlvDemuxer::processMpu(Stream& stream)
     else
     {
         int i = 0;
-
         while (!nstream.isEOF()) {
             DataUnit dataUnit;
             if (!dataUnit.unpack(nstream, mpu.timedFlag, mpu.aggregateFlag)) {
@@ -507,16 +529,16 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         return;
     }
 
-    MpuTimestamp desc;
-    MpuExtendedTimestamp ext_desc;
+    MpuTimestamp timestamp;
+    MpuExtendedTimestamp extendedTimestamp;
 
     if (mmtpStream->codecId == AV_CODEC_ID_HEVC || mmtpStream->codecId == AV_CODEC_ID_AAC_LATM) {
-        bool findTs = false, findEts = false;
+        bool findTimestamp = false, findExtendedTimestamp = false;
         for (int i = 0; i < mmtpStream->mpuTimestamps.size(); ++i) {
             if (mmtpStream->mpuTimestamps[i].mpuSequenceNumber ==
                 mmtpStream->lastMpuSequenceNumber) {
-                desc = mmtpStream->mpuTimestamps[i];
-                findTs = true;
+                timestamp = mmtpStream->mpuTimestamps[i];
+                findTimestamp = true;
                 break;
             }
         }
@@ -524,12 +546,12 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         for (int i = 0; i < mmtpStream->mpuExtendedTimestamps.size(); ++i) {
             if (mmtpStream->mpuExtendedTimestamps[i].mpuSequenceNumber ==
                 mmtpStream->lastMpuSequenceNumber) {
-                ext_desc = mmtpStream->mpuExtendedTimestamps[i];
-                findEts = true;
+                extendedTimestamp = mmtpStream->mpuExtendedTimestamps[i];
+                findExtendedTimestamp = true;
                 break;
             }
         }
-        if (!findTs || !findEts) {
+        if (!findTimestamp || !findExtendedTimestamp) {
             return;
         }
     }
@@ -563,39 +585,36 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
 
         if (((uint8 >> 1) & 0b111111) < 0x20) {
             uint8_t* data = (uint8_t*)malloc(mmtpStream->pendingData.size());
-
-            memcpy(data, mmtpStream->pendingData.data(), mmtpStream->pendingData.size());
-
-            AVBufferRef* buffer_ref = av_buffer_create(data, mmtpStream->pendingData.size(), buffer_free_callback, NULL, 0);
-
-            AVPacket* packet = av_packet_alloc();
-            packet->buf = buffer_ref;
-            packet->data = buffer_ref->data;
-            memcpy(packet->data, mmtpStream->pendingData.data(), mmtpStream->pendingData.size());
-            packet->size = mmtpStream->pendingData.size() - 64;
-
-            uint64_t ptime = av_rescale(desc.mpuPresentationTime, mmtpStream->timeBase.den,
-                1000000ll * mmtpStream->timeBase.num);
-
-            if (mmtpStream->auIndex >= ext_desc.numOfAu) {
+            if (data == 0) {
                 return;
             }
 
-            uint64_t dts = ptime - ext_desc.mpuDecodingTimeOffset;
-            for (int j = 0; j < mmtpStream->auIndex; ++j)
-                dts += ext_desc.ptsOffsets[j];
+            memcpy(data, mmtpStream->pendingData.data(), mmtpStream->pendingData.size());
 
-            uint64_t pts = dts + ext_desc.dtsPtsOffsets[mmtpStream->auIndex];
+            AVBufferRef* buf = av_buffer_create(data, mmtpStream->pendingData.size(), buffer_free_callback, NULL, 0);
+            AVPacket* packet = av_packet_alloc();
+            packet->buf = buf;
+            packet->data = buf->data;
+            packet->size = mmtpStream->pendingData.size() - 64;
+
+            std::pair<int64_t, int64_t> ptsDts;
+            try {
+                ptsDts = calcPtsDts(mmtpStream, timestamp, extendedTimestamp);
+            }
+            catch (const std::out_of_range& e) {
+                return;
+            }
+
             mmtpStream->auIndex++;
 
-            packet->pts = pts;
-            packet->dts = dts;
+            packet->pts = ptsDts.first;
+            packet->dts = ptsDts.second;
 
             packet->stream_index = mmtpStream->streamIndex;
             packet->flags = mmtpStream->flags;
             packet->pos = -1;
             packet->duration = 0;
-            packet->size = buffer_ref->size - AV_INPUT_BUFFER_PADDING_SIZE;
+            packet->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
 
             avpackets.push_back(packet);
             mmtpStream->pendingData.clear();
@@ -605,7 +624,6 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
 
         break;
     }
-
     case AV_CODEC_ID_AAC_LATM:
     {
         uint32_t size = stream.leftBytes();
@@ -618,31 +636,29 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         data[0] = 0x56;
         data[1] = ((size >> 8) & 0x1F) | 0xE0;
         data[2] = size & 0xFF;
+
         stream.read((char*)data + 3, size);
 
         memset(data + 3 + size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
         AVBufferRef* buf = av_buffer_create(data, 3 + size + AV_INPUT_BUFFER_PADDING_SIZE, buffer_free_callback, NULL, 0);
-
         AVPacket* packet = av_packet_alloc();
         packet->buf = buf;
         packet->data = buf->data;
 
-        uint64_t ptime = av_rescale(desc.mpuPresentationTime, mmtpStream->timeBase.den,
-            1000000ll * mmtpStream->timeBase.num);
 
-        if (mmtpStream->auIndex >= ext_desc.numOfAu)
+        std::pair<int64_t, int64_t> ptsDts;
+        try {
+            ptsDts = calcPtsDts(mmtpStream, timestamp, extendedTimestamp);
+        }
+        catch (const std::out_of_range& e) {
             return;
+        }
 
-        uint64_t dts = ptime - ext_desc.mpuDecodingTimeOffset;
-        for (int j = 0; j < mmtpStream->auIndex; ++j)
-            dts += ext_desc.ptsOffsets[j];
-
-        uint64_t pts = dts + ext_desc.dtsPtsOffsets[mmtpStream->auIndex];
         mmtpStream->auIndex++;
 
-        packet->pts = pts;
-        packet->dts = dts;
+        packet->pts = ptsDts.first;
+        packet->dts = ptsDts.second;
 
         packet->stream_index = mmtpStream->streamIndex;
         packet->flags = mmtpStream->flags;
@@ -654,7 +670,6 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         mmtpStream->flags = 0;
         break;
     }
-
     case AV_CODEC_ID_TTML:
     {
         uint32_t size = stream.leftBytes();
@@ -692,6 +707,7 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         if (stream.leftBytes() < data_size) {
             return;
         }
+
         uint8_t* data = (uint8_t*)malloc(data_size + AV_INPUT_BUFFER_PADDING_SIZE);
         if (data == 0) {
             return;

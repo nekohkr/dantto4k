@@ -14,8 +14,6 @@ bool MhShortEventDescriptor::unpack(Stream& stream)
         return false;
     }
 
-
-    uint8_t  language_code[4];
     uint8_t  eventNameLength;
     uint16_t textLength;
 
