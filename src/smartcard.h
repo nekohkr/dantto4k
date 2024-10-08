@@ -89,5 +89,4 @@ protected:
     DWORD dwActiveProtocol = 0;
 
 };
-
 #endif

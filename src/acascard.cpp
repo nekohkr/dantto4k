@@ -80,10 +80,6 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
 
 DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
 {
-    if (!smartcard->isConnected()) {
-        throw std::runtime_error("Smart card not connected");
-    }
-
     if (decryptedEcmMap.find(ecm) != decryptedEcmMap.end()) {
         return decryptedEcmMap[ecm];
     }
