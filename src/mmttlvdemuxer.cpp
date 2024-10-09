@@ -377,6 +377,7 @@ void MmtTlvDemuxer::processEcm(Ecm* ecm)
     }
     catch (const std::runtime_error& e) {
 
+        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -602,6 +603,7 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
                 ptsDts = calcPtsDts(mmtpStream, timestamp, extendedTimestamp);
             }
             catch (const std::out_of_range& e) {
+                std::cerr << e.what() << std::endl;
                 return;
             }
 

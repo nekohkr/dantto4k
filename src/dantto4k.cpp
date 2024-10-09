@@ -79,7 +79,7 @@ int outputFilter(void* opaque, const uint8_t* buf, int buf_size) {
         if (pid == 0x1000 && packet.getPriority() == 0) {
             continue;
         }
-        
+
         outputMutex.lock();
         muxedOutput.insert(muxedOutput.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         outputMutex.unlock();
