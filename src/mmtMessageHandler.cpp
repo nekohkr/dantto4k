@@ -456,7 +456,7 @@ void MmtMessageHandler::onMhTot(const MhTot* mhTot)
     struct tm startTime = EITConvertStartTime(mhTot->jstTime);
     ts::Time time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday,
         startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
-    ts::TOT tot(time.JSTToUTC());
+    ts::TOT tot(time);
 
     ts::BinaryTable table;
     tot.serialize(duck, table);

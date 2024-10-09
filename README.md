@@ -26,3 +26,9 @@ https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13
 - https://slproweb.com/products/Win32OpenSSL.html
 - https://github.com/BtbN/FFmpeg-Builds/releases
 - https://github.com/tsduck/tsduck/
+
+## References
+- ARIB STD-B32
+- ARIB STD-B60
+- [superfashi/FFmpeg](https://github.com/superfashi/FFmpeg)
+- b61decoder

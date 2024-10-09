@@ -31,9 +31,9 @@ std::mutex inputMutex;
 
 bool streamInitialized = false;
 
-class ByteArrayInput {
+class TSInput {
 public:
-    ByteArrayInput() : position(0) {}
+    TSInput() : position(0) {}
 
     bool read(ts::TSPacket& packet) {
         if (0 >= data.size()) {
@@ -55,17 +55,17 @@ private:
     size_t position;
 };
 
-ByteArrayInput input;
+TSInput tsInput;
 
 //filter out SDT, PAT, PMT packets creacted by ffmpeg.
 int outputFilter(void* opaque, const uint8_t* buf, int buf_size) {
     std::vector<uint8_t> buffer(buf_size);
     memcpy(buffer.data(), buf, buf_size);
     
-    input.data.insert(input.data.end(), buffer.begin(), buffer.end());
+    tsInput.data.insert(tsInput.data.end(), buffer.begin(), buffer.end());
     
     ts::TSPacket packet;
-    while (input.read(packet)) {
+    while (tsInput.read(packet)) {
         uint16_t pid = packet.getPID();
         
         if (pid == DVB_SDT_PID && packet.getPriority() == 0) {
