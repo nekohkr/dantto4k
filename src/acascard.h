@@ -17,6 +17,7 @@ public:
     DecryptedEcm lastDecryptedEcm;
     bool ready = false;
 
+    void clear();
 
 protected:
     static constexpr uint8_t masterKey[] =

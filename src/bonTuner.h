@@ -45,5 +45,5 @@ public:
 protected:
 	IBonDriver2* pBonDriver2;
 	std::vector<uint8_t> inputBuffer;
-
+	Config config;
 };

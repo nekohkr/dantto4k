@@ -126,3 +126,9 @@ DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
 
     return decryptedEcm;
 }
+
+void AcasCard::clear()
+{
+    ready = false;
+    decryptedEcmMap.clear();
+}

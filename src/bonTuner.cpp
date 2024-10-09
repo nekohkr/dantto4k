@@ -11,6 +11,8 @@ FILE* fp;
 
 bool CBonTuner::init(Config& config)
 {
+	this->config = config;
+
 	HINSTANCE hBonDriverDLL = LoadLibraryA(config.bondriverPath.c_str());
 	if (!hBonDriverDLL) {
 		std::cerr << "Failed to load BonDriver (Error code: " << GetLastError() << ")" << std::endl;
@@ -38,11 +40,7 @@ bool CBonTuner::init(Config& config)
 		return false;
 	}
 
-	if (config.mmtsDumpPath != "") {
-		fp = fopen(config.mmtsDumpPath.c_str(), "wb");
-	}
-	
-	std::thread danttoThread([&]() {
+	std::thread thread([&]() {
 		int skipByte = 0;
 		while (1) {
 			Sleep(1);
@@ -52,6 +50,7 @@ bool CBonTuner::init(Config& config)
 				inputMutex.unlock();
 				continue;
 			}
+
 			buffer.insert(buffer.end(), inputBuffer.begin(), inputBuffer.end());
 			inputBuffer.clear();
 			inputMutex.unlock();
@@ -79,7 +78,7 @@ bool CBonTuner::init(Config& config)
 		}
 	});
 
-	danttoThread.detach();
+	thread.detach();
 	return true;
 }
 
@@ -183,7 +182,25 @@ const char* CBonTuner::EnumChannelName(const uint32_t dwSpace, const uint32_t dw
 
 const bool CBonTuner::SetChannel(const uint32_t dwSpace, const uint32_t dwChannel)
 {
+	inputMutex.lock();
+	inputBuffer.clear();
+	inputMutex.unlock();
+
+	outputMutex.lock();
+	muxedOutput.clear();
+	outputMutex.unlock();
+
 	streamInitialized = false;
+
+	if (config.mmtsDumpPath != "") {
+		if (fp) {
+			fclose(fp);
+		}
+
+		fp = fopen(config.mmtsDumpPath.c_str(), "wb");
+	}
+
+	demuxer.clear();
 
 	return pBonDriver2->SetChannel(dwSpace, dwChannel);
 }

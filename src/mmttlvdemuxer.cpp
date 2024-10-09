@@ -394,6 +394,20 @@ void MmtTlvDemuxer::clearTables()
     tlvTables.clear();
 }
 
+void MmtTlvDemuxer::clear()
+{
+    clearTables();
+
+    assemblerMap.clear();
+    mpuData.clear();
+    streamMap.clear();
+    streamIndex = 0;
+
+    if (acasCard) {
+        acasCard->clear();
+    }
+}
+
 std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(MmtpStream* mmtpStream, MpuTimestamp& timestamp, MpuExtendedTimestamp& extendedTimestamp)
 {
     int64_t ptime = av_rescale(timestamp.mpuPresentationTime, mmtpStream->timeBase.den,
@@ -653,7 +667,7 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         try {
             ptsDts = calcPtsDts(mmtpStream, timestamp, extendedTimestamp);
         }
-        catch (const std::out_of_range& e) {
+        catch (const std::out_of_range&) {
             return;
         }
 
@@ -680,24 +694,27 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         uint16_t last_subsample_number = stream.getBe16U();
 
         uint8_t uint8 = stream.get8U();
-        uint8_t data_type = uint8 >> 4;
-        uint8_t length_ext_flag = (uint8 >> 3) & 1;
-        uint8_t subsample_info_list_flag = (uint8 >> 2) & 1;
-        if (data_type != 0b0000) return;
+        uint8_t dataType = uint8 >> 4;
+        uint8_t lengthExtFlag = (uint8 >> 3) & 1;
+        uint8_t subsampleInfoListFlag = (uint8 >> 2) & 1;
+
+        if (dataType != 0) {
+            return;
+        }
 
         uint32_t data_size;
-        if (length_ext_flag)
+        if (lengthExtFlag)
             data_size = stream.getBe32U();
         else
             data_size = stream.getBe16U();
 
-        if (subsample_number == 0 && last_subsample_number > 0 &&
-            subsample_info_list_flag) {
+        if (subsample_number == 0 && last_subsample_number > 0 && subsampleInfoListFlag) {
             for (int i = 0; i < last_subsample_number; ++i) {
                 // skip: subsample_i_data_type
                 stream.skip(4 + 4);
+
                 // skip: subsample_i_data_size
-                if (length_ext_flag) {
+                if (lengthExtFlag) {
                     stream.skip(4);
                 }
                 else {

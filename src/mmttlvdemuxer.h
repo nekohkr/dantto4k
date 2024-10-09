@@ -83,6 +83,7 @@ class MmtTlvDemuxer {
 public:
 	bool init();
 	int processPacket(Stream& stream);
+	void clear();
 
 protected:
 	void processMpu(Stream& stream);
@@ -102,11 +103,11 @@ protected:
 	void processMptDescriptor(Stream& stream, MmtpStream* mmtpStream);
 	void processMpuTimestampDescriptor(Stream& stream, MmtpStream* mmtpStream);
 	void processMpuExtendedTimestampDescriptor(Stream& stream, MmtpStream* mmtpStream);
+
 	void processEcm(Ecm* ecm);
 
 	void clearTables();
 
-	
 protected:
 	FragmentAssembler* getAssembler(uint16_t pid);
 	MmtpStream* getStream(uint16_t pid, bool create = false);
@@ -121,13 +122,12 @@ protected:
 	Mmtp mmtp;
 	Mpu mpu;
 
-	FILE* fp;
-
 	ts::DuckContext duck;
 	uint32_t streamIndex = 0;
 
-public:
 	std::map<uint16_t, std::vector<uint8_t>> mpuData;
+
+public:
 	std::map<uint16_t, MmtpStream*> streamMap;
 	std::list<AVPacket*> avpackets;
 	std::list<MmtTable*> tables;
