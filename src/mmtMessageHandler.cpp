@@ -254,6 +254,7 @@ void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
         packetizer.getPackets(packets);
         for (auto packet : packets) {
             packet.setCC((sdtCounter++) & 0xF);
+            packet.setPriority(true);
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
