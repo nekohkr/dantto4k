@@ -138,172 +138,175 @@ bool Mmtp::decryptPayload(DecryptedEcm* decryptedEcm)
 
 bool ExtensionHeaderScrambling::unpack(uint16_t extensionHeaderType, uint16_t extensionHeaderLength, Stream& stream)
 {
-	if (stream.leftBytes() < 1) {
+	try {
+		if (stream.leftBytes() < 1) {
+			return false;
+		}
+
+		uint8_t uint8 = stream.get8U();
+		encryptionFlag = (ENCRYPTION_FLAG)((uint8 & 0b00011000) >> 3);
+		scramblingSubsystem = (uint8 & 0b00000100) >> 2;
+		messageAuthenticationControl = (uint8 & 0b00000010) >> 1;
+		scramblingInitialCounterValue = uint8 & 0b00000001;
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
-
-	uint8_t uint8 = stream.get8U();
-	encryptionFlag = (ENCRYPTION_FLAG)((uint8 & 0b00011000) >> 3);
-	scramblingSubsystem = (uint8 & 0b00000100) >> 2;
-	messageAuthenticationControl = (uint8 & 0b00000010) >> 1;
-	scramblingInitialCounterValue = uint8 & 0b00000001;
 
 	return true;
 }
 
 bool Mpu::unpack(Stream& stream)
 {
-	if (stream.leftBytes() < 2 + 1 + 1 + 4)
+	try {
+		payloadLength = stream.getBe16U();
+		if (payloadLength != stream.leftBytes())
+			return false;
+
+		uint8_t byte = stream.get8U();
+		fragmentType = (MPU_FRAGMENT_TYPE)(byte >> 4);
+		timedFlag = (byte >> 3) & 1;
+		fragmentationIndicator = (byte >> 1) & 0b11;
+		aggregateFlag = byte & 1;
+
+		fragmentCounter = stream.get8U();
+		mpuSequenceNumber = stream.getBe32U();
+
+
+		payload.resize(payloadLength - 6);
+		stream.read((char*)payload.data(), payloadLength - 6);
+
+	}
+	catch (const std::out_of_range&) {
 		return false;
-
-	payloadLength = stream.getBe16U();
-	if (payloadLength != stream.leftBytes())
-		return false;
-
-	uint8_t byte = stream.get8U();
-	fragmentType = (MPU_FRAGMENT_TYPE)(byte >> 4);
-	timedFlag = (byte >> 3) & 1;
-	fragmentationIndicator = (byte >> 1) & 0b11;
-	aggregateFlag = byte & 1;
-
-	fragmentCounter = stream.get8U();
-	mpuSequenceNumber = stream.getBe32U();
-
-
-	payload.resize(payloadLength - 6);
-	stream.read((char*)payload.data(), payloadLength - 6);
+	}
 
 	return true;
 }
 
 bool DataUnit::unpack(Stream& stream, bool timedFlag, bool aggregateFlag)
 {
-	if (timedFlag) {
-		if (aggregateFlag == 0) {
-			if (stream.leftBytes() < 4 + 4 + 4 + 1 + 1) {
-				return false;
+	try {
+		if (timedFlag) {
+			if (aggregateFlag == 0) {
+				movieFragmentSequenceNumber = stream.getBe32U();
+				sampleNumber = stream.getBe32U();
+				offset = stream.getBe32U();
+				priority = stream.get8U();
+				dependencyCounter = stream.get8U();
+
+				data.resize(stream.leftBytes());
+				stream.read((char*)data.data(), stream.leftBytes());
 			}
+			else {
+				dataUnitLength = stream.getBe16U();
 
-			movieFragmentSequenceNumber = stream.getBe32U();
-			sampleNumber = stream.getBe32U();
-			offset = stream.getBe32U();
-			priority = stream.get8U();
-			dependencyCounter = stream.get8U();
+				size_t leftBytes = stream.leftBytes();
+				dataUnitLength = min(dataUnitLength, stream.leftBytes());
 
-			data.resize(stream.leftBytes());
-			stream.read((char*)data.data(), stream.leftBytes());
-		}
-		else {
-			if (stream.leftBytes() < 2+1+4+4+4+1+1) {
-				return false;
+				movieFragmentSequenceNumber = stream.getBe32U();
+				sampleNumber = stream.getBe32U();
+				offset = stream.getBe32U();
+				priority = stream.get8U();
+				dependencyCounter = stream.get8U();
+
+				data.resize(dataUnitLength - 4 * 3 - 2);
+				stream.read((char*)data.data(), dataUnitLength - 4 * 3 - 2);
 			}
-
-			dataUnitLength = stream.getBe16U();
-
-			size_t leftBytes = stream.leftBytes();
-			dataUnitLength = min(dataUnitLength, stream.leftBytes());
-
-			movieFragmentSequenceNumber = stream.getBe32U();
-			sampleNumber = stream.getBe32U();
-			offset = stream.getBe32U();
-			priority = stream.get8U();
-			dependencyCounter = stream.get8U();
-
-			if (dataUnitLength < 4 * 3 + 2) {
-				return false;
-			}
-			data.resize(dataUnitLength - 4 * 3 - 2);
-			stream.read((char*)data.data(), dataUnitLength - 4 * 3 - 2);
-		}
-	} else {
-		if (aggregateFlag == 0) {
-			if (stream.leftBytes() < 4) {
-				return false;
-			}
-
-			itemId = stream.getBe32U();
-
-			data.resize(stream.leftBytes());
-			stream.read((char*)data.data(), stream.leftBytes());
 		} else {
-			if (stream.leftBytes() < 2) {
-				return false;
+			if (aggregateFlag == 0) {
+				itemId = stream.getBe32U();
+
+				data.resize(stream.leftBytes());
+				stream.read((char*)data.data(), stream.leftBytes());
+			} else {
+				dataUnitLength = stream.getBe16U();
+
+				data.resize(dataUnitLength);
+				stream.read((char*)data.data(), dataUnitLength);
 			}
-
-			dataUnitLength = stream.getBe16U();
-
-			data.resize(dataUnitLength);
-			stream.read((char*)data.data(), dataUnitLength);
 		}
 	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+
 	return true;
 }
 
 bool PaMessage::unpack(Stream& stream)
 {
-	messageId = stream.getBe16U();
-	version = stream.get8U();
-	length = stream.getBe32U();
+	try {
+		messageId = stream.getBe16U();
+		version = stream.get8U();
+		length = stream.getBe32U();
 
-	numberOfTables = stream.get8U();
+		numberOfTables = stream.get8U();
 
-	if (stream.leftBytes() < (8 + 8 + 16) * numberOfTables) {
+		if (stream.leftBytes() < (8 + 8 + 16) * numberOfTables) {
+			return false;
+		}
+
+		for (int i = 0; i < numberOfTables; i++) {
+			stream.skip(8 + 8 + 16);
+		}
+
+		table.resize(stream.leftBytes());
+		stream.read((char*)table.data(), stream.leftBytes());
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
 
-	for (int i = 0; i < numberOfTables; i++) {
-		stream.skip(8 + 8 + 16);
-	}
-
-	table.resize(stream.leftBytes());
-	stream.read((char*)table.data(), stream.leftBytes());
-
-	return false;
+	return true;
 }
 
 
 bool SignalingMessage::unpack(Stream& stream)
 {
-	if (stream.leftBytes() < 1 + 1) {
+	try {
+		uint8_t uint8 = stream.get8U();
+		fragmentationIndicator = (uint8 & 0b11000000) >> 6;
+		reserved = (uint8 & 0b00111100) >> 2;
+		lengthExtensionFlag = (uint8 & 0x00000010) >> 2;
+		aggregationFlag = uint8 & 1;
+
+		fragmentCounter = stream.get8U();
+
+		payload.resize(stream.leftBytes());
+		stream.read((char*)payload.data(), stream.leftBytes());
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
-
-	uint8_t uint8 = stream.get8U();
-	fragmentationIndicator = (uint8 & 0b11000000) >> 6;
-	reserved = (uint8 & 0b00111100) >> 2;
-	lengthExtensionFlag = (uint8 & 0x00000010) >> 2;
-	aggregationFlag = uint8 & 1;
-
-	fragmentCounter = stream.get8U();
-
-	payload.resize(stream.leftBytes());
-	stream.read((char*)payload.data(), stream.leftBytes());
 
 	return true;
 }
 
 bool M2SectionMessage::unpack(Stream& stream)
 {
-	if (stream.leftBytes() < 2 + 1 + 2) {
+	try {
+		messageId = stream.getBe16U();
+		version = stream.get8U();
+		length = stream.getBe16U();
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
-
-	messageId = stream.getBe16U();
-	version = stream.get8U();
-	length = stream.getBe16U();
 
 	return true;
 }
 
 bool M2ShortSectionMessage::unpack(Stream& stream)
 {
-	if (stream.leftBytes() < 2 + 1 + 2) {
+	try {
+		messageId = stream.getBe16U();
+		version = stream.get8U();
+		length = stream.getBe16U();
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
-
-	messageId = stream.getBe16U();
-	version = stream.get8U();
-	length = stream.getBe16U();
 
 	return true;
 }

@@ -2,11 +2,12 @@
 
 bool MmtTable::unpack(Stream& stream)
 {
-	if (stream.leftBytes() < 1) {
+    try {
+		tableId = stream.get8U();
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
-
-    tableId = stream.get8U();
 
     return true;
 }

@@ -3,7 +3,6 @@
 
 class MhShortEventDescriptor : public MmtDescriptor {
 public:
-	~MhShortEventDescriptor();
 	bool unpack(Stream& stream);
 
 	char language[4];

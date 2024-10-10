@@ -14,28 +14,36 @@ static uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
 
 bool NTPTimestamp::unpack(Stream& stream)
 {
-	ntp = ff_parse_ntp_time2(stream.getBe64U()) - NTP_OFFSET_US;
+	try {
+		ntp = ff_parse_ntp_time2(stream.getBe64U()) - NTP_OFFSET_US;
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+
 	return true;
 }
 
 bool MpuTimestampDescriptor::unpack(Stream& stream)
 {
-	if (stream.leftBytes() < 3) {
+	try {
+		if (!MmtDescriptor::unpack(stream)) {
+			return false;
+		}
+
+		for (int i = 0; i < descriptorLength / 12; i++) {
+			MpuTimestamp mpuTimeStamp;
+			mpuTimeStamp.mpuSequenceNumber = stream.getBe32U();
+
+			NTPTimestamp ntpTimestamp;
+			ntpTimestamp.unpack(stream);
+			mpuTimeStamp.mpuPresentationTime = ntpTimestamp.ntp;
+			mpuTimestamps.push_back(mpuTimeStamp);
+		}
+	}
+	catch (const std::out_of_range&) {
 		return false;
 	}
 
-	if (!MmtDescriptor::unpack(stream)) {
-		return false;
-	}
-
-	for (int i = 0; i < descriptorLength / 12; i++) {
-		MpuTimestamp mpuTimeStamp;
-		mpuTimeStamp.mpuSequenceNumber = stream.getBe32U();
-
-		NTPTimestamp ntpTimestamp;
-		ntpTimestamp.unpack(stream);
-		mpuTimeStamp.mpuPresentationTime = ntpTimestamp.ntp;
-		mpuTimestamps.push_back(mpuTimeStamp);
-	}
 	return true;
 }

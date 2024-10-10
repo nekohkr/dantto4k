@@ -30,13 +30,13 @@ public:
 
     virtual void skip(uint64_t pos) {
         if (size < cur + pos) {
-            throw std::runtime_error("e");
+            throw std::out_of_range("");
         }
         cur += pos;
     }
     virtual void skip(uint64_t pos, int pos2) {
         if (size < cur + pos) {
-            throw std::runtime_error("e");
+            throw std::out_of_range("");
         }
         cur += pos;
     }
@@ -54,7 +54,7 @@ public:
 
     virtual size_t peek(char* buffer, size_t size) {
         if (this->size < cur + size) {
-            throw std::runtime_error("e");
+            throw std::out_of_range("");
         }
 
         memcpy(buffer, data.data() + cur, size);
@@ -168,14 +168,14 @@ public:
         fsIn.seekg(pos, std::ios::cur);
 
         if (fsIn.fail()) {
-            throw std::runtime_error("Failed to seek in file.");
+            throw std::out_of_range("Failed to seek in file.");
         }
     }
 
     size_t read(char* buffer, size_t size) override {
         fsIn.read(buffer, size);
         if (fsIn.fail() && !fsIn.eof()) {
-            throw std::runtime_error("Failed to read from file.");
+            throw std::out_of_range("Failed to read from file.");
         }
         return fsIn.gcount();
     }
@@ -185,7 +185,7 @@ public:
         fsIn.read(buffer, size);
 
         if (fsIn.fail() && !fsIn.eof()) {
-            throw std::runtime_error("Failed to read from file.");
+            throw std::out_of_range("Failed to read from file.");
         }
         fsIn.seekg(currentPos);
         return fsIn.gcount();

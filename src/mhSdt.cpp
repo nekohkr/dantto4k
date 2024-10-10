@@ -10,37 +10,42 @@ MhSdt::~MhSdt()
 
 bool MhSdt::unpack(Stream& stream)
 {
-    if (!MmtTable::unpack(stream)) {
-        return false;
-    }
-
-    if (stream.leftBytes() < 2 + 2 + 1 + 1 + 1 + 2 + 1 + 4) {
-        return false;
-    }
-
-    uint16_t uint16 = stream.getBe16U();
-    sectionSyntaxIndicator = (uint16 & 0b1000000000000000) >> 15;
-    sectionLength = uint16 & 0b0000111111111111;
-
-    tlvStreamId = stream.getBe16U();
-
-    uint8_t uint8 = stream.get8U();
-    currentNextIndicator = uint8 & 1;
-    sectionNumber = stream.get8U();
-    lastSectionNumber = stream.get8U();
-    originalNetworkId = stream.getBe16U();
-    stream.skip(1);
-
-    while (stream.leftBytes() > 4) {
-        MhSdtService* service = new MhSdtService();
-        if (!service->unpack(stream)) {
+    try {
+        if (!MmtTable::unpack(stream)) {
             return false;
         }
 
-        services.push_back(service);
-    }
+        uint16_t uint16 = stream.getBe16U();
+        sectionSyntaxIndicator = (uint16 & 0b1000000000000000) >> 15;
+        sectionLength = uint16 & 0b0000111111111111;
 
-    crc32 = stream.getBe32U();
+        tlvStreamId = stream.getBe16U();
+
+        uint8_t uint8 = stream.get8U();
+        currentNextIndicator = uint8 & 1;
+        sectionNumber = stream.get8U();
+        lastSectionNumber = stream.get8U();
+        originalNetworkId = stream.getBe16U();
+        stream.skip(1);
+
+        while (stream.leftBytes() > 4) {
+            MhSdtService* service = new MhSdtService();
+            if (!service->unpack(stream)) {
+                return false;
+            }
+
+            services.push_back(service);
+        }
+
+        if (stream.leftBytes() < 4) {
+            return false;
+        }
+
+        crc32 = stream.getBe32U();
+    }
+    catch (const std::out_of_range&) {
+        return false;
+    }
 
 	return true;
 }
