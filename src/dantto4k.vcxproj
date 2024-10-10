@@ -72,13 +72,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)thirdparty\ffmpeg\include;$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\bin\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\bin\Debug-x64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MD;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)thirdparty\ffmpeg\include;$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\lib\Debug-Win64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MD;$(LibraryPath)</LibraryPath>
     <IntDir>$(Platform)\$(Configuration)\dantto4k\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)thirdparty\ffmpeg\include;$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\bin\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\bin\Release-x64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MT;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)thirdparty\ffmpeg\include;$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\lib\Release-Win64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MT;$(LibraryPath)</LibraryPath>
     <IntDir>$(Platform)\$(Configuration)\dantto4k\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -113,16 +113,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>tsducklib.lib;libcrypto.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,10 +131,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -142,7 +142,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>tsducklib.lib;libcrypto.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
