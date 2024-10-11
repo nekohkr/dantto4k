@@ -245,7 +245,6 @@ void processMuxing() {
         }
 
         demuxer.avpackets.clear();
-        return;
     }
 
     for (auto table : demuxer.tables) {

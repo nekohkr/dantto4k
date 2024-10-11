@@ -33,7 +33,6 @@ int MmtTlvDemuxer::processPacket(Stream& stream)
         return -1;
     }
 
-    uint8_t syncByte = stream.peek8U();
     if (!isVaildTlv(stream)) {
         stream.skip(1);
         return -2;
