@@ -266,7 +266,7 @@ void processMuxing() {
         case 0x99:
         case 0x9A:
         case 0x9B:
-            handler.onMhEit((MhEit*)table);
+            handler.onMhEit(table->tableId, (MhEit*)table);
             break;
         case MMT_TABLE_ID::MH_SDT:
             handler.onMhSdt((MhSdt*)table);

@@ -38,7 +38,7 @@ public:
 	MmtMessageHandler(AVFormatContext** outputFormatContext)
 		: outputFormatContext(outputFormatContext) {
 	}
-	void onMhEit(const MhEit* mhEit);
+	void onMhEit(uint8_t tableId, const MhEit* mhEit);
 	void onMhSdt(const MhSdt* mhSdt);
 	void onPlt(const Plt* plt);
 	void onMpt(const Mpt* mpt);
@@ -51,11 +51,15 @@ protected:
 	std::map<uint16_t, uint16_t> mapService2Pid;
 	std::vector<uint8_t>* muxedOutput;
 	ts::DuckContext duck;
+
+	std::map<uint16_t, uint8_t> mapCC;
+
 	int eitCounter = 0;
 	int sdtCounter = 0;
 	int nitCounter = 0;
 	int patCounter = 0;
 	int pmtCounter = 0;
 	int totCounter = 0;
+
 	int tsid = -1;
 };

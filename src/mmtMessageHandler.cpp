@@ -116,7 +116,7 @@ static int assetType2streamType(uint32_t assetType)
     return stream_type;
 }
 
-void MmtMessageHandler::onMhEit(const MhEit* mhEit)
+void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
 {
     if (mhEit->events.size() == 0) {
         return;
@@ -133,7 +133,7 @@ void MmtMessageHandler::onMhEit(const MhEit* mhEit)
         tsEvent.start_time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday, 
             startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
         tsEvent.duration = std::chrono::seconds(EITConvertDuration(mhEvent->duration));
-		tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
+        tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
         tsEvent.event_id = mhEvent->eventId;
 
         for (auto descriptor : mhEvent->descriptors) {
@@ -143,7 +143,6 @@ void MmtMessageHandler::onMhEit(const MhEit* mhEit)
                 MhShortEventDescriptor* mmtDescriptor = (MhShortEventDescriptor*)descriptor;
                 ts::ShortEventDescriptor tsDescriptor;
 
-                const ts::Charset& cset(ts::ARIBCharset::B24);
                 ts::UString eventName = ts::UString::FromUTF8(mmtDescriptor->eventName);
                 ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
 
@@ -188,15 +187,27 @@ void MmtMessageHandler::onMhEit(const MhEit* mhEit)
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
 
-    ts::OneShotPacketizer packetizer(duck, DVB_EIT_PID);
+    uint16_t pid;
+    if (tableId == 0x8B) {
+        //present and next program
+        pid = DVB_EIT_PID;
+    }
+    else {
+        pid = 0x50;
+    }
+
+    ts::OneShotPacketizer packetizer(duck, pid);
     for (int i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
+        section.get()->setSectionNumber(mhEit->sectionNumber);
+        section.get()->setLastSectionNumber(mhEit->lastSectionNumber);
 
         packetizer.addSection(section);
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC((eitCounter++) & 0xF);
+            packet.setCC(mapCC[pid] & 0xF);
+            mapCC[pid]++;
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -248,12 +259,15 @@ void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
     ts::OneShotPacketizer packetizer(duck, DVB_SDT_PID);
     for (int i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
+        section.get()->setSectionNumber(mhSdt->sectionNumber);
+        section.get()->setLastSectionNumber(mhSdt->lastSectionNumber);
 
         packetizer.addSection(section);
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC((sdtCounter++) & 0xF);
+            packet.setCC(mapCC[DVB_SDT_PID] & 0xF);
+            mapCC[DVB_SDT_PID]++;
             packet.setPriority(true);
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
@@ -300,7 +314,8 @@ void MmtMessageHandler::onPlt(const Plt* plt)
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC((patCounter++) & 0xF);
+            packet.setCC(mapCC[MPEG_PAT_PID] & 0xF);
+            mapCC[MPEG_PAT_PID]++;
             packet.setPriority(true);
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
@@ -348,6 +363,7 @@ void MmtMessageHandler::onMpt(const Mpt* mpt)
                 if (streamType == 0) {
                     continue;
                 }
+
                 ts::PMT::Stream stream(&tsPmt, streamType);
 
                 if (streamType == STREAM_TYPE_VIDEO_HEVC) {
@@ -374,7 +390,8 @@ void MmtMessageHandler::onMpt(const Mpt* mpt)
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC((pmtCounter++) & 0xF);
+            packet.setCC(mapCC[pid] & 0xF);
+            mapCC[pid]++;
             packet.setPriority(true);
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
@@ -442,7 +459,8 @@ void MmtMessageHandler::onTlvNit(const TlvNit* tlvNit)
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC((nitCounter++) & 0xF);
+            packet.setCC(mapCC[DVB_NIT_PID] & 0xF);
+            mapCC[DVB_NIT_PID]++;
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -470,7 +488,8 @@ void MmtMessageHandler::onMhTot(const MhTot* mhTot)
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC((totCounter++) & 0xF);
+            packet.setCC(mapCC[DVB_TOT_PID] & 0xF);
+            mapCC[DVB_TOT_PID]++;
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());

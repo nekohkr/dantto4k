@@ -375,7 +375,6 @@ void MmtTlvDemuxer::processEcm(Ecm* ecm)
         acasCard->decryptEcm(ecm->ecmData);
     }
     catch (const std::runtime_error& e) {
-
         std::cerr << e.what() << std::endl;
     }
 }
@@ -586,6 +585,7 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         if ((uint8 >> 7) != 0) {
             return;
         }
+
         int oldSize = mmtpStream->pendingData.size();
         if (oldSize != 0)
             oldSize -= 64;
