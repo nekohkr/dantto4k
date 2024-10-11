@@ -124,7 +124,16 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
 
     tsid = mhEit->tlvStreamId;
 
-	ts::EIT tsEit(true, true, 0, 0, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
+    bool pf;
+    if (tableId == 0x8B) {
+        //present and next program
+        pf = true;
+    }
+    else {
+        pf = false;
+    }
+
+    ts::EIT tsEit(true, pf, 0, 0, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
 	for (auto mhEvent : mhEit->events) {
 		ts::EIT::Event tsEvent(&tsEit);
 
@@ -183,20 +192,10 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
         break;
 	}
 
-
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
 
-    uint16_t pid;
-    if (tableId == 0x8B) {
-        //present and next program
-        pid = DVB_EIT_PID;
-    }
-    else {
-        pid = 0x50;
-    }
-
-    ts::OneShotPacketizer packetizer(duck, pid);
+    ts::OneShotPacketizer packetizer(duck, DVB_EIT_PID);
     for (int i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
         section.get()->setSectionNumber(mhEit->sectionNumber);
@@ -206,8 +205,8 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto packet : packets) {
-            packet.setCC(mapCC[pid] & 0xF);
-            mapCC[pid]++;
+            packet.setCC(mapCC[DVB_EIT_PID] & 0xF);
+            mapCC[DVB_EIT_PID]++;
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());

@@ -32,7 +32,7 @@ Stream::Stream(const std::vector<uint8_t>& data)
 Stream::Stream(const std::vector<uint8_t>& data, uint32_t size)
 {
 	if (data.size() < size) {
-		throw std::runtime_error("wrong size");
+		throw std::out_of_range("wrong size");
 	}
 
     this->data = data;
@@ -43,8 +43,9 @@ Stream::Stream(const std::vector<uint8_t>& data, uint32_t size)
 Stream::Stream(Stream& stream, uint32_t size)
 {
     if (stream.data.size() < stream.cur + size) {
-        throw std::runtime_error("wrong size");
+        throw std::out_of_range("wrong size");
     }
+
     this->data.insert(this->data.begin(), stream.data.begin() + stream.cur, stream.data.begin() + stream.cur + size);
     this->hasSize = true;
     this->size = size;
