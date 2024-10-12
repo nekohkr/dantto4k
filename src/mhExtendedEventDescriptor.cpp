@@ -15,7 +15,7 @@ bool MhExtendedEventDescriptor::unpack(Stream& stream)
 
         lengthOfItems = stream.getBe16U();
         Stream nstream(stream, lengthOfItems);
-        while(!nstream.isEOF()) {
+        while (!nstream.isEOF()) {
             MhExtendedEventItem item;
             if (!item.unpack(nstream)) {
                 return false;

@@ -63,6 +63,7 @@ bool MHEvent::unpack(Stream& stream)
 {
     try {
         eventId = stream.getBe16U();
+
         uint64_t uint64 = stream.getBe64U();
         startTime = (uint64 >> 24) & 0xFFFFFFFFFF;
         duration = uint64 & 0xFFFFFF;
@@ -125,7 +126,6 @@ bool MHEvent::unpack(Stream& stream)
                 descriptors.push_back(descriptor);
                 break;
             }
-
             default:
             {
                 MmtDescriptor* descriptor = new MmtDescriptor();

@@ -7,23 +7,29 @@ bool VideoComponentDescriptor::unpack(Stream& stream)
             return false;
         }
 
-        uint8_t uint8 = stream.get8U();
+        Stream nstream(stream, descriptorLength);
+
+        uint8_t uint8 = nstream.get8U();
         videoResolution = (uint8 & 0b11110000) >> 4;
         videoAspectRatio = uint8 & 0b0001111;
 
-        uint8 = stream.get8U();
+        uint8 = nstream.get8U();
         videoScanFlag = (uint8 & 0b10000000) >> 7;
         videoFrameRate = uint8 & 0b00011111;
-        componentTag = stream.getBe16U();
+        componentTag = nstream.getBe16U();
 
-        uint8 = stream.get8U();
+        uint8 = nstream.get8U();
         videoTransferCharacteristics = (uint8 & 0b11110000) >> 4;
-        stream.read((char*)language, 3);
+        nstream.read((char*)language, 3);
         language[3] = '\0';
 
-        int textLength = stream.leftBytes();
-        text.resize(textLength);
-        stream.read((char*)text.data(), textLength);
+        int textLength = nstream.leftBytes();
+        if (textLength) {
+            text.resize(textLength);
+            nstream.read((char*)text.data(), textLength);
+        }
+
+        stream.skip(descriptorLength);
     }
     catch (const std::out_of_range&) {
         return false;

@@ -4,6 +4,7 @@
 #include "mhShortEventDescriptor.h"
 #include "mhContentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
+#include "videoComponentDescriptor.h"
 #include "mhSdt.h"
 #include "mhServiceDescriptor.h"
 #include "plt.h"
@@ -134,7 +135,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
     }
 
     ts::EIT tsEit(true, pf, 0, 0, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
-	for (auto mhEvent : mhEit->events) {
+	for (auto& mhEvent : mhEit->events) {
 		ts::EIT::Event tsEvent(&tsEit);
 
         struct tm startTime = EITConvertStartTime(mhEvent->startTime);
@@ -144,7 +145,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
         tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
         tsEvent.event_id = mhEvent->eventId;
 
-        for (auto descriptor : mhEvent->descriptors) {
+        for (auto& descriptor : mhEvent->descriptors) {
             switch (descriptor->descriptorTag) {
             case MH_SHORT_EVENT_DESCRIPTOR:
             {
@@ -161,6 +162,34 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 tsDescriptor.event_name = ts::UString::FromUTF8((char*)eventNameBlock.data());
                 tsDescriptor.text = ts::UString::FromUTF8((char*)textBlock.data());
                 tsEvent.descs.add(duck, tsDescriptor);
+                break;
+            }
+            case MH_EXTENDED_EVENT_DESCRIPTOR:
+            {
+                MhExtendedEventDescriptor* mmtDescriptor = (MhExtendedEventDescriptor*)descriptor;
+                ts::ExtendedEventDescriptor tsDescriptor;
+                tsDescriptor.descriptor_number = mmtDescriptor->descriptorNumber;
+                tsDescriptor.last_descriptor_number = mmtDescriptor->lastDescriptorNumber;
+                tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
+
+                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->textChar);
+                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
+                tsDescriptor.text = ts::UString::FromUTF8((char*)textBlock.data());
+
+                for (auto& item : mmtDescriptor->items) {
+                    ts::ExtendedEventDescriptor::Entry entry;
+
+                    ts::UString itemChar = ts::UString::FromUTF8(item.itemChar);
+                    ts::UString itemDescriptionChar = ts::UString::FromUTF8(item.itemDescriptionChar);
+
+                    const ts::ByteBlock itemCharBlock(ts::ARIBCharset::B24.encoded(itemChar));
+                    const ts::ByteBlock itemDescriptionCharBlock(ts::ARIBCharset::B24.encoded(itemDescriptionChar));
+
+                    entry.item = ts::UString::FromUTF8((char*)itemCharBlock.data());
+                    entry.item_description = ts::UString::FromUTF8((char*)itemDescriptionCharBlock.data());
+
+                    tsDescriptor.entries.push_back(entry);
+                }
                 break;
             }
             case MH_AUDIO_COMPONENT_DESCRIPTOR:
@@ -184,6 +213,21 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
+            case VIDEO_COMPONENT_DESCRIPTOR:
+            {
+                VideoComponentDescriptor* mmtDescriptor = (VideoComponentDescriptor*)descriptor;
+                ts::ComponentDescriptor tsDescriptor;
+                tsDescriptor.stream_content = 2; //type = hevc
+                tsDescriptor.component_type = mmtDescriptor->videoResolution; //resolution
+                break;
+            }
+            case MH_CONTENT_DESCRIPTOR:
+            {
+                MhContentDescriptor* mmtDescriptor = (MhContentDescriptor*)descriptor;
+                ts::ContentDescriptor tsDescriptor;
+
+                break;
+            }
             }
         }
 
@@ -202,7 +246,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
         packetizer.addSection(section);
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
-        for (auto packet : packets) {
+        for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_EIT_PID] & 0xF);
             mapCC[DVB_EIT_PID]++;
 
@@ -222,14 +266,14 @@ void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
     tsid = mhSdt->tlvStreamId;
 
     ts::SDT tsSdt(true, 0, true, mhSdt->tlvStreamId, mhSdt->originalNetworkId);
-    for (auto service : mhSdt->services) {
+    for (auto& service : mhSdt->services) {
         ts::SDT::ServiceEntry tsService(&tsSdt);
         tsService.EITs_present = service->eitScheduleFlag;
         tsService.EITpf_present = service->eitPresentFollowingFlag;
         tsService.running_status = convertRunningStatus(service->runningStatus);
         tsService.CA_controlled = service->freeCaMode;
 
-        for (auto descriptor : service->descriptors) {
+        for (auto& descriptor : service->descriptors) {
             switch (descriptor->descriptorTag) {
             case MH_SERVICE_DECRIPTOR:
             {
@@ -262,7 +306,7 @@ void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
         packetizer.addSection(section);
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
-        for (auto packet : packets) {
+        for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_SDT_PID] & 0xF);
             mapCC[DVB_SDT_PID]++;
             packet.setPriority(true);
@@ -283,7 +327,7 @@ void MmtMessageHandler::onPlt(const Plt* plt)
     mapService2Pid.clear();
 
     int i = 0;
-    for (auto item : plt->items) {
+    for (auto& item : plt->items) {
         if (item.mmtPackageIdLength != 2) {
             return;
         }
@@ -310,7 +354,7 @@ void MmtMessageHandler::onPlt(const Plt* plt)
 
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
-        for (auto packet : packets) {
+        for (auto& packet : packets) {
             packet.setCC(mapCC[MPEG_PAT_PID] & 0xF);
             mapCC[MPEG_PAT_PID]++;
             packet.setPriority(true);
@@ -353,7 +397,7 @@ void MmtMessageHandler::onMpt(const Mpt* mpt)
     tsPmt.descs.add(aribDescriptor2, sizeof(aribDescriptor2));
 
     int streamIndex = 0;
-    for (auto asset : mpt->assets) {
+    for (auto& asset : mpt->assets) {
         for (int i = 0; i < asset.locationCount; i++) {
             if (asset.locationInfos[i].locationType == 0) {
                 int streamType = assetType2streamType(asset.assetType);
@@ -386,7 +430,7 @@ void MmtMessageHandler::onMpt(const Mpt* mpt)
 
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
-        for (auto packet : packets) {
+        for (auto& packet : packets) {
             packet.setCC(mapCC[pid] & 0xF);
             mapCC[pid]++;
             packet.setPriority(true);
@@ -403,7 +447,7 @@ void MmtMessageHandler::onTlvNit(const TlvNit* tlvNit)
     ts::NIT nit(true, 0, true, 0);
     nit.network_id = tlvNit->networkId;
 
-    for (auto descriptor : tlvNit->descriptors) {
+    for (auto& descriptor : tlvNit->descriptors) {
         switch (descriptor->descriptorTag) {
         case 0x40:
         {
@@ -419,11 +463,11 @@ void MmtMessageHandler::onTlvNit(const TlvNit* tlvNit)
         }
     }
 
-    for (auto item : tlvNit->items) {
+    for (auto& item : tlvNit->items) {
         ts::TransportStreamId tsid(item.tlvStreamId, item.originalNetworkId);
         nit.transports[tsid];
 
-        for (auto descriptor : item.descriptors) {
+        for (auto& descriptor : item.descriptors) {
             switch (descriptor->descriptorTag) {
             case 0x41:
             {
@@ -455,7 +499,7 @@ void MmtMessageHandler::onTlvNit(const TlvNit* tlvNit)
 
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
-        for (auto packet : packets) {
+        for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_NIT_PID] & 0xF);
             mapCC[DVB_NIT_PID]++;
 
@@ -484,7 +528,7 @@ void MmtMessageHandler::onMhTot(const MhTot* mhTot)
 
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
-        for (auto packet : packets) {
+        for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_TOT_PID] & 0xF);
             mapCC[DVB_TOT_PID]++;
 

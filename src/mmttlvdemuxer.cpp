@@ -191,10 +191,10 @@ void MmtTlvDemuxer::processMmtPackageTable(Stream& stream)
     Mpt* mpt = new Mpt();
     mpt->unpack(stream);
 
-    for (auto asset : mpt->assets) {
+    for (auto& asset : mpt->assets) {
         MmtpStream* mmtpStream = nullptr;
 
-        for (auto locationInfo : asset.locationInfos) {
+        for (auto& locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
                 switch (asset.assetType) {
                 case makeTag('h', 'e', 'v', '1'):
@@ -249,8 +249,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(Stream& stream, MmtpStream* mm
     MpuTimestampDescriptor descriptor;
     descriptor.unpack(stream);
 
-
-    for (auto ts : descriptor.mpuTimestamps) {
+    for (auto& ts : descriptor.mpuTimestamps) {
         bool find = false;
         for (int i = 0; i < mmtpStream->mpuTimestamps.size(); i++) {
             if (mmtpStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
@@ -307,7 +306,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(Stream& stream, MmtpSt
         mmtpStream->timeBase.num = 1;
         mmtpStream->timeBase.den = descriptor.timescale;
     }
-    for (auto ts : descriptor.extendedTimestamps) {
+    for (auto& ts : descriptor.extendedTimestamps) {
         if (mmtpStream->lastMpuSequenceNumber > ts.mpuSequenceNumber)
             continue;
 
