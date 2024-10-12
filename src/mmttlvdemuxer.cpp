@@ -197,17 +197,17 @@ void MmtTlvDemuxer::processMmtPackageTable(Stream& stream)
         for (auto locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
                 switch (asset.assetType) {
-                case MAKE_TAG('h', 'e', 'v', '1'):
+                case makeTag('h', 'e', 'v', '1'):
                     mmtpStream = getStream(locationInfo.packetId, true);
                     mmtpStream->codecType = AVMEDIA_TYPE_VIDEO;
                     mmtpStream->codecId = AV_CODEC_ID_HEVC;
                     break;
-                case MAKE_TAG('m', 'p', '4', 'a'):
+                case makeTag('m', 'p', '4', 'a'):
                     mmtpStream = getStream(locationInfo.packetId, true);
                     mmtpStream->codecType = AVMEDIA_TYPE_AUDIO;
                     mmtpStream->codecId = AV_CODEC_ID_AAC_LATM;
                     break;
-                case MAKE_TAG('s', 't', 'p', 'p'):
+                case makeTag('s', 't', 'p', 'p'):
                     mmtpStream = getStream(locationInfo.packetId, true);
                     mmtpStream->codecType = AVMEDIA_TYPE_SUBTITLE;
                     mmtpStream->codecId = AV_CODEC_ID_TTML;

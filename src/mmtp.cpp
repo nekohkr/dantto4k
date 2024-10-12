@@ -210,7 +210,7 @@ bool DataUnit::unpack(Stream& stream, bool timedFlag, bool aggregateFlag)
 				priority = stream.get8U();
 				dependencyCounter = stream.get8U();
 
-				if (dataUnitLength < 4 * 3 - 2) {
+				if (dataUnitLength < 4 * 3 + 2) {
 					return false;
 				}
 

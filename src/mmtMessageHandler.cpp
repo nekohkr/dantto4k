@@ -99,13 +99,13 @@ static int assetType2streamType(uint32_t assetType)
     int stream_type;
 
     switch (assetType) {
-    case MAKE_TAG('h', 'e', 'v', '1'):
+    case makeTag('h', 'e', 'v', '1'):
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
-    case MAKE_TAG('m', 'p', '4', 'a'):
+    case makeTag('m', 'p', '4', 'a'):
         stream_type = STREAM_TYPE_AUDIO_AAC_LATM;
         break;
-    case MAKE_TAG('s', 't', 'p', 'p'):
+    case makeTag('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;
         break;
     default:
@@ -138,7 +138,6 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
 		ts::EIT::Event tsEvent(&tsEit);
 
         struct tm startTime = EITConvertStartTime(mhEvent->startTime);
-
         tsEvent.start_time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday, 
             startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
         tsEvent.duration = std::chrono::seconds(EITConvertDuration(mhEvent->duration));
@@ -189,7 +188,6 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
         }
 
         tsEit.events[tsEvent.event_id] = tsEvent;
-        break;
 	}
 
     ts::BinaryTable table;
