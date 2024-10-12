@@ -6,10 +6,10 @@ class MhContentItem {
 public:
     bool unpack(Stream& stream);
 
-    uint8_t content_nibble_level_1;
-    uint8_t content_nibble_level_2;
-    uint8_t user_nibble1;
-    uint8_t user_nibble2;
+    uint8_t contentNibbleLevel1;
+    uint8_t contentNibbleLevel2;
+    uint8_t userNibble1;
+    uint8_t userNibble2;
 };
 
 class MhContentDescriptor : public MmtDescriptor {

@@ -9,14 +9,16 @@ bool MhServiceDescriptor::unpack(Stream& stream)
 
 		serviceType = stream.get8U();
 		serviceProviderNameLength = stream.get8U();
-		serviceProviderName.resize(serviceProviderNameLength + 1);
-		stream.read(serviceProviderName.data(), serviceProviderNameLength);
-		serviceProviderName.data()[serviceProviderNameLength] = 0;
+		if (serviceProviderNameLength) {
+			serviceProviderName.resize(serviceProviderNameLength);
+			stream.read(serviceProviderName.data(), serviceProviderNameLength);
+		}
 
 		serviceNameLength = stream.get8U();
-		serviceName.resize(serviceNameLength + 1);
-		stream.read(serviceName.data(), serviceNameLength);
-		serviceName.data()[serviceNameLength] = 0;
+		if (serviceNameLength) {
+			serviceName.resize(serviceNameLength);
+			stream.read(serviceName.data(), serviceNameLength);
+		}
 	}
 	catch (const std::out_of_range&) {
 		return false;

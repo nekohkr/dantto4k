@@ -4,12 +4,12 @@ bool MhContentItem::unpack(Stream& stream)
 {
 	try {
 		uint8_t uint8 = stream.get8U();
-		content_nibble_level_1 = (uint8 & 0b11110000) >> 4;
-		content_nibble_level_1 = uint8 & 0b1111;
+		contentNibbleLevel1 = (uint8 & 0b11110000) >> 4;
+		contentNibbleLevel2 = uint8 & 0b1111;
 
 		uint8 = stream.get8U();
-		user_nibble1 = (uint8 & 0b11110000) >> 4;
-		user_nibble2 = uint8 & 0b1111;
+		userNibble1 = (uint8 & 0b11110000) >> 4;
+		userNibble2 = uint8 & 0b1111;
 	}
 	catch (const std::out_of_range&) {
 		return false;

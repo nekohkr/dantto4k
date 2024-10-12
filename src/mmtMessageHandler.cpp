@@ -21,7 +21,7 @@ extern "C" {
 
 static int convertRunningStatus(int runningStatus) {
     /*
-       mmtp
+       MMT
        0 undefined
        1 In non-operation
        2 It will start within several seconds
@@ -115,6 +115,17 @@ static int assetType2streamType(uint32_t assetType)
     }
 
     return stream_type;
+}
+
+static uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoAspectRatio) {
+    if (videoResolution > 7) {
+        return 0;
+    }
+
+    uint8_t tsVideoResolutions[] = { 0x00, 0xF0, 0xD0, 0xA0, 0xC0, 0xE0, 0x90, 0x80 };
+    uint8_t videoComponentType = tsVideoResolutions[videoResolution] + videoAspectRatio;
+
+    return videoComponentType;
 }
 
 void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
@@ -218,7 +229,8 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 VideoComponentDescriptor* mmtDescriptor = (VideoComponentDescriptor*)descriptor;
                 ts::ComponentDescriptor tsDescriptor;
                 tsDescriptor.stream_content = 2; //type = hevc
-                tsDescriptor.component_type = mmtDescriptor->videoResolution; //resolution
+                tsDescriptor.component_type = convertVideoComponentType(mmtDescriptor->videoResolution, mmtDescriptor->videoAspectRatio);
+                tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MH_CONTENT_DESCRIPTOR:
@@ -226,6 +238,15 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 MhContentDescriptor* mmtDescriptor = (MhContentDescriptor*)descriptor;
                 ts::ContentDescriptor tsDescriptor;
 
+                for (auto& item : mmtDescriptor->items) {
+                    ts::ContentDescriptor::Entry entry;
+                    entry.content_nibble_level_1 = item.contentNibbleLevel1;
+                    entry.content_nibble_level_2 = item.contentNibbleLevel2;
+                    entry.user_nibble_1 = item.userNibble1;
+                    entry.user_nibble_2 = item.userNibble2;
+                    tsDescriptor.entries.push_back(entry);
+                }
+                tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             }

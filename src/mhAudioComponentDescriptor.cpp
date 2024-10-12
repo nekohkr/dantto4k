@@ -31,8 +31,10 @@ bool MhAudioComponentDescriptor::unpack(Stream& stream)
         }
 
         int textLength = nstream.leftBytes();
-        text.resize(textLength);
-        nstream.read(text.data(), textLength);
+        if (textLength) {
+            text.resize(textLength);
+            nstream.read(text.data(), textLength);
+        }
 
         stream.skip(descriptorLength);
     }
