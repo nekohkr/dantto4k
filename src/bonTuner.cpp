@@ -146,7 +146,6 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 
 	outputBuffer = muxedOutput;
 	muxedOutput.clear();
-
 	outputMutex.unlock();
 
 	*ppDst = outputBuffer.data();
@@ -189,8 +188,6 @@ const bool CBonTuner::SetChannel(const uint32_t dwSpace, const uint32_t dwChanne
 	outputMutex.lock();
 	muxedOutput.clear();
 	outputMutex.unlock();
-
-	streamInitialized = false;
 
 	if (config.mmtsDumpPath != "") {
 		if (fp) {

@@ -29,8 +29,6 @@ MmtMessageHandler handler(&outputFormatContext);
 std::mutex outputMutex;
 std::mutex inputMutex;
 
-bool streamInitialized = false;
-
 class TSInput {
 public:
     TSInput() : position(0) {}
@@ -138,6 +136,8 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
 }
 
 void processMuxing();
+unsigned char* buffer = nullptr;
+AVIOContext* avio_ctx = nullptr;
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -154,18 +154,9 @@ int main(int argc, char* argv[]) {
     FileStream input(inputPath.c_str());
     FILE* fp = fopen(outputPath.c_str(), "wb");
 
-    unsigned char* buffer = (unsigned char*)av_malloc(4096);
-    AVIOContext* avio_ctx = avio_alloc_context(buffer, 4096, 1, fp, nullptr, outputFilter, nullptr);
+    buffer = (unsigned char*)av_malloc(4096);
+    avio_ctx = avio_alloc_context(buffer, 4096, 1, fp, nullptr, outputFilter, nullptr);
     
-    avformat_alloc_output_context2(&outputFormatContext, nullptr, "mpegts", nullptr);
-    if (!outputFormatContext) {
-        std::cerr << "Could not create output context." << std::endl;
-        return -1;
-    }
-
-    outputFormatContext->pb = avio_ctx;
-    outputFormatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
-
     int stream_idx = 0;
     while (!input.isEOF()) {
         int n = demuxer.processPacket(input);
@@ -193,58 +184,77 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void processMuxing() {
-    if (!streamInitialized) {
-        if (demuxer.streamMap.size() == 0) {
-            return;
-        }
+int stream_idx = 0;
 
-        int i = 0;
-        int stream_idx = 0;
-        for (auto stream : demuxer.streamMap) {
-            if (stream.second->codecType == AVMEDIA_TYPE_VIDEO ||
-                stream.second->codecType == AVMEDIA_TYPE_AUDIO ||
-                stream.second->codecType == AVMEDIA_TYPE_SUBTITLE) {
-                AVStream* out_stream = avformat_new_stream(outputFormatContext, nullptr);
-
-                out_stream->codecpar->codec_type = stream.second->codecType;
-                out_stream->codecpar->codec_id = stream.second->codecId;
-                out_stream->codecpar->codec_tag = stream.second->codecTag;
-                if (out_stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-                    out_stream->codecpar->codec_tag = 0;
-                    out_stream->codecpar->sample_rate = 48000;
-                }
-
-                stream_idx++;
-            }
-            i++;
-        }
-
-        if (avformat_write_header(outputFormatContext, nullptr) < 0) {
-            std::cerr << "Could not open output file." << std::endl;
-            avformat_free_context(outputFormatContext);
-            return;
-        }
-
-        streamInitialized = true;
-        return;
+bool initStream() {
+    if (demuxer.streamMap.size() == 0) {
+        return false;
     }
 
-    if (demuxer.avpackets.size()) {
-        for (auto packet : demuxer.avpackets) {
-            AVStream* out_stream = outputFormatContext->streams[packet->stream_index];
-            AVRational tb = (*demuxer.streamMap.begin()).second->timeBase;
+    if (outputFormatContext) {
+        av_write_trailer(outputFormatContext);
+        avformat_free_context(outputFormatContext);
+    }
 
-            av_packet_rescale_ts(packet, tb, out_stream->time_base);
-            if (av_interleaved_write_frame(outputFormatContext, packet) < 0) {
-                std::cerr << "Error muxing packet." << std::endl;
-                continue;
+    avformat_alloc_output_context2(&outputFormatContext, nullptr, "mpegts", nullptr);
+    if (!outputFormatContext) {
+        std::cerr << "Could not create output context." << std::endl;
+        return false;
+    }
+    outputFormatContext->pb = avio_ctx;
+    outputFormatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+    stream_idx = 0;
+
+    int i = 0;
+    for (auto stream : demuxer.streamMap) {
+        if (stream.second->codecType == AVMEDIA_TYPE_VIDEO ||
+            stream.second->codecType == AVMEDIA_TYPE_AUDIO ||
+            stream.second->codecType == AVMEDIA_TYPE_SUBTITLE) {
+            AVStream* out_stream = avformat_new_stream(outputFormatContext, nullptr);
+
+            out_stream->codecpar->codec_type = stream.second->codecType;
+            out_stream->codecpar->codec_id = stream.second->codecId;
+            out_stream->codecpar->codec_tag = stream.second->codecTag;
+            if (out_stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                out_stream->codecpar->codec_tag = 0;
+                out_stream->codecpar->sample_rate = 48000;
             }
+            stream_idx++;
+        }
+        i++;
+    }
 
-            av_packet_unref(packet);
+    if (avformat_write_header(outputFormatContext, nullptr) < 0) {
+        std::cerr << "Could not open output file." << std::endl;
+        avformat_free_context(outputFormatContext);
+        return false;
+    }
+
+    return true;
+}
+
+void processMuxing() {
+    if(stream_idx != demuxer.streamMap.size()) {
+        if (initStream()) {
+        }
+        else {
+            return;
+        }
+    }
+
+    for (auto packet : demuxer.avpackets) {
+        AVStream* out_stream;
+        out_stream = outputFormatContext->streams[packet->stream_index];
+        AVRational tb = (*demuxer.streamMap.begin()).second->timeBase;
+
+        av_packet_rescale_ts(packet, tb, out_stream->time_base);
+        if (av_interleaved_write_frame(outputFormatContext, packet) < 0) {
+            std::cerr << "Error muxing packet." << std::endl;
+            continue;
         }
 
-        demuxer.avpackets.clear();
+        av_packet_unref(packet);
     }
 
     for (auto table : demuxer.tables) {
@@ -282,6 +292,7 @@ void processMuxing() {
             break;
         }
     }
+
     for (auto table : demuxer.tlvTables) {
         switch (table->tableId) {
         case TLV_TABLE_ID::TLV_NIT:

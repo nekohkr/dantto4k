@@ -28,7 +28,9 @@ bool MmtTlvDemuxer::init()
 
 int MmtTlvDemuxer::processPacket(Stream& stream)
 {
+    avpackets.clear();
     clearTables();
+
     if (stream.leftBytes() < 4) {
         return -1;
     }
@@ -620,19 +622,16 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
             }
 
             mmtpStream->auIndex++;
-
             packet->pts = ptsDts.first;
             packet->dts = ptsDts.second;
-
             packet->stream_index = mmtpStream->streamIndex;
             packet->flags = mmtpStream->flags;
             packet->pos = -1;
             packet->duration = 0;
             packet->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
-
             avpackets.push_back(packet);
-            mmtpStream->pendingData.clear();
 
+            mmtpStream->pendingData.clear();
             mmtpStream->flags = 0;
         }
 
@@ -670,17 +669,14 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         }
 
         mmtpStream->auIndex++;
-
         packet->pts = ptsDts.first;
         packet->dts = ptsDts.second;
-
         packet->stream_index = mmtpStream->streamIndex;
         packet->flags = mmtpStream->flags;
         packet->pos = -1;
         packet->duration = 0;
         packet->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
         avpackets.push_back(packet);
-
         mmtpStream->flags = 0;
         break;
     }
@@ -688,8 +684,8 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
     {
         uint32_t size = stream.leftBytes();
 
-        uint16_t subsample_number = stream.getBe16U();
-        uint16_t last_subsample_number = stream.getBe16U();
+        uint16_t subsampleNumber = stream.getBe16U();
+        uint16_t lastSubsampleNumber = stream.getBe16U();
 
         uint8_t uint8 = stream.get8U();
         uint8_t dataType = uint8 >> 4;
@@ -706,8 +702,8 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         else
             data_size = stream.getBe16U();
 
-        if (subsample_number == 0 && last_subsample_number > 0 && subsampleInfoListFlag) {
-            for (int i = 0; i < last_subsample_number; ++i) {
+        if (subsampleNumber == 0 && lastSubsampleNumber > 0 && subsampleInfoListFlag) {
+            for (int i = 0; i < lastSubsampleNumber; ++i) {
                 // skip: subsample_i_data_type
                 stream.skip(4 + 4);
 

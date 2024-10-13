@@ -106,6 +106,7 @@ protected:
 
 	void clearTables();
 
+
 protected:
 	FragmentAssembler* getAssembler(uint16_t pid);
 	MmtpStream* getStream(uint16_t pid, bool create = false);

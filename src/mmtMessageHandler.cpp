@@ -201,6 +201,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
 
                     tsDescriptor.entries.push_back(entry);
                 }
+                tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MH_AUDIO_COMPONENT_DESCRIPTOR:
