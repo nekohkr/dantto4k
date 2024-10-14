@@ -91,6 +91,9 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
     return &bonTuner;
 }
 
+unsigned char* buffer = nullptr;
+AVIOContext* avio_ctx = nullptr;
+
 BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
     switch (fdwReason) {
@@ -98,17 +101,8 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
     {
         try {
             demuxer.init();
-            unsigned char* buffer = (unsigned char*)av_malloc(4096);
-            AVIOContext* avio_ctx = avio_alloc_context(buffer, 4096, 1, nullptr, nullptr, outputFilter, nullptr);
-
-            avformat_alloc_output_context2(&outputFormatContext, nullptr, "mpegts", nullptr);
-            if (!outputFormatContext) {
-                std::cerr << "Could not create output context." << std::endl;
-                return -1;
-            }
-
-            outputFormatContext->pb = avio_ctx;
-            outputFormatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
+            buffer = (unsigned char*)av_malloc(4096);
+            avio_ctx = avio_alloc_context(buffer, 4096, 1, nullptr, nullptr, outputFilter, nullptr);
 
             Config config;
             char g_IniFilePath[_MAX_FNAME];
@@ -136,8 +130,6 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
 }
 
 void processMuxing();
-unsigned char* buffer = nullptr;
-AVIOContext* avio_ctx = nullptr;
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
