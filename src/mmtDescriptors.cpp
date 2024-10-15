@@ -17,11 +17,11 @@ bool MmtDescriptors::unpack(Stream& stream)
 	list.clear();
 	while (!stream.isEOF()) {
 		uint16_t descriptorTag = stream.peekBe16U();
-
 		auto it = mapDescriptorFactory.find(descriptorTag);
 		if (it == mapDescriptorFactory.end()) {
 			MmtDescriptorBase base;
 			base.unpack(stream);
+			stream.skip(base.getDescriptorLength());
 		}
 		else {
 			auto descriptorFactory = it->second();

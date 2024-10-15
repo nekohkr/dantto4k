@@ -2,10 +2,8 @@
 #include "mmtDescriptor.h"
 #include <list>
 
-
-
 class MhExtendedEventDescriptor
-    : public MmtDescriptor<0xF002> {
+    : public MmtDescriptor<0xF002, true> {
 public:
     bool unpack(Stream& stream) override;
 
