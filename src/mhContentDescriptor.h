@@ -2,8 +2,6 @@
 #include "mmtDescriptor.h"
 #include <list>
 
-
-
 class MhContentDescriptor
     : public MmtDescriptor<0x8012> {
 public:

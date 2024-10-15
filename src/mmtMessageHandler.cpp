@@ -104,7 +104,7 @@ static int assetType2streamType(uint32_t assetType)
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
     case makeTag('m', 'p', '4', 'a'):
-        stream_type = STREAM_TYPE_AUDIO_AAC_LATM;
+        stream_type = STREAM_TYPE_AUDIO_AAC; //STREAM_TYPE_AUDIO_AAC_LATM
         break;
     case makeTag('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;
@@ -161,6 +161,20 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
         tsEvent.duration = std::chrono::seconds(EITConvertDuration(mhEvent->duration));
         tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
         tsEvent.event_id = mhEvent->eventId;
+
+        std::vector<uint16_t> order = {
+            MhShortEventDescriptor::kDescriptorTag,
+            MhExtendedEventDescriptor::kDescriptorTag,
+            VideoComponentDescriptor::kDescriptorTag,
+            MhContentDescriptor::kDescriptorTag,
+            MhAudioComponentDescriptor::kDescriptorTag,
+        };
+
+        mhEvent->descriptors.list.sort([&order](const std::shared_ptr<MmtDescriptorBase>& a, const std::shared_ptr<MmtDescriptorBase>& b) {
+            auto itA = std::find(order.begin(), order.end(), a->getDescriptorTag());
+            auto itB = std::find(order.begin(), order.end(), b->getDescriptorTag());
+            return itA < itB;
+        });
 
         for (const auto& descriptor : mhEvent->descriptors.list) {
             switch (descriptor->getDescriptorTag()) {

@@ -523,7 +523,7 @@ void MmtTlvDemuxer::processMpu(Stream& stream)
     }
 }
 
-void buffer_free_callback(void* opaque, uint8_t* data) {
+static void buffer_free_callback(void* opaque, uint8_t* data) {
     free(data);
 }
 

@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="acascard.cpp" />
     <ClCompile Include="acascard.h" />
+    <ClCompile Include="adtsConverter.cpp" />
     <ClCompile Include="bonTuner.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="ecm.cpp" />
@@ -195,6 +196,7 @@
     <ClCompile Include="videoComponentDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="adtsConverter.h" />
     <ClInclude Include="bonTuner.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="dantto4k.h" />

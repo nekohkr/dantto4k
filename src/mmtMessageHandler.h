@@ -54,12 +54,5 @@ protected:
 
 	std::map<uint16_t, uint8_t> mapCC;
 
-	int eitCounter = 0;
-	int sdtCounter = 0;
-	int nitCounter = 0;
-	int patCounter = 0;
-	int pmtCounter = 0;
-	int totCounter = 0;
-
 	int tsid = -1;
 };

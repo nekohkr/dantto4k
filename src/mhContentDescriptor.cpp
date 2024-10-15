@@ -1,6 +1,5 @@
 #include "mhContentDescriptor.h"
 
-
 bool MhContentDescriptor::unpack(Stream& stream)
 {
 	try {

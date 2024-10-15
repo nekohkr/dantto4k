@@ -19,13 +19,14 @@ extern "C" {
 #include "bonTuner.h"
 #include "config.h"
 #include "dantto4k.h"
+#include "adtsConverter.h"
 
 AVFormatContext* outputFormatContext = nullptr;
 MmtTlvDemuxer demuxer;
 CBonTuner bonTuner;
 std::vector<uint8_t> muxedOutput;
 MmtMessageHandler handler(&outputFormatContext);
-
+AVCodecContext* decoderContext;
 std::mutex outputMutex;
 std::mutex inputMutex;
 
@@ -100,21 +101,13 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
     case DLL_PROCESS_ATTACH:
     {
         try {
+            std::string path = getConfigFilePath(hModule);
+            Config config = loadConfig(path);
+
             demuxer.init();
             buffer = (unsigned char*)av_malloc(4096);
             avio_ctx = avio_alloc_context(buffer, 4096, 1, nullptr, nullptr, outputFilter, nullptr);
 
-            Config config;
-            char g_IniFilePath[_MAX_FNAME];
-            GetModuleFileNameA(hModule, g_IniFilePath, MAX_PATH);
-
-            char drive[_MAX_DRIVE];
-            char dir[_MAX_DIR];
-            char fname[_MAX_FNAME];
-            _splitpath_s(g_IniFilePath, drive, sizeof(drive), dir, sizeof(dir), fname, sizeof(fname), NULL, NULL);
-            sprintf(g_IniFilePath, "%s%s%s.ini\0", drive, dir, fname);
-
-            config = parseConfig(g_IniFilePath);
             bonTuner.init(config);
         }
         catch (const std::runtime_error& e) {
@@ -148,7 +141,7 @@ int main(int argc, char* argv[]) {
 
     buffer = (unsigned char*)av_malloc(4096);
     avio_ctx = avio_alloc_context(buffer, 4096, 1, fp, nullptr, outputFilter, nullptr);
-    
+
     int stream_idx = 0;
     while (!input.isEOF()) {
         int n = demuxer.processPacket(input);
@@ -203,14 +196,14 @@ bool initStream() {
         if (stream.second->codecType == AVMEDIA_TYPE_VIDEO ||
             stream.second->codecType == AVMEDIA_TYPE_AUDIO ||
             stream.second->codecType == AVMEDIA_TYPE_SUBTITLE) {
-            AVStream* out_stream = avformat_new_stream(outputFormatContext, nullptr);
+            AVStream* outStream = avformat_new_stream(outputFormatContext, nullptr);
 
-            out_stream->codecpar->codec_type = stream.second->codecType;
-            out_stream->codecpar->codec_id = stream.second->codecId;
-            out_stream->codecpar->codec_tag = stream.second->codecTag;
-            if (out_stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-                out_stream->codecpar->codec_tag = 0;
-                out_stream->codecpar->sample_rate = 48000;
+            outStream->codecpar->codec_type = stream.second->codecType;
+            outStream->codecpar->codec_id = stream.second->codecId;
+            outStream->codecpar->codec_tag = stream.second->codecTag;
+            if (outStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                outStream->codecpar->sample_rate = 48000;
+                outStream->codecpar->codec_id = AV_CODEC_ID_AAC;
             }
             stream_idx++;
         }
@@ -226,6 +219,10 @@ bool initStream() {
     return true;
 }
 
+static void buffer_free_callback(void* opaque, uint8_t* data) {
+    free(data);
+}
+
 void processMuxing() {
     if(stream_idx != demuxer.streamMap.size()) {
         if (initStream()) {
@@ -236,14 +233,49 @@ void processMuxing() {
     }
 
     for (auto packet : demuxer.avpackets) {
-        AVStream* out_stream;
-        out_stream = outputFormatContext->streams[packet->stream_index];
+        AVStream* outStream = outputFormatContext->streams[packet->stream_index];
         AVRational tb = (*demuxer.streamMap.begin()).second->timeBase;
-
-        av_packet_rescale_ts(packet, tb, out_stream->time_base);
-        if (av_interleaved_write_frame(outputFormatContext, packet) < 0) {
-            std::cerr << "Error muxing packet." << std::endl;
+        auto it = std::next(demuxer.streamMap.begin(), packet->stream_index);
+        if (it == demuxer.streamMap.end()) {
             continue;
+        }
+
+        if (outStream->codecpar->codec_id == AV_CODEC_ID_AAC) {
+            ADTSConverter converter;
+            std::vector<uint8_t> output;
+            if (!converter.convert(packet->buf->data, packet->size, output)) {
+                continue;
+            }
+
+            uint8_t* data = (uint8_t*)malloc(output.size() + AV_INPUT_BUFFER_PADDING_SIZE);
+            memcpy(data, output.data(), output.size());
+            memset(data + output.size(), 0, AV_INPUT_BUFFER_PADDING_SIZE);
+            AVBufferRef* buf = av_buffer_create(data, output.size() + AV_INPUT_BUFFER_PADDING_SIZE, buffer_free_callback, NULL, 0);
+            AVPacket* adtsPacket = av_packet_alloc();
+            adtsPacket->buf = buf;
+            adtsPacket->data = buf->data;
+            adtsPacket->pts = packet->pts;
+            adtsPacket->dts = packet->dts;
+            adtsPacket->stream_index = packet->stream_index;
+            adtsPacket->flags = packet->flags;
+            adtsPacket->pos = -1;
+            adtsPacket->duration = 0;
+            adtsPacket->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
+
+            av_packet_rescale_ts(adtsPacket, tb, outStream->time_base);
+            if (av_interleaved_write_frame(outputFormatContext, adtsPacket) < 0) {
+                std::cerr << "Error muxing packet." << std::endl;
+                continue;
+            }
+
+            av_packet_unref(adtsPacket);
+        }
+        else {
+            av_packet_rescale_ts(packet, tb, outStream->time_base);
+            if (av_interleaved_write_frame(outputFormatContext, packet) < 0) {
+                std::cerr << "Error muxing packet." << std::endl;
+                continue;
+            }
         }
 
         av_packet_unref(packet);

@@ -93,6 +93,9 @@
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mmtMessageHandler.cpp" />
+    <ClCompile Include="adtsConverter.cpp">
+      <Filter>adts</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mmtMessageHandler.h" />
@@ -175,6 +178,9 @@
     <ClInclude Include="mmtDescriptors.h">
       <Filter>mmttlv\descriptors</Filter>
     </ClInclude>
+    <ClInclude Include="adtsConverter.h">
+      <Filter>adts</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="acas">
@@ -197,6 +203,9 @@
     </Filter>
     <Filter Include="stream">
       <UniqueIdentifier>{f40fdc0c-24bd-44cd-9272-d96c62b86634}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="adts">
+      <UniqueIdentifier>{0b34077b-fc11-415a-b9db-0ef3c9efecad}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
