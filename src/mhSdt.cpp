@@ -52,10 +52,6 @@ bool MhSdt::unpack(Stream& stream)
 
 MhSdtService::~MhSdtService()
 {
-    for (auto descriptor : descriptors) {
-        delete descriptor;
-    }
-    descriptors.clear();
 }
 
 bool MhSdtService::unpack(Stream& stream)
@@ -76,34 +72,13 @@ bool MhSdtService::unpack(Stream& stream)
     freeCaMode = (uint16 & 0b0001000000000000) >> 12;
     descriptorsLoopLength = uint16 & 0b0000111111111111;
 
-
     if (stream.leftBytes() < descriptorsLoopLength) {
         return false;
     }
 
     Stream nstream(stream, descriptorsLoopLength);
-    while (!nstream.isEOF()) {
-        uint16_t descriptorTag = nstream.peekBe16U();
-        switch (descriptorTag) {
-        case MH_SERVICE_DECRIPTOR:
-        {
-            MhServiceDescriptor* descriptor = new MhServiceDescriptor();
-            if (!descriptor->unpack(nstream)) {
-                return false;
-            }
-            descriptors.push_back(descriptor);
-            break;
-        }
-        default:
-        {
-            MmtDescriptor descriptor;
-            descriptor.unpack(nstream);
-            nstream.skip(descriptor.descriptorLength);
-            break;
-        }
-        }
-    }
-
+    descriptors.unpack(nstream);
     stream.skip(descriptorsLoopLength);
+
     return true;
 }

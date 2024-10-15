@@ -1,9 +1,10 @@
 #pragma once
 #include "mmtDescriptor.h"
 
-class MhAudioComponentDescriptor : public MmtDescriptor {
+class MhAudioComponentDescriptor
+    : public MmtDescriptor<0x8014> {
 public:
-    bool unpack(Stream& stream);
+    bool unpack(Stream& stream) override;
 
     uint8_t streamContent;
     uint8_t componentType;

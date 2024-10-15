@@ -12,18 +12,6 @@ static uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
 	return (sec * 1000000) + usec;
 }
 
-bool NTPTimestamp::unpack(Stream& stream)
-{
-	try {
-		ntp = ff_parse_ntp_time2(stream.getBe64U()) - NTP_OFFSET_US;
-	}
-	catch (const std::out_of_range&) {
-		return false;
-	}
-
-	return true;
-}
-
 bool MpuTimestampDescriptor::unpack(Stream& stream)
 {
 	try {
@@ -32,13 +20,10 @@ bool MpuTimestampDescriptor::unpack(Stream& stream)
 		}
 
 		for (int i = 0; i < descriptorLength / 12; i++) {
-			MpuTimestamp mpuTimeStamp;
-			mpuTimeStamp.mpuSequenceNumber = stream.getBe32U();
-
-			NTPTimestamp ntpTimestamp;
-			ntpTimestamp.unpack(stream);
-			mpuTimeStamp.mpuPresentationTime = ntpTimestamp.ntp;
-			mpuTimestamps.push_back(mpuTimeStamp);
+			Entry entry;
+			entry.mpuSequenceNumber = stream.getBe32U();
+			entry.mpuPresentationTime = ff_parse_ntp_time2(stream.getBe64U()) - NTP_OFFSET_US;
+			entries.push_back(entry);
 		}
 	}
 	catch (const std::out_of_range&) {

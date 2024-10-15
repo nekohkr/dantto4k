@@ -1,12 +1,13 @@
 #pragma once
 #include "mmtTable.h"
 #include "mmtp.h"
+#include "mmtDescriptors.h"
 #include <list>
 
-class MmtDescriptor;
+class MmtDescriptorBase;
+
 class MHEvent {
 public:
-    ~MHEvent();
     bool unpack(Stream& stream);
 
     uint16_t eventId;
@@ -16,7 +17,7 @@ public:
     uint8_t freeCaMode;
     uint16_t descriptorsLoopLength;
 
-    std::list<MmtDescriptor*> descriptors;
+    MmtDescriptors descriptors;
 };
 
 class MhEit : public MmtTable {
@@ -32,7 +33,7 @@ public:
     uint8_t lastSectionNumber;
     uint16_t tlvStreamId;
     uint16_t originalNetworkId;
-    uint8_t segmentLast_sectionNumber;
+    uint8_t segmentLastSectionNumber;
     uint8_t lastTableId;
     uint8_t eventCount;
 

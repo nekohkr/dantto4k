@@ -1,21 +1,16 @@
 #pragma once
 #include "mmtDescriptor.h"
 
-class MpuTimestamp {
+class MpuTimestampDescriptor
+	: public MmtDescriptor<0x0001> {
 public:
-	uint32_t mpuSequenceNumber;
-	uint64_t mpuPresentationTime;
-};
+	bool unpack(Stream& stream) override;
 
-class NTPTimestamp {
-public:
-	bool unpack(Stream& stream);
-	uint64_t ntp;
-};
+	class Entry {
+	public:
+		uint32_t mpuSequenceNumber;
+		uint64_t mpuPresentationTime;
+	};
 
-class MpuTimestampDescriptor : public MmtDescriptor {
-public:
-	bool unpack(Stream& stream);
-
-	std::vector<MpuTimestamp> mpuTimestamps;
+	std::vector<Entry> entries;
 };

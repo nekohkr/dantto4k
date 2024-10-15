@@ -2,20 +2,22 @@
 #include "mmtDescriptor.h"
 #include <list>
 
-class MhContentItem {
+
+
+class MhContentDescriptor
+    : public MmtDescriptor<0x8012> {
 public:
-    bool unpack(Stream& stream);
+    bool unpack(Stream& stream) override;
 
-    uint8_t contentNibbleLevel1;
-    uint8_t contentNibbleLevel2;
-    uint8_t userNibble1;
-    uint8_t userNibble2;
-};
+    class Entry {
+    public:
+        bool unpack(Stream& stream);
 
-class MhContentDescriptor : public MmtDescriptor {
-public:
-    bool unpack(Stream& stream);
+        uint8_t contentNibbleLevel1;
+        uint8_t contentNibbleLevel2;
+        uint8_t userNibble1;
+        uint8_t userNibble2;
+    };
 
-    std::list<MhContentItem> items;
-
+    std::list<Entry> entries;
 };
