@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="dantto4k.cpp" />
-    <ClCompile Include="mmtMessageHandler.cpp" />
     <ClCompile Include="acascard.cpp">
       <Filter>acas</Filter>
     </ClCompile>
@@ -43,9 +42,6 @@
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhShortEventDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
-    </ClCompile>
-    <ClCompile Include="mmtDescriptor.cpp">
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mmtDescriptor.h">
@@ -93,6 +89,10 @@
     <ClCompile Include="mmttlvdemuxer.h">
       <Filter>mmttlv</Filter>
     </ClCompile>
+    <ClCompile Include="mmtDescriptors.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtMessageHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mmtMessageHandler.h" />
@@ -171,6 +171,9 @@
     <ClInclude Include="dantto4k.h" />
     <ClInclude Include="ip.h">
       <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtDescriptors.h">
+      <Filter>mmttlv\descriptors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

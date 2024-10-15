@@ -1,9 +1,10 @@
 #pragma once
 #include "mmtDescriptor.h"
 
-class VideoComponentDescriptor : public MmtDescriptor {
+class VideoComponentDescriptor
+    : public MmtDescriptor<0x8010> {
 public:
-	bool unpack(Stream& stream);
+	bool unpack(Stream& stream) override;
 
     uint8_t videoResolution;
     uint8_t videoAspectRatio;

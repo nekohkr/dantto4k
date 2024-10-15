@@ -233,11 +233,10 @@ void MmtTlvDemuxer::processMptDescriptor(Stream& stream, MmtpStream* mmtpStream)
 {
     uint16_t descriptorId = stream.peekBe16U();
     switch (descriptorId) {
-    case MPU_TIMESTAMP_DESCRIPTOR:
+    case MpuTimestampDescriptor::kDescriptorTag:
         return processMpuTimestampDescriptor(stream, mmtpStream);
-    case MPU_EXTENDED_TIMESTAMP_DESCRIPTOR:
+    case MpuExtendedTimestampDescriptor::kDescriptorTag:
         return processMpuExtendedTimestampDescriptor(stream, mmtpStream);
-
     default:
         stream.skip(2); //descriptorId
         uint16_t descriptorLength = stream.get8U();
@@ -251,7 +250,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(Stream& stream, MmtpStream* mm
     MpuTimestampDescriptor descriptor;
     descriptor.unpack(stream);
 
-    for (auto& ts : descriptor.mpuTimestamps) {
+    for (auto& ts : descriptor.entries) {
         bool find = false;
         for (int i = 0; i < mmtpStream->mpuTimestamps.size(); i++) {
             if (mmtpStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
@@ -291,10 +290,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(Stream& stream, MmtpStream* mm
             mmtpStream->mpuTimestamps[minIndex].mpuPresentationTime = ts.mpuPresentationTime;
         }
         else {
-            MpuTimestamp mpuTimestamp;
-            mpuTimestamp.mpuSequenceNumber = ts.mpuSequenceNumber;
-            mpuTimestamp.mpuPresentationTime = ts.mpuPresentationTime;
-            mmtpStream->mpuTimestamps.push_back(mpuTimestamp);
+            mmtpStream->mpuTimestamps.push_back(ts);
         }
     }
 }
@@ -308,7 +304,8 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(Stream& stream, MmtpSt
         mmtpStream->timeBase.num = 1;
         mmtpStream->timeBase.den = descriptor.timescale;
     }
-    for (auto& ts : descriptor.extendedTimestamps) {
+
+    for (auto& ts : descriptor.entries) {
         if (mmtpStream->lastMpuSequenceNumber > ts.mpuSequenceNumber)
             continue;
 
@@ -359,13 +356,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(Stream& stream, MmtpSt
             mmtpStream->mpuExtendedTimestamps[minIndex].dtsPtsOffsets = ts.dtsPtsOffsets;
         }
         else {
-            MpuExtendedTimestamp mpuExtendedTimestamp;
-            mpuExtendedTimestamp.mpuSequenceNumber = ts.mpuSequenceNumber;
-            mpuExtendedTimestamp.mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
-            mpuExtendedTimestamp.numOfAu = ts.numOfAu;
-            mpuExtendedTimestamp.ptsOffsets = ts.ptsOffsets;
-            mpuExtendedTimestamp.dtsPtsOffsets = ts.dtsPtsOffsets;
-            mmtpStream->mpuExtendedTimestamps.push_back(mpuExtendedTimestamp);
+            mmtpStream->mpuExtendedTimestamps.push_back(ts);
         }
     }
 }
@@ -407,7 +398,7 @@ void MmtTlvDemuxer::clear()
     }
 }
 
-std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(MmtpStream* mmtpStream, MpuTimestamp& timestamp, MpuExtendedTimestamp& extendedTimestamp)
+std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(MmtpStream* mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp)
 {
     int64_t ptime = av_rescale(timestamp.mpuPresentationTime, mmtpStream->timeBase.den,
         1000000ll * mmtpStream->timeBase.num);
@@ -543,8 +534,8 @@ void MmtTlvDemuxer::processMpuData(Stream& stream)
         return;
     }
 
-    MpuTimestamp timestamp;
-    MpuExtendedTimestamp extendedTimestamp;
+    MpuTimestampDescriptor::Entry timestamp;
+    MpuExtendedTimestampDescriptor::Entry extendedTimestamp;
 
     if (mmtpStream->codecId == AV_CODEC_ID_HEVC || mmtpStream->codecId == AV_CODEC_ID_AAC_LATM) {
         bool findTimestamp = false, findExtendedTimestamp = false;

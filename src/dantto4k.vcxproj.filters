@@ -45,9 +45,6 @@
     <ClCompile Include="mhShortEventDescriptor.cpp">
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
-    <ClCompile Include="mmtDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
-    </ClCompile>
     <ClCompile Include="mmtDescriptor.h">
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
@@ -92,6 +89,9 @@
     </ClCompile>
     <ClCompile Include="mmttlvdemuxer.h">
       <Filter>mmttlv</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtDescriptors.cpp">
+      <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +171,9 @@
     <ClInclude Include="dantto4k.h" />
     <ClInclude Include="ip.h">
       <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtDescriptors.h">
+      <Filter>mmttlv\descriptors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

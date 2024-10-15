@@ -57,8 +57,8 @@ public:
 
 	int flags = 0;
 
-	std::vector<MpuTimestamp> mpuTimestamps;
-	std::vector<MpuExtendedTimestamp> mpuExtendedTimestamps;
+	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
+	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
 	std::vector<uint8_t> pendingData;
 };
 
@@ -110,7 +110,7 @@ protected:
 protected:
 	FragmentAssembler* getAssembler(uint16_t pid);
 	MmtpStream* getStream(uint16_t pid, bool create = false);
-	std::pair<int64_t, int64_t> calcPtsDts(MmtpStream* mmtpStream, MpuTimestamp& timestamp, MpuExtendedTimestamp& extendedTimestamp);
+	std::pair<int64_t, int64_t> calcPtsDts(MmtpStream* mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp);
 
 	SmartCard* smartCard = nullptr;
 	AcasCard* acasCard = nullptr;

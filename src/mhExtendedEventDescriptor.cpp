@@ -3,7 +3,7 @@
 bool MhExtendedEventDescriptor::unpack(Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream, true)) {
+        if (!MmtDescriptor::unpack(stream)) {
             return false;
         }
 
@@ -16,12 +16,12 @@ bool MhExtendedEventDescriptor::unpack(Stream& stream)
         lengthOfItems = stream.getBe16U();
         Stream nstream(stream, lengthOfItems);
         while (!nstream.isEOF()) {
-            MhExtendedEventItem item;
-            if (!item.unpack(nstream)) {
+            Entry entry;
+            if (!entry.unpack(nstream)) {
                 return false;
             }
 
-            items.push_back(item);
+            entries.push_back(entry);
         }
         stream.skip(lengthOfItems);
 
@@ -39,7 +39,7 @@ bool MhExtendedEventDescriptor::unpack(Stream& stream)
 	return true;
 }
 
-bool MhExtendedEventItem::unpack(Stream& stream)
+bool MhExtendedEventDescriptor::Entry::unpack(Stream& stream)
 {
     try {
         itemDescriptionLength = stream.get8U();

@@ -176,8 +176,8 @@
     <ClCompile Include="mhServiceDescriptor.cpp" />
     <ClCompile Include="mhShortEventDescriptor.cpp" />
     <ClCompile Include="mhTot.cpp" />
-    <ClCompile Include="mmtDescriptor.cpp" />
     <ClCompile Include="mmtDescriptor.h" />
+    <ClCompile Include="mmtDescriptors.cpp" />
     <ClCompile Include="mmtGeneralLocationInfo.cpp" />
     <ClCompile Include="mmtMessageHandler.cpp" />
     <ClCompile Include="mmtp.cpp" />
@@ -209,6 +209,7 @@
     <ClInclude Include="mhServiceDescriptor.h" />
     <ClInclude Include="mhShortEventDescriptor.h" />
     <ClInclude Include="mhTot.h" />
+    <ClInclude Include="mmtDescriptors.h" />
     <ClInclude Include="mmtGeneralLocationInfo.h" />
     <ClInclude Include="mmtMessageHandler.h" />
     <ClInclude Include="mmtp.h" />

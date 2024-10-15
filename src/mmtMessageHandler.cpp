@@ -150,17 +150,23 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
 		ts::EIT::Event tsEvent(&tsEit);
 
         struct tm startTime = EITConvertStartTime(mhEvent->startTime);
-        tsEvent.start_time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday, 
-            startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
+        try {
+            tsEvent.start_time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday,
+                startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
+        }
+        catch(ts::Time::TimeError){
+            return;
+        }
+
         tsEvent.duration = std::chrono::seconds(EITConvertDuration(mhEvent->duration));
         tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
         tsEvent.event_id = mhEvent->eventId;
 
-        for (auto& descriptor : mhEvent->descriptors) {
-            switch (descriptor->descriptorTag) {
-            case MH_SHORT_EVENT_DESCRIPTOR:
+        for (const auto& descriptor : mhEvent->descriptors.list) {
+            switch (descriptor->getDescriptorTag()) {
+            case MhShortEventDescriptor::kDescriptorTag:
             {
-                MhShortEventDescriptor* mmtDescriptor = (MhShortEventDescriptor*)descriptor;
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhShortEventDescriptor>(descriptor);
                 ts::ShortEventDescriptor tsDescriptor;
 
                 ts::UString eventName = ts::UString::FromUTF8(mmtDescriptor->eventName);
@@ -175,9 +181,9 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
-            case MH_EXTENDED_EVENT_DESCRIPTOR:
+            case MhExtendedEventDescriptor::kDescriptorTag:
             {
-                MhExtendedEventDescriptor* mmtDescriptor = (MhExtendedEventDescriptor*)descriptor;
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhExtendedEventDescriptor>(descriptor);
                 ts::ExtendedEventDescriptor tsDescriptor;
                 tsDescriptor.descriptor_number = mmtDescriptor->descriptorNumber;
                 tsDescriptor.last_descriptor_number = mmtDescriptor->lastDescriptorNumber;
@@ -187,7 +193,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
                 tsDescriptor.text = ts::UString::FromUTF8((char*)textBlock.data());
 
-                for (auto& item : mmtDescriptor->items) {
+                for (auto& item : mmtDescriptor->entries) {
                     ts::ExtendedEventDescriptor::Entry entry;
 
                     ts::UString itemChar = ts::UString::FromUTF8(item.itemChar);
@@ -204,9 +210,9 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
-            case MH_AUDIO_COMPONENT_DESCRIPTOR:
+            case MhAudioComponentDescriptor::kDescriptorTag:
             {
-                MhAudioComponentDescriptor* mmtDescriptor = (MhAudioComponentDescriptor*)descriptor;
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhAudioComponentDescriptor>(descriptor);
                 ts::AudioComponentDescriptor tsDescriptor;
                 tsDescriptor.stream_content = mmtDescriptor->streamContent;
                 tsDescriptor.component_type = mmtDescriptor->componentType;
@@ -225,21 +231,21 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
-            case VIDEO_COMPONENT_DESCRIPTOR:
+            case VideoComponentDescriptor::kDescriptorTag:
             {
-                VideoComponentDescriptor* mmtDescriptor = (VideoComponentDescriptor*)descriptor;
+                auto mmtDescriptor = std::dynamic_pointer_cast<VideoComponentDescriptor>(descriptor);
                 ts::ComponentDescriptor tsDescriptor;
                 tsDescriptor.stream_content = 2; //type = hevc
                 tsDescriptor.component_type = convertVideoComponentType(mmtDescriptor->videoResolution, mmtDescriptor->videoAspectRatio);
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
-            case MH_CONTENT_DESCRIPTOR:
+            case MhContentDescriptor::kDescriptorTag:
             {
-                MhContentDescriptor* mmtDescriptor = (MhContentDescriptor*)descriptor;
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhContentDescriptor>(descriptor);
                 ts::ContentDescriptor tsDescriptor;
 
-                for (auto& item : mmtDescriptor->items) {
+                for (auto& item : mmtDescriptor->entries) {
                     ts::ContentDescriptor::Entry entry;
                     entry.content_nibble_level_1 = item.contentNibbleLevel1;
                     entry.content_nibble_level_2 = item.contentNibbleLevel2;
@@ -295,11 +301,11 @@ void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
         tsService.running_status = convertRunningStatus(service->runningStatus);
         tsService.CA_controlled = service->freeCaMode;
 
-        for (auto& descriptor : service->descriptors) {
-            switch (descriptor->descriptorTag) {
-            case MH_SERVICE_DECRIPTOR:
+        for (auto& descriptor : service->descriptors.list) {
+            switch (descriptor->getDescriptorTag()) {
+            case MhServiceDescriptor::kDescriptorTag:
             {
-                MhServiceDescriptor* mmtDescriptor = (MhServiceDescriptor*)descriptor;
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhServiceDescriptor>(descriptor);
 
                 const ts::ByteBlock serviceProviderName(ts::ARIBCharset::B24.encoded(
                     ts::UString::FromUTF8(mmtDescriptor->serviceProviderName)));

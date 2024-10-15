@@ -1,9 +1,11 @@
 #pragma once
 #include "mmtTable.h"
 #include "mmtp.h"
+#include "mmtDescriptors.h"
 #include <list>
 
-class MmtDescriptor;
+class MmtDescriptorBase;
+
 class MhSdtService {
 public:
     virtual ~MhSdtService();
@@ -17,7 +19,7 @@ public:
     bool freeCaMode;
     uint16_t descriptorsLoopLength;
 
-    std::list<MmtDescriptor*> descriptors;
+    MmtDescriptors descriptors;
 };
 
 class MhSdt : public MmtTable {

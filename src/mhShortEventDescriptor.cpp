@@ -4,7 +4,7 @@
 bool MhShortEventDescriptor::unpack(Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream, true)) {
+        if (!MmtDescriptor::unpack(stream)) {
             return false;
         }
 

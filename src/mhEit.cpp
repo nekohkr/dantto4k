@@ -26,7 +26,7 @@ bool MhEit::unpack(Stream& stream)
         lastSectionNumber = stream.get8U();
         tlvStreamId = stream.getBe16U();
         originalNetworkId = stream.getBe16U();
-        segmentLast_sectionNumber = stream.get8U();
+        segmentLastSectionNumber = stream.get8U();
         lastTableId = stream.get8U();
 
         while (stream.leftBytes() - 4 > 0) {
@@ -51,14 +51,6 @@ bool MhEit::unpack(Stream& stream)
 	return true;
 }
 
-MHEvent::~MHEvent()
-{
-    for (auto descriptor : descriptors) {
-        delete descriptor;
-    }
-    descriptors.clear();
-}
-
 bool MHEvent::unpack(Stream& stream)
 {
     try {
@@ -78,64 +70,7 @@ bool MHEvent::unpack(Stream& stream)
         }
 
         Stream nstream(stream, descriptorsLoopLength);
-        while (!nstream.isEOF()) {
-            uint16_t descriptorTag = nstream.peekBe16U();
-            switch (descriptorTag) {
-            case VIDEO_COMPONENT_DESCRIPTOR:
-            {
-                VideoComponentDescriptor* descriptor = new VideoComponentDescriptor();
-                if (!descriptor->unpack(nstream)) {
-                    return false;
-                }
-                descriptors.push_back(descriptor);
-                break;
-            }
-            case MH_AUDIO_COMPONENT_DESCRIPTOR:
-            {
-                MhAudioComponentDescriptor* descriptor = new MhAudioComponentDescriptor();
-                if (!descriptor->unpack(nstream)) {
-                    return false;
-                }
-                descriptors.push_back(descriptor);
-                break;
-            }
-            case MH_SHORT_EVENT_DESCRIPTOR:
-            {
-                MhShortEventDescriptor* descriptor = new MhShortEventDescriptor();
-                if (!descriptor->unpack(nstream)) {
-                    return false;
-                }
-                descriptors.push_back(descriptor);
-                break;
-            }
-            case MH_EXTENDED_EVENT_DESCRIPTOR:
-            {
-                MhExtendedEventDescriptor* descriptor = new MhExtendedEventDescriptor();
-                if (!descriptor->unpack(nstream)) {
-                    return false;
-                }
-                descriptors.push_back(descriptor);
-                break;
-            }
-            case MH_CONTENT_DESCRIPTOR:
-            {
-                MhContentDescriptor* descriptor = new MhContentDescriptor();
-                if (!descriptor->unpack(nstream)) {
-                    return false;
-                }
-                descriptors.push_back(descriptor);
-                break;
-            }
-            default:
-            {
-                MmtDescriptor* descriptor = new MmtDescriptor();
-                descriptor->unpack(nstream);
-                nstream.skip(descriptor->descriptorLength);
-                break;
-            }
-            }
-        }
-
+        descriptors.unpack(nstream);
         stream.skip(descriptorsLoopLength);
 
     }
