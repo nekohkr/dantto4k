@@ -1,5 +1,6 @@
 #include "config.h"
 #include <iostream>
+#include <windows.h>
 
 static std::string trim(const std::string& str) {
     size_t first = str.find_first_not_of(" \t\n\r");
@@ -8,12 +9,25 @@ static std::string trim(const std::string& str) {
     return str.substr(first, last - first + 1);
 }
 
-Config parseConfig(const std::string& filename)
+std::string getConfigFilePath(void* hModule) {
+    char g_IniFilePath[_MAX_FNAME];
+    GetModuleFileNameA((HMODULE)hModule, g_IniFilePath, MAX_PATH);
+
+    char drive[_MAX_DRIVE];
+    char dir[_MAX_DIR];
+    char fname[_MAX_FNAME];
+    _splitpath_s(g_IniFilePath, drive, sizeof(drive), dir, sizeof(dir), fname, sizeof(fname), NULL, NULL);
+    sprintf(g_IniFilePath, "%s%s%s.ini\0", drive, dir, fname);
+
+    return g_IniFilePath;
+}
+
+Config loadConfig(const std::string& filename)
 {
      Config config;
      std::ifstream file(filename);
      if (!file.is_open()) {
-         throw std::runtime_error("Unable to open file: " + filename);
+         throw std::runtime_error("Unable to open config file: " + filename);
      }
 
      std::string currentSection;
