@@ -27,6 +27,11 @@ https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13
 - https://github.com/BtbN/FFmpeg-Builds/releases
 - https://github.com/tsduck/tsduck/
 
+## TODO
+- [ ] 外字対応（ARIB STD-B62）
+- [ ] 局ロゴ
+- [ ] refactoring
+
 ## References
 - ARIB STD-B32
 - ARIB STD-B60
