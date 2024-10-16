@@ -55,7 +55,7 @@ int MmtTlvDemuxer::processPacket(Stream& stream)
         switch (tableId) {
         case 0x40:
         {
-            TlvNit* tlvNit = new TlvNit();
+            std::shared_ptr<TlvNit> tlvNit = std::make_shared<TlvNit>();
             tlvNit->unpack(tlvDataStream);
             tlvTables.push_back(tlvNit);
             break;
@@ -76,7 +76,7 @@ int MmtTlvDemuxer::processPacket(Stream& stream)
         if (mmtp.extensionHeaderScrambling.encryptionFlag == ENCRYPTION_FLAG::ODD ||
             mmtp.extensionHeaderScrambling.encryptionFlag == ENCRYPTION_FLAG::EVEN) {
             if (!acasCard->ready) {
-                return true;
+                return 1;
             }
             else {
                 mmtp.decryptPayload(&acasCard->lastDecryptedEcm);
@@ -128,12 +128,16 @@ void MmtTlvDemuxer::processTable(Stream& stream)
     switch (tableId) {
     case MMT_TABLE_ID::MPT:
     {
-        processMmtPackageTable(stream);
+        std::shared_ptr<Mpt> mpt = std::make_shared<Mpt>();
+        mpt->unpack(stream);
+        tables.push_back(mpt);
+
+        processMmtPackageTable(mpt);
         break;
     }
     case MMT_TABLE_ID::PLT:
     {
-        Plt* plt = new Plt();
+        std::shared_ptr<Plt> plt = std::make_shared<Plt>();
         plt->unpack(stream);
         tables.push_back(plt);
         break;
@@ -156,30 +160,31 @@ void MmtTlvDemuxer::processTable(Stream& stream)
     case 0x9A:
     case 0x9B:
     {
-        MhEit* mhEit = new MhEit();
+        std::shared_ptr<MhEit> mhEit = std::make_shared<MhEit>();
         mhEit->unpack(stream);
         tables.push_back(mhEit);
         break;
     }
     case MMT_TABLE_ID::MH_SDT:
     {
-        MhSdt* mhSdt = new MhSdt();
+        std::shared_ptr<MhSdt> mhSdt = std::make_shared<MhSdt>();
         mhSdt->unpack(stream);
         tables.push_back(mhSdt);
         break;
     }
     case MMT_TABLE_ID::MH_TOT:
     {
-        MhTot* mhTot = new MhTot();
+        std::shared_ptr<MhTot> mhTot = std::make_shared<MhTot>();
         mhTot->unpack(stream);
         tables.push_back(mhTot);
         break;
     }
     case MMT_TABLE_ID::ECM:
     {
-        Ecm* ecm = new Ecm();
+        std::shared_ptr<Ecm> ecm = std::make_shared<Ecm>();
         ecm->unpack(stream);
         tables.push_back(ecm);
+
         processEcm(ecm);
         break;
     }
@@ -188,13 +193,10 @@ void MmtTlvDemuxer::processTable(Stream& stream)
     stream.skip(stream.leftBytes());
 }
 
-void MmtTlvDemuxer::processMmtPackageTable(Stream& stream)
+void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
 {
-    Mpt* mpt = new Mpt();
-    mpt->unpack(stream);
-
     for (auto& asset : mpt->assets) {
-        MmtpStream* mmtpStream = nullptr;
+        std::shared_ptr<MmtpStream> mmtpStream;
 
         for (auto& locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
@@ -218,39 +220,26 @@ void MmtTlvDemuxer::processMmtPackageTable(Stream& stream)
             }
         }
 
-        if (mmtpStream) {
-            Stream nstream(asset.assetDescriptorsByte);
-            while (!nstream.isEOF()) {
-                processMptDescriptor(nstream, mmtpStream);
+        if (!mmtpStream) {
+            continue;
+        }
+
+        for (auto& descriptor : asset.descriptors.list) {
+            switch (descriptor->getDescriptorTag()) {
+            case MpuTimestampDescriptor::kDescriptorTag:
+                processMpuTimestampDescriptor(std::dynamic_pointer_cast<MpuTimestampDescriptor>(descriptor), mmtpStream);
+                break;
+            case MpuExtendedTimestampDescriptor::kDescriptorTag:
+                processMpuExtendedTimestampDescriptor(std::dynamic_pointer_cast<MpuExtendedTimestampDescriptor>(descriptor), mmtpStream);
+                break;
             }
         }
     }
-
-    tables.push_back(mpt);
 }
 
-void MmtTlvDemuxer::processMptDescriptor(Stream& stream, MmtpStream* mmtpStream)
+void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtpStream> mmtpStream)
 {
-    uint16_t descriptorId = stream.peekBe16U();
-    switch (descriptorId) {
-    case MpuTimestampDescriptor::kDescriptorTag:
-        return processMpuTimestampDescriptor(stream, mmtpStream);
-    case MpuExtendedTimestampDescriptor::kDescriptorTag:
-        return processMpuExtendedTimestampDescriptor(stream, mmtpStream);
-    default:
-        stream.skip(2); //descriptorId
-        uint16_t descriptorLength = stream.get8U();
-        stream.skip(descriptorLength);
-        return;
-    }
-}
-
-void MmtTlvDemuxer::processMpuTimestampDescriptor(Stream& stream, MmtpStream* mmtpStream)
-{
-    MpuTimestampDescriptor descriptor;
-    descriptor.unpack(stream);
-
-    for (auto& ts : descriptor.entries) {
+    for (auto& ts : descriptor->entries) {
         bool find = false;
         for (int i = 0; i < mmtpStream->mpuTimestamps.size(); i++) {
             if (mmtpStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
@@ -295,17 +284,14 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(Stream& stream, MmtpStream* mm
     }
 }
 
-void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(Stream& stream, MmtpStream* mmtpStream)
+void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtpStream> mmtpStream)
 {
-    MpuExtendedTimestampDescriptor descriptor;
-    descriptor.unpack(stream);
-
-    if (descriptor.timescaleFlag) {
+    if (descriptor->timescaleFlag) {
         mmtpStream->timeBase.num = 1;
-        mmtpStream->timeBase.den = descriptor.timescale;
+        mmtpStream->timeBase.den = descriptor->timescale;
     }
 
-    for (auto& ts : descriptor.entries) {
+    for (auto& ts : descriptor->entries) {
         if (mmtpStream->lastMpuSequenceNumber > ts.mpuSequenceNumber)
             continue;
 
@@ -361,7 +347,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(Stream& stream, MmtpSt
     }
 }
 
-void MmtTlvDemuxer::processEcm(Ecm* ecm)
+void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm)
 {
     try {
         acasCard->decryptEcm(ecm->ecmData);
@@ -373,14 +359,7 @@ void MmtTlvDemuxer::processEcm(Ecm* ecm)
 
 void MmtTlvDemuxer::clearTables()
 {
-    for (auto table : tables) {
-        delete table;
-    }
     tables.clear();
-
-    for (auto table : tlvTables) {
-        delete table;
-    }
     tlvTables.clear();
 }
 
@@ -388,9 +367,9 @@ void MmtTlvDemuxer::clear()
 {
     clearTables();
 
-    assemblerMap.clear();
+    mapAssembler.clear();
     mpuData.clear();
-    streamMap.clear();
+    mapStream.clear();
     streamIndex = 0;
 
     if (acasCard) {
@@ -398,7 +377,7 @@ void MmtTlvDemuxer::clear()
     }
 }
 
-std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(MmtpStream* mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp)
+std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(std::shared_ptr<MmtpStream> mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp)
 {
     int64_t ptime = av_rescale(timestamp.mpuPresentationTime, mmtpStream->timeBase.den,
         1000000ll * mmtpStream->timeBase.num);
@@ -408,34 +387,35 @@ std::pair<int64_t, int64_t> MmtTlvDemuxer::calcPtsDts(MmtpStream* mmtpStream, Mp
     }
 
     int64_t dts = ptime - extendedTimestamp.mpuDecodingTimeOffset;
-    for (int j = 0; j < mmtpStream->auIndex; ++j)
+    for (int j = 0; j < mmtpStream->auIndex; ++j) {
         dts += extendedTimestamp.ptsOffsets[j];
+    }
 
     int64_t pts = dts + extendedTimestamp.dtsPtsOffsets[mmtpStream->auIndex];
 
     return std::pair<int64_t, int64_t>(pts, dts);
 }
 
-FragmentAssembler* MmtTlvDemuxer::getAssembler(uint16_t pid)
+std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t pid)
 {
-    if (assemblerMap.find(pid) == assemblerMap.end()) {
-        FragmentAssembler* assembler = new FragmentAssembler();
-        assemblerMap[pid] = assembler;
+    if (mapAssembler.find(pid) == mapAssembler.end()) {
+        auto assembler = std::make_shared<FragmentAssembler>();
+        mapAssembler[pid] = assembler;
         return assembler;
     }
     else {
-        return assemblerMap[pid];
+        return mapAssembler[pid];
     }
 }
 
-MmtpStream* MmtTlvDemuxer::getStream(uint16_t pid, bool create)
+std::shared_ptr<MmtpStream> MmtTlvDemuxer::getStream(uint16_t pid, bool create)
 {
-    if (streamMap.find(pid) == streamMap.end()) {
+    if (mapStream.find(pid) == mapStream.end()) {
         if (create) {
-            MmtpStream* stream = new MmtpStream();
+            auto stream = std::make_shared<MmtpStream>();
             stream->streamIndex = streamIndex++;
             stream->pid = pid;
-            streamMap[pid] = stream;
+            mapStream[pid] = stream;
             return stream;
         }
         else {
@@ -443,9 +423,8 @@ MmtpStream* MmtTlvDemuxer::getStream(uint16_t pid, bool create)
         }
     }
     else {
-        return streamMap[pid];
+        return mapStream[pid];
     }
-
 }
 
 void MmtTlvDemuxer::processMpu(Stream& stream)
@@ -455,7 +434,7 @@ void MmtTlvDemuxer::processMpu(Stream& stream)
 
     auto assembler = getAssembler(mmtp.packetId);
     Stream nstream(mpu.payload);
-    MmtpStream* mmtpStream = getStream(mmtp.packetId);
+    std::shared_ptr<MmtpStream> mmtpStream = getStream(mmtp.packetId);
 
     if (!mmtpStream) {
         return;
@@ -529,7 +508,7 @@ static void buffer_free_callback(void* opaque, uint8_t* data) {
 
 void MmtTlvDemuxer::processMpuData(Stream& stream)
 {
-    MmtpStream* mmtpStream = getStream(mmtp.packetId);
+    std::shared_ptr<MmtpStream> mmtpStream = getStream(mmtp.packetId);
     if (!mmtpStream) {
         return;
     }

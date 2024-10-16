@@ -11,7 +11,7 @@
 #include <tsduck.h>
 #include "mpuExtendedTimestampDescriptor.h"
 #include "mpuTimestampDescriptor.h"
-
+#include "mpt.h"
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
@@ -97,24 +97,23 @@ protected:
 	void processM2ShortSectionMessage(Stream& stream);
 
 	void processTable(Stream& stream);
-	void processMmtPackageTable(Stream& stream);
-	void processMptDescriptor(Stream& stream, MmtpStream* mmtpStream);
-	void processMpuTimestampDescriptor(Stream& stream, MmtpStream* mmtpStream);
-	void processMpuExtendedTimestampDescriptor(Stream& stream, MmtpStream* mmtpStream);
+	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
+	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtpStream> mmtpStream);
+	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtpStream> mmtpStream);
 
-	void processEcm(Ecm* ecm);
+	void processEcm(std::shared_ptr<Ecm> ecm);
 
 	void clearTables();
 
 
 protected:
-	FragmentAssembler* getAssembler(uint16_t pid);
-	MmtpStream* getStream(uint16_t pid, bool create = false);
-	std::pair<int64_t, int64_t> calcPtsDts(MmtpStream* mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp);
+	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
+	std::shared_ptr<MmtpStream> getStream(uint16_t pid, bool create = false);
+	std::pair<int64_t, int64_t> calcPtsDts(std::shared_ptr<MmtpStream> mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp);
 
 	SmartCard* smartCard = nullptr;
 	AcasCard* acasCard = nullptr;
-	std::map<uint16_t, FragmentAssembler*> assemblerMap;
+	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
 	
 	TLVPacket tlv;
 	CompressedIPPacket compressedIPPacket;
@@ -127,8 +126,8 @@ protected:
 	std::map<uint16_t, std::vector<uint8_t>> mpuData;
 
 public:
-	std::map<uint16_t, MmtpStream*> streamMap;
+	std::map<uint16_t, std::shared_ptr<MmtpStream>> mapStream;
 	std::list<AVPacket*> avpackets;
-	std::list<MmtTable*> tables;
-	std::list<TlvTable*> tlvTables;
+	std::list<std::shared_ptr<MmtTable>> tables;
+	std::list<std::shared_ptr<TlvTable>> tlvTables;
 };

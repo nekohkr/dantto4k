@@ -25,7 +25,7 @@
 #define STREAM_TYPE_AUDIO_TRUEHD    0x83
 #define STREAM_TYPE_AUDIO_EAC3      0x87
 
-class AVFormatContext;
+struct AVFormatContext;
 class MhEit;
 class MhSdt;
 class Plt;
@@ -35,24 +35,22 @@ class MhTot;
 
 class MmtMessageHandler {
 public:
-	MmtMessageHandler(AVFormatContext** outputFormatContext)
+	MmtMessageHandler(struct AVFormatContext** outputFormatContext)
 		: outputFormatContext(outputFormatContext) {
 	}
-	void onMhEit(uint8_t tableId, const MhEit* mhEit);
-	void onMhSdt(const MhSdt* mhSdt);
-	void onPlt(const Plt* plt);
-	void onMpt(const Mpt* mpt);
-	void onTlvNit(const TlvNit* tlvNit);
-	void onMhTot(const MhTot* mhTot);
+	void onMhEit(const std::shared_ptr<MhEit>& mhEit);
+	void onMhSdt(const std::shared_ptr<MhSdt>& mhSdt);
+	void onPlt(const std::shared_ptr<Plt>& plt);
+	void onMpt(const std::shared_ptr<Mpt>& mpt);
+	void onMhTot(const std::shared_ptr<MhTot>& mhTot);
+	void onTlvNit(const std::shared_ptr<TlvNit>& tlvNit);
 
 protected:
-	AVFormatContext** outputFormatContext;
+	struct AVFormatContext** outputFormatContext;
 
 	std::map<uint16_t, uint16_t> mapService2Pid;
-	std::vector<uint8_t>* muxedOutput;
-	ts::DuckContext duck;
-
 	std::map<uint16_t, uint8_t> mapCC;
-
 	int tsid = -1;
+
+	ts::DuckContext duck;
 };

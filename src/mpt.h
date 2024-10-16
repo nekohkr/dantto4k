@@ -1,10 +1,12 @@
 #pragma once
 #include "mmtTable.h"
 #include "mmtGeneralLocationInfo.h"
+#include "MmtDescriptors.h"
 
 class MptAsset {
 public:
 	bool unpack(Stream& stream);
+
 	uint8_t identifierType;
 	uint32_t assetIdScheme;
 	uint8_t assetIdLength;
@@ -16,8 +18,7 @@ public:
 	std::vector<MmtGeneralLocationInfo> locationInfos;
 
 	uint16_t assetDescriptorsLength;
-	std::vector<uint8_t> assetDescriptorsByte;
-
+	MmtDescriptors descriptors;
 };
 
 class Mpt : public MmtTable {
@@ -34,5 +35,4 @@ public:
 	std::vector<uint8_t> mptDescriptorsByte;
 	uint8_t numberOfAssets;
 	std::vector<MptAsset> assets;
-
 };

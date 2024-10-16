@@ -43,7 +43,6 @@ public:
 	bool unpack(Stream& stream);
 
 protected:
-
 	uint8_t version;
 	uint8_t priority;
 	uint32_t flow_lbl;
@@ -58,7 +57,7 @@ protected:
 class CompressedIPPacket {
 public:
 	bool unpack(Stream& stream);
-	void pack(Stream& stream) const;
+
 	std::vector<uint8_t> getCompressedHeader() const {
 		return compressedHeader;
 	}
@@ -78,7 +77,6 @@ public:
 	TLVPacket() {}
 
 	bool unpack(Stream& stream);
-	void pack(Stream& stream) const;
 
 	const std::vector<uint8_t> getData() const {
 		return data;

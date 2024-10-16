@@ -9,7 +9,7 @@ MmtDescriptors::MmtDescriptors()
 	mapDescriptorFactory[MhShortEventDescriptor::kDescriptorTag] =			[] { return std::make_shared<MhShortEventDescriptor>(); };
 	mapDescriptorFactory[MpuExtendedTimestampDescriptor::kDescriptorTag] =	[] { return std::make_shared<MpuExtendedTimestampDescriptor>(); };
 	mapDescriptorFactory[MpuTimestampDescriptor::kDescriptorTag] =			[] { return std::make_shared<MpuTimestampDescriptor>(); };
-	mapDescriptorFactory[VideoComponentDescriptor::kDescriptorTag] =			[] { return std::make_shared<VideoComponentDescriptor>(); };
+	mapDescriptorFactory[VideoComponentDescriptor::kDescriptorTag] =		[] { return std::make_shared<VideoComponentDescriptor>(); };
 }
 
 bool MmtDescriptors::unpack(Stream& stream)

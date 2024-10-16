@@ -72,7 +72,6 @@ bool MHEvent::unpack(Stream& stream)
         Stream nstream(stream, descriptorsLoopLength);
         descriptors.unpack(nstream);
         stream.skip(descriptorsLoopLength);
-
     }
     catch (const std::out_of_range&) {
         return false;

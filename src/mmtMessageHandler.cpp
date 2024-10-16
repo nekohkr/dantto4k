@@ -98,7 +98,6 @@ static int EITConvertDuration(uint32_t i_duration)
 static int assetType2streamType(uint32_t assetType)
 {
     int stream_type;
-
     switch (assetType) {
     case makeTag('h', 'e', 'v', '1'):
         stream_type = STREAM_TYPE_VIDEO_HEVC;
@@ -128,7 +127,7 @@ static uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoA
     return videoComponentType;
 }
 
-void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
+void MmtMessageHandler::onMhEit(const std::shared_ptr<MhEit>& mhEit)
 {
     if (mhEit->events.size() == 0) {
         return;
@@ -137,7 +136,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
     tsid = mhEit->tlvStreamId;
 
     bool pf;
-    if (tableId == 0x8B) {
+    if (mhEit->getTableId() == 0x8B) {
         //present and next program
         pf = true;
     }
@@ -299,7 +298,7 @@ void MmtMessageHandler::onMhEit(uint8_t tableId, const MhEit* mhEit)
     }
 }
 
-void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
+void MmtMessageHandler::onMhSdt(const std::shared_ptr<MhSdt>& mhSdt)
 {
     if (mhSdt->services.size() == 0) {
         return;
@@ -360,7 +359,7 @@ void MmtMessageHandler::onMhSdt(const MhSdt* mhSdt)
     }
 }
 
-void MmtMessageHandler::onPlt(const Plt* plt)
+void MmtMessageHandler::onPlt(const std::shared_ptr<Plt>& plt)
 {
     if (tsid == -1)
         return;
@@ -408,7 +407,7 @@ void MmtMessageHandler::onPlt(const Plt* plt)
     }
 }
 
-void MmtMessageHandler::onMpt(const Mpt* mpt)
+void MmtMessageHandler::onMpt(const std::shared_ptr<Mpt>& mpt)
 {
     uint16_t serviceId;
     uint16_t pid;
@@ -484,7 +483,36 @@ void MmtMessageHandler::onMpt(const Mpt* mpt)
     }
 }
 
-void MmtMessageHandler::onTlvNit(const TlvNit* tlvNit)
+void MmtMessageHandler::onMhTot(const std::shared_ptr<MhTot>& mhTot)
+{
+    struct tm startTime = EITConvertStartTime(mhTot->jstTime);
+    ts::Time time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday,
+        startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
+    ts::TOT tot(time);
+
+    ts::BinaryTable table;
+    tot.serialize(duck, table);
+    ts::OneShotPacketizer packetizer(duck, DVB_TOT_PID);
+
+    for (int i = 0; i < table.sectionCount(); i++) {
+        const ts::SectionPtr& section = table.sectionAt(i);
+
+        packetizer.addSection(section);
+
+        ts::TSPacketVector packets;
+        packetizer.getPackets(packets);
+        for (auto& packet : packets) {
+            packet.setCC(mapCC[DVB_TOT_PID] & 0xF);
+            mapCC[DVB_TOT_PID]++;
+
+            if (*outputFormatContext && (*outputFormatContext)->pb) {
+                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
+        }
+    }
+}
+
+void MmtMessageHandler::onTlvNit(const std::shared_ptr<TlvNit>& tlvNit)
 {
     ts::NIT nit(true, 0, true, 0);
     nit.network_id = tlvNit->networkId;
@@ -544,35 +572,6 @@ void MmtMessageHandler::onTlvNit(const TlvNit* tlvNit)
         for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_NIT_PID] & 0xF);
             mapCC[DVB_NIT_PID]++;
-
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
-        }
-    }
-}
-
-void MmtMessageHandler::onMhTot(const MhTot* mhTot)
-{
-    struct tm startTime = EITConvertStartTime(mhTot->jstTime);
-    ts::Time time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday,
-        startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
-    ts::TOT tot(time);
-
-    ts::BinaryTable table;
-    tot.serialize(duck, table);
-    ts::OneShotPacketizer packetizer(duck, DVB_TOT_PID);
-
-    for (int i = 0; i < table.sectionCount(); i++) {
-        const ts::SectionPtr& section = table.sectionAt(i);
-
-        packetizer.addSection(section);
-
-        ts::TSPacketVector packets;
-        packetizer.getPackets(packets);
-        for (auto& packet : packets) {
-            packet.setCC(mapCC[DVB_TOT_PID] & 0xF);
-            mapCC[DVB_TOT_PID]++;
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());

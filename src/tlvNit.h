@@ -56,6 +56,7 @@ public:
 
 class TlvTable {
 public:
+    virtual ~TlvTable() = default;
     bool unpack(Stream& stream);
 
     uint8_t tableId;

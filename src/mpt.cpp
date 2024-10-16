@@ -31,6 +31,8 @@ bool Mpt::unpack(Stream& stream)
 			asset.unpack(stream);
 			assets.push_back(asset);
 		}
+
+
 	}
 	catch (const std::out_of_range&) {
 		return false;
@@ -46,17 +48,8 @@ bool MptAsset::unpack(Stream& stream)
 		assetIdScheme = stream.getBe32U();
 		assetIdLength = stream.get8U();
 
-		if (stream.leftBytes() < assetIdLength) {
-			return false;
-		}
-
 		assetIdByte.resize(assetIdLength);
 		stream.read((char*)assetIdByte.data(), assetIdLength);
-
-
-		if (stream.leftBytes() < 4 + 1 + 1) {
-			return false;
-		}
 
 		assetType = stream.getBe32U();
 		uint8_t uint8 = stream.get8U();
@@ -69,18 +62,11 @@ bool MptAsset::unpack(Stream& stream)
 			locationInfos.push_back(locationInfo);
 		}
 
-		if (stream.leftBytes() < 2) {
-			return false;
-		}
-
 		assetDescriptorsLength = stream.getBe16U();
 
-		if (stream.leftBytes() < assetDescriptorsLength) {
-			return false;
-		}
-
-		assetDescriptorsByte.resize(assetDescriptorsLength);
-		stream.read((char*)assetDescriptorsByte.data(), assetDescriptorsLength);
+		Stream nstream(stream, assetDescriptorsLength);
+		descriptors.unpack(nstream);
+		stream.skip(assetDescriptorsLength);
 	}
 	catch (const std::out_of_range&) {
 		return false;

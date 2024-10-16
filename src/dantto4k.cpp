@@ -6,6 +6,7 @@
 #include "mhSdt.h"
 #include "plt.h"
 #include "mpt.h"
+#include "mhTot.h"
 #include "mmtTable.h"
 #include "mmtMessageHandler.h"
 #include "tlvNit.h"
@@ -26,7 +27,6 @@ MmtTlvDemuxer demuxer;
 CBonTuner bonTuner;
 std::vector<uint8_t> muxedOutput;
 MmtMessageHandler handler(&outputFormatContext);
-AVCodecContext* decoderContext;
 std::mutex outputMutex;
 std::mutex inputMutex;
 
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 int stream_idx = 0;
 
 bool initStream() {
-    if (demuxer.streamMap.size() == 0) {
+    if (demuxer.mapStream.size() == 0) {
         return false;
     }
 
@@ -192,7 +192,7 @@ bool initStream() {
     stream_idx = 0;
 
     int i = 0;
-    for (auto stream : demuxer.streamMap) {
+    for (auto stream : demuxer.mapStream) {
         if (stream.second->codecType == AVMEDIA_TYPE_VIDEO ||
             stream.second->codecType == AVMEDIA_TYPE_AUDIO ||
             stream.second->codecType == AVMEDIA_TYPE_SUBTITLE) {
@@ -224,7 +224,7 @@ static void buffer_free_callback(void* opaque, uint8_t* data) {
 }
 
 void processMuxing() {
-    if(stream_idx != demuxer.streamMap.size()) {
+    if(stream_idx != demuxer.mapStream.size()) {
         if (initStream()) {
         }
         else {
@@ -234,11 +234,11 @@ void processMuxing() {
 
     for (auto packet : demuxer.avpackets) {
         AVStream* outStream = outputFormatContext->streams[packet->stream_index];
-        AVRational tb = (*demuxer.streamMap.begin()).second->timeBase;
-        auto it = std::next(demuxer.streamMap.begin(), packet->stream_index);
-        if (it == demuxer.streamMap.end()) {
+        auto it = std::next(demuxer.mapStream.begin(), packet->stream_index);
+        if (it == demuxer.mapStream.end()) {
             continue;
         }
+        AVRational tb = it->second->timeBase;
 
         if (outStream->codecpar->codec_id == AV_CODEC_ID_AAC) {
             ADTSConverter converter;
@@ -282,7 +282,7 @@ void processMuxing() {
     }
 
     for (auto table : demuxer.tables) {
-        switch (table->tableId) {
+        switch (table->getTableId()) {
         case MMT_TABLE_ID::MH_EIT:
         case 0x8C:
         case 0x8D:
@@ -300,19 +300,19 @@ void processMuxing() {
         case 0x99:
         case 0x9A:
         case 0x9B:
-            handler.onMhEit(table->tableId, (MhEit*)table);
+            handler.onMhEit(std::dynamic_pointer_cast<MhEit>(table));
             break;
         case MMT_TABLE_ID::MH_SDT:
-            handler.onMhSdt((MhSdt*)table);
+            handler.onMhSdt(std::dynamic_pointer_cast<MhSdt>(table));
             break;
         case MMT_TABLE_ID::MPT:
-            handler.onMpt((Mpt*)table);
+            handler.onMpt(std::dynamic_pointer_cast<Mpt>(table));
             break;
         case MMT_TABLE_ID::PLT:
-            handler.onPlt((Plt*)table);
+            handler.onPlt(std::dynamic_pointer_cast<Plt>(table));
             break;
         case MMT_TABLE_ID::MH_TOT:
-            handler.onMhTot((MhTot*)table);
+            handler.onMhTot(std::dynamic_pointer_cast<MhTot>(table));
             break;
         }
     }
@@ -320,7 +320,8 @@ void processMuxing() {
     for (auto table : demuxer.tlvTables) {
         switch (table->tableId) {
         case TLV_TABLE_ID::TLV_NIT:
-            handler.onTlvNit((TlvNit*)table);
+            auto it = std::dynamic_pointer_cast<TlvNit>(table);
+            handler.onTlvNit(it);
             break;
         }
     }

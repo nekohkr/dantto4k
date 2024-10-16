@@ -25,15 +25,6 @@ bool TLVPacket::unpack(Stream& stream)
 	return true;
 }
 
-void TLVPacket::pack(Stream& stream) const
-{
-	stream.put8U(0x7F);
-	stream.put8U(packetType);
-	stream.putBe16U(dataLength);
-
-	compressedIPPacket.pack(stream);
-}
-
 bool CompressedIPPacket::unpack(Stream& stream)
 {
 	uint16_t uint16 = stream.getBe16U();
@@ -57,30 +48,6 @@ bool CompressedIPPacket::unpack(Stream& stream)
 		break;
 	}
 	return false;
-}
-
-void CompressedIPPacket::pack(Stream& stream) const
-{
-	uint16_t uint16 = (contextId & 0b111111111111) << 4;
-	uint16 |= sequenceNumber & 0b0000000000001111;
-	stream.putBe16U(uint16);
-
-	stream.put8U(headerType);
-
-	switch (headerType) {
-	case CONTEXT_ID_PARTIAL_IPV4_HEADER_AND_PARTIAL_UDP_HEADER:
-		break;
-	case CONTEXT_ID_IPV4_HEADER_IDENTIFIER:
-		break;
-	case CONTEXT_ID_PARTIAL_IPV6_HEADER_AND_PARTIAL_UDP_HEADER:
-		stream.write((char*)ipv6.data(), 38);
-		stream.write((char*)udp.data(), 4);
-		break;
-	case CONTEXT_ID_NO_COMPRESSED_HEADER:
-		break;
-	}
-
-	return;
 }
 
 bool IPv6Header::unpack(Stream& stream)

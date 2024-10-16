@@ -33,6 +33,8 @@ protected:
 template<uint16_t descriptorTagValue, bool is16BitLength = false>
 class MmtDescriptor : public MmtDescriptorBase {
 public:
+	virtual ~MmtDescriptor() = default;
+
 	static constexpr uint16_t kDescriptorTag = descriptorTagValue;
 	static constexpr uint16_t kIs16BitLength = is16BitLength;
 
@@ -57,7 +59,6 @@ public:
 		return true;
 	}
 
-	virtual ~MmtDescriptor() = default;
 
 };
 
