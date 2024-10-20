@@ -19,11 +19,11 @@ bool Mpt::unpack(Stream& stream)
 		}
 
 		mmtPackageIdByte.resize(mmtPackageIdLength);
-		stream.read((char*)mmtPackageIdByte.data(), mmtPackageIdLength);
+		stream.read(mmtPackageIdByte.data(), mmtPackageIdLength);
 
 		mptDescriptorsLength = stream.getBe16U();
 		mptDescriptorsByte.resize(mptDescriptorsLength);
-		stream.read((char*)mptDescriptorsByte.data(), mptDescriptorsLength);
+		stream.read(mptDescriptorsByte.data(), mptDescriptorsLength);
 
 		numberOfAssets = stream.get8U();
 		for (int i = 0; i < numberOfAssets; i++) {
@@ -31,8 +31,6 @@ bool Mpt::unpack(Stream& stream)
 			asset.unpack(stream);
 			assets.push_back(asset);
 		}
-
-
 	}
 	catch (const std::out_of_range&) {
 		return false;
@@ -49,7 +47,7 @@ bool MptAsset::unpack(Stream& stream)
 		assetIdLength = stream.get8U();
 
 		assetIdByte.resize(assetIdLength);
-		stream.read((char*)assetIdByte.data(), assetIdLength);
+		stream.read(assetIdByte.data(), assetIdLength);
 
 		assetType = stream.getBe32U();
 		uint8_t uint8 = stream.get8U();

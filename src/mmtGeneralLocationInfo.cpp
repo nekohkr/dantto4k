@@ -11,14 +11,14 @@ bool MmtGeneralLocationInfo::unpack(Stream& stream)
 			packetId = stream.getBe16U();
 			break;
 		case 1:
-			stream.read((char*)&ipv4SrcAddr, 4);
-			stream.read((char*)&ipv4DstAddr, 4);
+			stream.read(&ipv4SrcAddr, 4);
+			stream.read(&ipv4DstAddr, 4);
 			dstPort = stream.getBe16U();
 			packetId = stream.getBe16U();
 			break;
 		case 2:
-			stream.read((char*)&ipv6SrcAddr, 16);
-			stream.read((char*)&ipv6DstAddr, 16);
+			stream.read(&ipv6SrcAddr, 16);
+			stream.read(&ipv6DstAddr, 16);
 			dstPort = stream.getBe16U();
 			packetId = stream.getBe16U();
 			break;
@@ -31,8 +31,8 @@ bool MmtGeneralLocationInfo::unpack(Stream& stream)
 			mpeg2Pid = uint16 & 0x0001111111111111;
 			break;
 		case 4:
-			stream.read((char*)&ipv6SrcAddr, 16);
-			stream.read((char*)&ipv6DstAddr, 16);
+			stream.read(&ipv6SrcAddr, 16);
+			stream.read(&ipv6DstAddr, 16);
 			dstPort = stream.getBe16U();
 
 			uint16 = stream.getBe16U();
@@ -42,7 +42,7 @@ bool MmtGeneralLocationInfo::unpack(Stream& stream)
 		case 5:
 			urlLength = stream.get8U();
 			urlByte.resize(urlLength);
-			stream.read((char*)urlByte.data(), urlLength);
+			stream.read(urlByte.data(), urlLength);
 			break;
 		}
 	}

@@ -58,7 +58,5 @@ public:
 
 		return true;
 	}
-
-
 };
 

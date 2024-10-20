@@ -30,7 +30,7 @@ bool MhEit::unpack(Stream& stream)
         lastTableId = stream.get8U();
 
         while (stream.leftBytes() - 4 > 0) {
-            MHEvent* event = new MHEvent();
+            std::shared_ptr<MHEvent> event = std::make_shared<MHEvent>();
             if (!event->unpack(stream)) {
                 return false;
             }

@@ -123,7 +123,6 @@ public:
 class ExtensionHeaderScrambling {
 public:
 	bool unpack(uint16_t extensionHeaderType, uint16_t extensionHeaderLength, Stream& stream);
-	//void pack(Stream& stream) const;
 	ENCRYPTION_FLAG encryptionFlag;
 	uint8_t scramblingSubsystem;
 	uint8_t messageAuthenticationControl;
@@ -132,11 +131,7 @@ public:
 
 class Mmtp {
 public:
-	Mmtp() {}
 	void unpack(Stream& stream);
-	void unpackPayload();
-	void pack(Stream& stream) const;
-
 	bool decryptPayload(DecryptedEcm* decryptedEcm);
 
 	uint8_t version;

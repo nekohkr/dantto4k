@@ -4,6 +4,7 @@
 
 class TlvDescriptor {
 public:
+    virtual ~TlvDescriptor() = default;
     bool unpack(Stream& stream);
 
     uint8_t descriptorTag;
@@ -51,7 +52,7 @@ public:
     uint16_t tlvStreamId;
     uint16_t originalNetworkId;
     uint16_t tlvStreamDescriptorsLength;
-    std::list<TlvDescriptor*> descriptors;
+    std::list<std::shared_ptr<TlvDescriptor>> descriptors;
 };
 
 class TlvTable {
@@ -74,7 +75,7 @@ public:
 
 
     uint16_t networkDescriptorsLength;
-    std::list<TlvDescriptor*> descriptors;
+    std::list<std::shared_ptr<TlvDescriptor>> descriptors;
 
     uint16_t tlvStreamLoopLength;
     std::list<TlvNitItem> items;

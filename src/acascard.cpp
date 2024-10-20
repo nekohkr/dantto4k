@@ -5,15 +5,15 @@
 #include <openssl/evp.h>
 #pragma comment(lib, "Winscard.lib")
 
-AcasCard::AcasCard(SmartCard* smartcard)
+AcasCard::AcasCard(std::shared_ptr<SmartCard> smartCard)
+    : smartCard(smartCard)
 {
-	this->smartcard = smartcard;
 }
 
 void AcasCard::init()
 {
     ApduCommand apdu(0x90, 0x30, 0x00, 0x01);
-    smartcard->transmit(apdu.case2short(0x00));
+    smartCard->transmit(apdu.case2short(0x00));
 }
 
 std::vector<uint8_t> AcasCard::getA0AuthKcl()
@@ -30,7 +30,7 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
     data.insert(data.end(), a0init.begin(), a0init.end());
 
     ApduCommand apdu(0x90, 0xA0, 0x00, 0x01);
-    auto response = smartcard->transmit(apdu.case4short(data, 0x00));
+    auto response = smartCard->transmit(apdu.case4short(data, 0x00));
 
     if (!response.isSuccess()) {
         throw std::runtime_error("A0 auth failed");
@@ -87,7 +87,7 @@ DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
     auto kcl = getA0AuthKcl();
 
     ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
-    auto response = smartcard->transmit(apdu.case4short(ecm, 0x00));
+    auto response = smartCard->transmit(apdu.case4short(ecm, 0x00));
 
     if (!response.isSuccess()) {
         throw std::runtime_error("ECM request failed");

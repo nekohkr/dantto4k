@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include "ip.h"
+
+class StreamBase;
 class Stream;
 class MmtTlvDemuxer;
 
@@ -74,11 +76,9 @@ public:
 
 class TLVPacket {
 public:
-	TLVPacket() {}
+	bool unpack(StreamBase& stream);
 
-	bool unpack(Stream& stream);
-
-	const std::vector<uint8_t> getData() const {
+	const std::vector<uint8_t>& getData() const {
 		return data;
 	}
 

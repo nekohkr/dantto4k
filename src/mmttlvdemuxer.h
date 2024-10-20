@@ -12,13 +12,12 @@
 #include "mpuExtendedTimestampDescriptor.h"
 #include "mpuTimestampDescriptor.h"
 #include "mpt.h"
+#include "mmtStream.h"
+#include "mpuDataProcessorBase.h"
+
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
-}
-
-constexpr int32_t makeTag(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
-	return (a << 24) | (b << 16) | (c << 8) | d;
 }
 
 enum {
@@ -27,60 +26,18 @@ enum {
 	M2_SHORT_SECTION_MESSAGE = 0x8002,
 };
 
-enum FragmentationIndicator {
-	NOT_FRAGMENTED = 0b00,
-	FIRST_FRAGMENT = 0b01,
-	MIDDLE_FRAGMENT = 0b10,
-	LAST_FRAGMENT = 0b11,
-};
 
-enum class ASSEMBLER_STATE
-{
-	INIT,
-	NOT_STARTED,
-	IN_FRAGMENT,
-	SKIP,
-};
 
-class MmtpStream {
-public:
-	enum AVMediaType codecType;
-	enum AVCodecID codecId = AV_CODEC_ID_NONE;
-	uint32_t codecTag = 0;
-
-	uint32_t lastMpuSequenceNumber = 0;
-	uint32_t auIndex = 0;
-	uint32_t streamIndex = 0;
-	uint16_t pid = 0;
-
-	AVRational timeBase;
-
-	int flags = 0;
-
-	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
-	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
-	std::vector<uint8_t> pendingData;
-};
-
-class FragmentAssembler {
-public:
-	bool assemble(std::vector<uint8_t> fragment, uint8_t fragmentationIndicator, uint32_t packetSequenceNumber);
-	void checkState(uint32_t packetSequenceNumber);
-	void clear();
-
-	ASSEMBLER_STATE state = ASSEMBLER_STATE::INIT;
-	std::vector<uint8_t> data;
-	uint32_t last_seq = 0;
-};
-
+class MpuAssembler;
 class MmtTable;
 class Plt;
 class TlvTable;
 class Ecm;
 class MmtTlvDemuxer {
 public:
+	MmtTlvDemuxer();
 	bool init();
-	int processPacket(Stream& stream);
+	int processPacket(StreamBase& stream);
 	void clear();
 
 protected:
@@ -90,7 +47,7 @@ protected:
 	void processSignalingMessages(Stream& stream);
 	void processSignalingMessage(Stream& stream);
 
-	bool isVaildTlv(Stream& stream) const;
+	bool isVaildTlv(StreamBase& stream) const;
 
 	void processPaMessage(Stream& stream);
 	void processM2SectionMessage(Stream& stream);
@@ -98,22 +55,21 @@ protected:
 
 	void processTable(Stream& stream);
 	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
-	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtpStream> mmtpStream);
-	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtpStream> mmtpStream);
+	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream> MmtStream);
+	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream> MmtStream);
 
 	void processEcm(std::shared_ptr<Ecm> ecm);
 
-	void clearTables();
 
 
 protected:
-	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
-	std::shared_ptr<MmtpStream> getStream(uint16_t pid, bool create = false);
-	std::pair<int64_t, int64_t> calcPtsDts(std::shared_ptr<MmtpStream> mmtpStream, MpuTimestampDescriptor::Entry& timestamp, MpuExtendedTimestampDescriptor::Entry& extendedTimestamp);
+	std::shared_ptr<MpuAssembler> getAssembler(uint16_t pid);
+	std::shared_ptr<MmtStream> getStream(uint16_t pid, bool create = false);
+	
+	std::shared_ptr<SmartCard> smartCard;
+	std::shared_ptr<AcasCard> acasCard;
 
-	SmartCard* smartCard = nullptr;
-	AcasCard* acasCard = nullptr;
-	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
+	std::map<uint16_t, std::shared_ptr<MpuAssembler>> mapAssembler;
 	
 	TLVPacket tlv;
 	CompressedIPPacket compressedIPPacket;
@@ -126,8 +82,9 @@ protected:
 	std::map<uint16_t, std::vector<uint8_t>> mpuData;
 
 public:
-	std::map<uint16_t, std::shared_ptr<MmtpStream>> mapStream;
-	std::list<AVPacket*> avpackets;
+	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
+
+	std::list<std::shared_ptr<MpuData>> mpuDatas;
 	std::list<std::shared_ptr<MmtTable>> tables;
 	std::list<std::shared_ptr<TlvTable>> tlvTables;
 };

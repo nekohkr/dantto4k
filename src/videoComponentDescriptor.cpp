@@ -20,13 +20,13 @@ bool VideoComponentDescriptor::unpack(Stream& stream)
 
         uint8 = nstream.get8U();
         videoTransferCharacteristics = (uint8 & 0b11110000) >> 4;
-        nstream.read((char*)language, 3);
+        nstream.read(language, 3);
         language[3] = '\0';
 
         int textLength = nstream.leftBytes();
         if (textLength) {
             text.resize(textLength);
-            nstream.read((char*)text.data(), textLength);
+            nstream.read(text.data(), textLength);
         }
 
         stream.skip(descriptorLength);

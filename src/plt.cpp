@@ -10,6 +10,7 @@ bool Plt::unpack(Stream& stream)
 		version = stream.get8U();
 		length = stream.getBe16U();
 		numOfPackage = stream.get8U();
+
 		for (int i = 0; i < numOfPackage; i++) {
 			PltItem item;
 			item.unpack(stream);
@@ -32,7 +33,7 @@ bool PltItem::unpack(Stream& stream)
 		}
 
 		mmtPackageIdByte.resize(mmtPackageIdLength);
-		stream.read((char*)mmtPackageIdByte.data(), mmtPackageIdLength);
+		stream.read(mmtPackageIdByte.data(), mmtPackageIdLength);
 		locationInfos.unpack(stream);
 	}
 	catch (const std::out_of_range&) {

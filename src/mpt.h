@@ -34,5 +34,5 @@ public:
 	uint16_t mptDescriptorsLength;
 	std::vector<uint8_t> mptDescriptorsByte;
 	uint8_t numberOfAssets;
-	std::vector<MptAsset> assets;
+	std::list<MptAsset> assets;
 };

@@ -76,7 +76,7 @@ public:
     SmartCard();
     ~SmartCard();
 
-    bool initializeCard();
+    bool initCard();
     bool isConnected();
     void connect();
     ApduResponse transmit(const std::vector<BYTE>& sendData);

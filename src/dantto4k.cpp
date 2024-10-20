@@ -130,6 +130,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     demuxer.init();
 
     std::string inputPath, outputPath;
@@ -166,12 +168,15 @@ int main(int argc, char* argv[]) {
 
     fclose(fp);
 
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cerr << "Elapsed time: " << elapsed_seconds.count() << " seconds\n";
     return 0;
 }
 
-int stream_idx = 0;
+int streamIndex = 0;
 
-bool initStream() {
+bool initStreams() {
     if (demuxer.mapStream.size() == 0) {
         return false;
     }
@@ -189,25 +194,27 @@ bool initStream() {
     outputFormatContext->pb = avio_ctx;
     outputFormatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
 
-    stream_idx = 0;
+    streamIndex = 0;
+    for (const auto& mmtStream : demuxer.mapStream) {
+        AVStream* outStream = avformat_new_stream(outputFormatContext, nullptr);
 
-    int i = 0;
-    for (auto stream : demuxer.mapStream) {
-        if (stream.second->codecType == AVMEDIA_TYPE_VIDEO ||
-            stream.second->codecType == AVMEDIA_TYPE_AUDIO ||
-            stream.second->codecType == AVMEDIA_TYPE_SUBTITLE) {
-            AVStream* outStream = avformat_new_stream(outputFormatContext, nullptr);
-
-            outStream->codecpar->codec_type = stream.second->codecType;
-            outStream->codecpar->codec_id = stream.second->codecId;
-            outStream->codecpar->codec_tag = stream.second->codecTag;
-            if (outStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-                outStream->codecpar->sample_rate = 48000;
-                outStream->codecpar->codec_id = AV_CODEC_ID_AAC;
-            }
-            stream_idx++;
+        switch (mmtStream.second->assetType) {
+        case makeAssetType('h', 'e', 'v', '1'):
+            outStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+            outStream->codecpar->codec_id = AV_CODEC_ID_HEVC;
+            break;
+        case makeAssetType('m', 'p', '4', 'a'):
+            outStream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
+            outStream->codecpar->codec_id = AV_CODEC_ID_AAC; //AV_CODEC_ID_AAC_LATM
+            outStream->codecpar->sample_rate = 48000;
+            break;
+        case makeAssetType('s', 't', 'p', 'p'):
+            outStream->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+            outStream->codecpar->codec_id = AV_CODEC_ID_TTML;
+            break;
         }
-        i++;
+        outStream->codecpar->codec_tag = 0;
+        streamIndex++;
     }
 
     if (avformat_write_header(outputFormatContext, nullptr) < 0) {
@@ -219,63 +226,64 @@ bool initStream() {
     return true;
 }
 
-static void buffer_free_callback(void* opaque, uint8_t* data) {
-    free(data);
-}
 
 void processMuxing() {
-    if(stream_idx != demuxer.mapStream.size()) {
-        if (initStream()) {
-        }
-        else {
+    if(streamIndex != demuxer.mapStream.size()) {
+        if (!initStreams()) {
             return;
         }
     }
 
-    for (auto packet : demuxer.avpackets) {
-        AVStream* outStream = outputFormatContext->streams[packet->stream_index];
-        auto it = std::next(demuxer.mapStream.begin(), packet->stream_index);
+    for (const auto& mpuData : demuxer.mpuDatas) {
+        AVStream* outStream = outputFormatContext->streams[mpuData->streamIndex];
+        auto it = std::next(demuxer.mapStream.begin(), mpuData->streamIndex);
         if (it == demuxer.mapStream.end()) {
             continue;
         }
-        AVRational tb = it->second->timeBase;
 
+        AVRational timeBase = { it->second->timeBase.num, it->second->timeBase.den };
+
+        uint8_t* data = nullptr;
+        AVBufferRef* buf = nullptr;
         if (outStream->codecpar->codec_id == AV_CODEC_ID_AAC) {
             ADTSConverter converter;
             std::vector<uint8_t> output;
-            if (!converter.convert(packet->buf->data, packet->size, output)) {
+            if (!converter.convert(mpuData->data.data(), mpuData->data.size(), output)) {
                 continue;
             }
 
-            uint8_t* data = (uint8_t*)malloc(output.size() + AV_INPUT_BUFFER_PADDING_SIZE);
+            data = (uint8_t*)malloc(output.size() + AV_INPUT_BUFFER_PADDING_SIZE);
             memcpy(data, output.data(), output.size());
             memset(data + output.size(), 0, AV_INPUT_BUFFER_PADDING_SIZE);
-            AVBufferRef* buf = av_buffer_create(data, output.size() + AV_INPUT_BUFFER_PADDING_SIZE, buffer_free_callback, NULL, 0);
-            AVPacket* adtsPacket = av_packet_alloc();
-            adtsPacket->buf = buf;
-            adtsPacket->data = buf->data;
-            adtsPacket->pts = packet->pts;
-            adtsPacket->dts = packet->dts;
-            adtsPacket->stream_index = packet->stream_index;
-            adtsPacket->flags = packet->flags;
-            adtsPacket->pos = -1;
-            adtsPacket->duration = 0;
-            adtsPacket->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
+            buf = av_buffer_create(data, output.size() + AV_INPUT_BUFFER_PADDING_SIZE, [](void* opaque, uint8_t* data) {
+                free(data);
+            }, NULL, 0);
 
-            av_packet_rescale_ts(adtsPacket, tb, outStream->time_base);
-            if (av_interleaved_write_frame(outputFormatContext, adtsPacket) < 0) {
-                std::cerr << "Error muxing packet." << std::endl;
-                continue;
-            }
-
-            av_packet_unref(adtsPacket);
         }
         else {
-            av_packet_rescale_ts(packet, tb, outStream->time_base);
-            if (av_interleaved_write_frame(outputFormatContext, packet) < 0) {
-                std::cerr << "Error muxing packet." << std::endl;
-                continue;
-            }
+            data = (uint8_t*)malloc(mpuData->data.size() + AV_INPUT_BUFFER_PADDING_SIZE);
+            memcpy(data, mpuData->data.data(), mpuData->data.size());
+            memset(data + mpuData->data.size(), 0, AV_INPUT_BUFFER_PADDING_SIZE);
+            buf = av_buffer_create(data, mpuData->data.size() + AV_INPUT_BUFFER_PADDING_SIZE, [](void* opaque, uint8_t* data) {
+                free(data);
+                }, NULL, 0);
+        }
+
+        AVPacket* packet = av_packet_alloc();
+        packet->buf = buf;
+        packet->data = buf->data;
+        packet->pts = mpuData->pts;
+        packet->dts = mpuData->dts;
+        packet->stream_index = mpuData->streamIndex;
+        packet->flags = mpuData->flags;
+        packet->pos = -1;
+        packet->duration = 0;
+        packet->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
+
+        av_packet_rescale_ts(packet, timeBase, outStream->time_base);
+        if (av_interleaved_write_frame(outputFormatContext, packet) < 0) {
+            std::cerr << "Error muxing packet." << std::endl;
+            continue;
         }
 
         av_packet_unref(packet);

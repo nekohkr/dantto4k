@@ -37,6 +37,6 @@ public:
     uint8_t lastTableId;
     uint8_t eventCount;
 
-    std::list<MHEvent*> events;
+    std::list<std::shared_ptr<MHEvent>> events;
     uint32_t crc32;
 };

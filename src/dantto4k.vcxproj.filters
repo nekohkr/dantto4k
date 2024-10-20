@@ -96,6 +96,24 @@
     <ClCompile Include="adtsConverter.cpp">
       <Filter>adts</Filter>
     </ClCompile>
+    <ClCompile Include="hevcMpuDataProcessor.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtStream.cpp">
+      <Filter>mmttlv</Filter>
+    </ClCompile>
+    <ClCompile Include="mpuDataProcessorFactory.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="aacMpuDataProcessor.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="ttmlMpuDataProcessor.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="mpuAssembler.cpp">
+      <Filter>mmttlv</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mmtMessageHandler.h" />
@@ -181,6 +199,27 @@
     <ClInclude Include="adtsConverter.h">
       <Filter>adts</Filter>
     </ClInclude>
+    <ClInclude Include="mpuDataProcessorBase.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="hevcMpuDataProcessor.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtStream.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="mpuDataProcessorFactory.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="aacMpuDataProcessor.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="ttmlMpuDataProcessor.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="mpuAssembler.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="acas">
@@ -206,6 +245,9 @@
     </Filter>
     <Filter Include="adts">
       <UniqueIdentifier>{b026877e-512f-4823-9779-1a919bfb08bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mpuDataProcessor">
+      <UniqueIdentifier>{39e74407-f57e-47e0-97fc-4c84f854aa1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

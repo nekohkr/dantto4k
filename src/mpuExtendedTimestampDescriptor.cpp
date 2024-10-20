@@ -19,6 +19,7 @@ bool MpuExtendedTimestampDescriptor::unpack(Stream& stream)
 			defaultPtsOffset = stream.getBe16U();
 		}
 
+		entries.reserve(50);
 		while (!stream.isEOF()) {
 			Entry entry;
 			entry.unpack(stream, ptsOffsetType, defaultPtsOffset);
@@ -43,6 +44,8 @@ bool MpuExtendedTimestampDescriptor::Entry::unpack(Stream& stream, uint8_t ptsOf
 		mpuDecodingTimeOffset = stream.getBe16U();
 		numOfAu = stream.get8U();
 
+		dtsPtsOffsets.reserve(numOfAu);
+		ptsOffsets.reserve(numOfAu);
 		for (int i = 0; i < numOfAu; i++) {
 			dtsPtsOffsets.push_back(stream.getBe16U());
 			if (ptsOffsetType == 2) {

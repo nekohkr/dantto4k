@@ -37,6 +37,6 @@ public:
 
     uint16_t originalNetworkId;
 
-    std::list<MhSdtService*> services;
+    std::list<std::shared_ptr<MhSdtService>> services;
     uint32_t crc32;
 };

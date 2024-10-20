@@ -3,9 +3,6 @@
 
 MhSdt::~MhSdt()
 {
-    for (auto service : services) {
-        delete service;
-    }
 }
 
 bool MhSdt::unpack(Stream& stream)
@@ -29,7 +26,7 @@ bool MhSdt::unpack(Stream& stream)
         stream.skip(1);
 
         while (stream.leftBytes() > 4) {
-            MhSdtService* service = new MhSdtService();
+            std::shared_ptr<MhSdtService> service = std::make_shared<MhSdtService>();
             if (!service->unpack(stream)) {
                 return false;
             }

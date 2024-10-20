@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="dantto4k.cpp" />
+    <ClCompile Include="mmtMessageHandler.cpp" />
     <ClCompile Include="acascard.cpp">
       <Filter>acas</Filter>
     </ClCompile>
@@ -92,9 +93,26 @@
     <ClCompile Include="mmtDescriptors.cpp">
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
-    <ClCompile Include="mmtMessageHandler.cpp" />
     <ClCompile Include="adtsConverter.cpp">
       <Filter>adts</Filter>
+    </ClCompile>
+    <ClCompile Include="hevcMpuDataProcessor.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtStream.cpp">
+      <Filter>mmttlv</Filter>
+    </ClCompile>
+    <ClCompile Include="mpuDataProcessorFactory.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="aacMpuDataProcessor.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="ttmlMpuDataProcessor.cpp">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClCompile>
+    <ClCompile Include="mpuAssembler.cpp">
+      <Filter>mmttlv</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +199,27 @@
     <ClInclude Include="adtsConverter.h">
       <Filter>adts</Filter>
     </ClInclude>
+    <ClInclude Include="mpuDataProcessorBase.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="hevcMpuDataProcessor.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtStream.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="mpuDataProcessorFactory.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="aacMpuDataProcessor.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="ttmlMpuDataProcessor.h">
+      <Filter>mmttlv\mpuDataProcessor</Filter>
+    </ClInclude>
+    <ClInclude Include="mpuAssembler.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="acas">
@@ -205,7 +244,10 @@
       <UniqueIdentifier>{f40fdc0c-24bd-44cd-9272-d96c62b86634}</UniqueIdentifier>
     </Filter>
     <Filter Include="adts">
-      <UniqueIdentifier>{0b34077b-fc11-415a-b9db-0ef3c9efecad}</UniqueIdentifier>
+      <UniqueIdentifier>{b026877e-512f-4823-9779-1a919bfb08bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mpuDataProcessor">
+      <UniqueIdentifier>{39e74407-f57e-47e0-97fc-4c84f854aa1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@ SmartCard::SmartCard() {
 SmartCard::~SmartCard() {
 }
 
-bool SmartCard::initializeCard() {
+bool SmartCard::initCard() {
     LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
     return result == SCARD_S_SUCCESS;
 }

@@ -2,6 +2,7 @@
 #include "smartcard.h"
 #include <unordered_map>
 #include <map>
+
 struct DecryptedEcm {
 public:
     uint8_t odd[16];
@@ -10,16 +11,15 @@ public:
 
 class AcasCard {
 public:
-    AcasCard(SmartCard* smartcard);
+    AcasCard(std::shared_ptr<SmartCard> smartCard);
     void init();
     std::vector<uint8_t> getA0AuthKcl();
     DecryptedEcm decryptEcm(std::vector<uint8_t>& ecm);
     DecryptedEcm lastDecryptedEcm;
     bool ready = false;
-
     void clear();
 
-protected:
+private:
     static constexpr uint8_t masterKey[] =
     {
             0x4F, 0x4C, 0x7C, 0xEB, 0x34, 0xFE, 0xB0, 0xA3,
@@ -29,5 +29,5 @@ protected:
     };
 
     std::map<std::vector<uint8_t>, DecryptedEcm> decryptedEcmMap;
-    SmartCard* smartcard;
+    std::shared_ptr<SmartCard> smartCard;
 };

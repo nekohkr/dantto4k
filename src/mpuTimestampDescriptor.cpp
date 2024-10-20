@@ -19,6 +19,7 @@ bool MpuTimestampDescriptor::unpack(Stream& stream)
 			return false;
 		}
 
+		entries.reserve(descriptorLength / 12);
 		for (int i = 0; i < descriptorLength / 12; i++) {
 			Entry entry;
 			entry.mpuSequenceNumber = stream.getBe32U();

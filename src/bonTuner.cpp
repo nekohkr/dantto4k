@@ -6,7 +6,6 @@
 std::vector<uint8_t> inputBuffer;
 std::vector<uint8_t> buffer;
 std::vector<uint8_t> outputBuffer;
-Stream inputStream;
 FILE* fp;
 
 bool CBonTuner::init(Config& config)

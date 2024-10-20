@@ -19,7 +19,7 @@ bool Ecm::unpack(Stream& stream)
         lastSectionNumber = stream.get8U();
 
         ecmData.resize(stream.leftBytes() - 4);
-        stream.read((char*)ecmData.data(), stream.leftBytes() - 4);
+        stream.read(ecmData.data(), stream.leftBytes() - 4);
 
         crc32 = stream.getBe32U();
     }

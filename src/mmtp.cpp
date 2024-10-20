@@ -46,7 +46,7 @@ void Mmtp::unpack(Stream& stream)
 			return;
 		}
 		extensionHeaderField.resize(extensionHeaderLength);
-		stream.read((char*)extensionHeaderField.data(), extensionHeaderLength);
+		stream.read(extensionHeaderField.data(), extensionHeaderLength);
 
 
 		if (extensionHeaderField.size() >= 5) {
@@ -69,27 +69,7 @@ void Mmtp::unpack(Stream& stream)
 	}
 
 	payload.resize(stream.leftBytes());
-	stream.read((char*)payload.data(), stream.leftBytes());
-}
-
-void Mmtp::pack(Stream& stream) const
-{
-	uint8_t uint8;
-	uint8 = (version & 0b00000011) << 6;
-	uint8 |= (packetCounterFlag & 0b00000001) << 5;
-	uint8 |= (fecType & 0b00000011) << 3;
-	uint8 |= (reserved1 & 0b00000001) << 2;
-	uint8 |= (extensionHeaderFlag & 0b00000001) << 1;
-	uint8 |= (rapFlag & 0b00000001);
-	stream.put8U(uint8);
-
-	uint8 = (uint8 & 0b11000000) << 6;
-	uint8 |= uint8 & 0b00111111;
-	stream.put8U(uint8);
-
-	stream.putBe16U(packetId);
-	stream.putBe32U(deliveryTimestamp);
-	stream.putBe32U(packetSequenceNumber);
+	stream.read(payload.data(), stream.leftBytes());
 }
 
 bool Mmtp::decryptPayload(DecryptedEcm* decryptedEcm)
@@ -172,9 +152,8 @@ bool Mpu::unpack(Stream& stream)
 		fragmentCounter = stream.get8U();
 		mpuSequenceNumber = stream.getBe32U();
 
-
 		payload.resize(payloadLength - 6);
-		stream.read((char*)payload.data(), payloadLength - 6);
+		stream.read(payload.data(), payloadLength - 6);
 
 	}
 	catch (const std::out_of_range&) {
@@ -196,7 +175,7 @@ bool DataUnit::unpack(Stream& stream, bool timedFlag, bool aggregateFlag)
 				dependencyCounter = stream.get8U();
 
 				data.resize(stream.leftBytes());
-				stream.read((char*)data.data(), stream.leftBytes());
+				stream.read(data.data(), stream.leftBytes());
 			}
 			else {
 				dataUnitLength = stream.getBe16U();
@@ -215,19 +194,19 @@ bool DataUnit::unpack(Stream& stream, bool timedFlag, bool aggregateFlag)
 				}
 
 				data.resize(dataUnitLength - 4 * 3 - 2);
-				stream.read((char*)data.data(), dataUnitLength - 4 * 3 - 2);
+				stream.read(data.data(), dataUnitLength - 4 * 3 - 2);
 			}
 		} else {
 			if (aggregateFlag == 0) {
 				itemId = stream.getBe32U();
 
 				data.resize(stream.leftBytes());
-				stream.read((char*)data.data(), stream.leftBytes());
+				stream.read(data.data(), stream.leftBytes());
 			} else {
 				dataUnitLength = stream.getBe16U();
 
 				data.resize(dataUnitLength);
-				stream.read((char*)data.data(), dataUnitLength);
+				stream.read(data.data(), dataUnitLength);
 			}
 		}
 	}
@@ -256,7 +235,7 @@ bool PaMessage::unpack(Stream& stream)
 		}
 
 		table.resize(stream.leftBytes());
-		stream.read((char*)table.data(), stream.leftBytes());
+		stream.read(table.data(), stream.leftBytes());
 	}
 	catch (const std::out_of_range&) {
 		return false;
@@ -278,7 +257,7 @@ bool SignalingMessage::unpack(Stream& stream)
 		fragmentCounter = stream.get8U();
 
 		payload.resize(stream.leftBytes());
-		stream.read((char*)payload.data(), stream.leftBytes());
+		stream.read(payload.data(), stream.leftBytes());
 	}
 	catch (const std::out_of_range&) {
 		return false;

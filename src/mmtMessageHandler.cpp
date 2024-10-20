@@ -18,6 +18,9 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 }
+#include <codecvt>
+#include <locale>
+#include "mpuDataProcessorBase.h"
 
 static int convertRunningStatus(int runningStatus) {
     /*
@@ -99,13 +102,13 @@ static int assetType2streamType(uint32_t assetType)
 {
     int stream_type;
     switch (assetType) {
-    case makeTag('h', 'e', 'v', '1'):
+    case makeAssetType('h', 'e', 'v', '1'):
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
-    case makeTag('m', 'p', '4', 'a'):
+    case makeAssetType('m', 'p', '4', 'a'):
         stream_type = STREAM_TYPE_AUDIO_AAC; //STREAM_TYPE_AUDIO_AAC_LATM
         break;
-    case makeTag('s', 't', 'p', 'p'):
+    case makeAssetType('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;
         break;
     default:
@@ -191,6 +194,7 @@ void MmtMessageHandler::onMhEit(const std::shared_ptr<MhEit>& mhEit)
                 tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
                 tsDescriptor.event_name = ts::UString::FromUTF8((char*)eventNameBlock.data());
                 tsDescriptor.text = ts::UString::FromUTF8((char*)textBlock.data());
+
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
@@ -521,7 +525,7 @@ void MmtMessageHandler::onTlvNit(const std::shared_ptr<TlvNit>& tlvNit)
         switch (descriptor->descriptorTag) {
         case 0x40:
         {
-            NetworkNameDescriptor* networkNameDescriptor = (NetworkNameDescriptor*)descriptor;
+            std::shared_ptr<NetworkNameDescriptor> networkNameDescriptor = std::dynamic_pointer_cast<NetworkNameDescriptor>(descriptor);
 
             const ts::ByteBlock networkNameBlock(ts::ARIBCharset::B24.encoded(
                 ts::UString::FromUTF8(networkNameDescriptor->networkName)));
@@ -541,8 +545,8 @@ void MmtMessageHandler::onTlvNit(const std::shared_ptr<TlvNit>& tlvNit)
             switch (descriptor->descriptorTag) {
             case 0x41:
             {
+                std::shared_ptr<ServiceListDescriptor> serviceListDescriptor = std::dynamic_pointer_cast<ServiceListDescriptor>(descriptor);
                 ts::ServiceListDescriptor tsDescriptor;
-                ServiceListDescriptor* serviceListDescriptor = (ServiceListDescriptor*)descriptor;
                 for (auto service : serviceListDescriptor->services) {
                     tsDescriptor.addService(service.serviceId, service.serviceType);
                 }

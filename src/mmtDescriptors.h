@@ -19,6 +19,6 @@ public:
 	bool unpack(Stream& stream);
 	std::list<std::shared_ptr<MmtDescriptorBase>> list;
 
-protected:
+private:
 	std::unordered_map<uint16_t, std::function<std::shared_ptr<MmtDescriptorBase>()>> mapDescriptorFactory;
 };

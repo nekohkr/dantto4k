@@ -113,7 +113,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -131,7 +131,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -146,13 +146,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="aacMpuDataProcessor.cpp" />
     <ClCompile Include="acascard.cpp" />
-    <ClCompile Include="acascard.h" />
     <ClCompile Include="adtsConverter.cpp" />
     <ClCompile Include="bonTuner.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="ecm.cpp" />
-    <ClCompile Include="IBonDriver2.h" />
+    <ClCompile Include="hevcMpuDataProcessor.cpp" />
     <ClCompile Include="mhAudioComponentDescriptor.cpp" />
     <ClCompile Include="dantto4k.cpp" />
     <ClCompile Include="mhContentDescriptor.cpp" />
@@ -162,15 +162,16 @@
     <ClCompile Include="mhServiceDescriptor.cpp" />
     <ClCompile Include="mhShortEventDescriptor.cpp" />
     <ClCompile Include="mhTot.cpp" />
-    <ClCompile Include="mmtDescriptor.h" />
     <ClCompile Include="mmtDescriptors.cpp" />
     <ClCompile Include="mmtGeneralLocationInfo.cpp" />
     <ClCompile Include="mmtMessageHandler.cpp" />
     <ClCompile Include="mmtp.cpp" />
+    <ClCompile Include="mmtStream.cpp" />
     <ClCompile Include="mmtTable.cpp" />
     <ClCompile Include="mmttlvdemuxer.cpp" />
-    <ClCompile Include="mmttlvdemuxer.h" />
     <ClCompile Include="mpt.cpp" />
+    <ClCompile Include="mpuAssembler.cpp" />
+    <ClCompile Include="mpuDataProcessorFactory.cpp" />
     <ClCompile Include="mpuExtendedTimestampDescriptor.cpp" />
     <ClCompile Include="mpuTimestampDescriptor.cpp" />
     <ClCompile Include="plt.cpp" />
@@ -178,14 +179,18 @@
     <ClCompile Include="tlv.cpp" />
     <ClCompile Include="smartcard.cpp" />
     <ClCompile Include="tlvNit.cpp" />
+    <ClCompile Include="ttmlMpuDataProcessor.cpp" />
     <ClCompile Include="videoComponentDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="aacMpuDataProcessor.h" />
+    <ClInclude Include="acascard.h" />
     <ClInclude Include="adtsConverter.h" />
     <ClInclude Include="bonTuner.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="dantto4k.h" />
     <ClInclude Include="ecm.h" />
+    <ClInclude Include="hevcMpuDataProcessor.h" />
     <ClInclude Include="IBonDriver.h" />
     <ClInclude Include="ip.h" />
     <ClInclude Include="mhAudioComponentDescriptor.h" />
@@ -200,7 +205,11 @@
     <ClInclude Include="mmtGeneralLocationInfo.h" />
     <ClInclude Include="mmtMessageHandler.h" />
     <ClInclude Include="mmtp.h" />
+    <ClInclude Include="mmtStream.h" />
     <ClInclude Include="mpt.h" />
+    <ClInclude Include="mpuAssembler.h" />
+    <ClInclude Include="mpuDataProcessorBase.h" />
+    <ClInclude Include="mpuDataProcessorFactory.h" />
     <ClInclude Include="mpuExtendedTimestampDescriptor.h" />
     <ClInclude Include="mpuTimestampDescriptor.h" />
     <ClInclude Include="plt.h" />
@@ -209,7 +218,11 @@
     <ClInclude Include="mmtTable.h" />
     <ClInclude Include="tlv.h" />
     <ClInclude Include="tlvNit.h" />
+    <ClInclude Include="ttmlMpuDataProcessor.h" />
     <ClInclude Include="videoComponentDescriptor.h" />
+    <ClInclude Include="IBonDriver2.h" />
+    <ClInclude Include="mmtDescriptor.h" />
+    <ClInclude Include="mmttlvdemuxer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

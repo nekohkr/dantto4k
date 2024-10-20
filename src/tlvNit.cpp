@@ -16,21 +16,21 @@ bool TlvNit::unpack(Stream& stream)
         switch (descriptorTag) {
         case 0x40://network name
         {
-            NetworkNameDescriptor* descriptor = new NetworkNameDescriptor();
+            std::shared_ptr<NetworkNameDescriptor> descriptor = std::make_shared<NetworkNameDescriptor>();
             descriptor->unpack(nstream);
             descriptors.push_back(descriptor);
             break;
         }
         case 0x41://service list
         {
-            ServiceListDescriptor* descriptor = new ServiceListDescriptor();
+            std::shared_ptr<ServiceListDescriptor> descriptor = std::make_shared<ServiceListDescriptor>();
             descriptor->unpack(nstream);
             descriptors.push_back(descriptor);
             break;
         }
         case 0xCD://remote control key
         {
-            RemoteControlKeyDescriptor* descriptor = new RemoteControlKeyDescriptor();
+            std::shared_ptr<RemoteControlKeyDescriptor> descriptor = std::make_shared<RemoteControlKeyDescriptor>();
             descriptor->unpack(nstream);
             descriptors.push_back(descriptor);
             break;
@@ -137,21 +137,21 @@ bool TlvNitItem::unpack(Stream& stream)
         switch (descriptorTag) {
         case 0x40://network name
         {
-            NetworkNameDescriptor* descriptor = new NetworkNameDescriptor();
+            std::shared_ptr<NetworkNameDescriptor> descriptor = std::make_shared<NetworkNameDescriptor>();
             descriptor->unpack(nstream);
             descriptors.push_back(descriptor);
             break;
         }
         case 0x41://service list
         {
-            ServiceListDescriptor* descriptor = new ServiceListDescriptor();
+            std::shared_ptr<ServiceListDescriptor> descriptor = std::make_shared<ServiceListDescriptor>();
             descriptor->unpack(nstream);
             descriptors.push_back(descriptor);
             break;
         }
         case 0xCD://remote control key
         {
-            RemoteControlKeyDescriptor* descriptor = new RemoteControlKeyDescriptor();
+            std::shared_ptr<RemoteControlKeyDescriptor> descriptor = std::make_shared<RemoteControlKeyDescriptor>();
             descriptor->unpack(nstream);
             descriptors.push_back(descriptor);
             break;

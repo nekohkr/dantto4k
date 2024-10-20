@@ -2,7 +2,7 @@
 #include "stream.h"
 #include "MmtTlvDemuxer.h"
 
-bool TLVPacket::unpack(Stream& stream)
+bool TLVPacket::unpack(StreamBase& stream)
 {
 	if (stream.leftBytes() < 4) {
 		return false;
@@ -21,7 +21,7 @@ bool TLVPacket::unpack(Stream& stream)
 	}
 
 	data.resize(dataLength);
-	stream.read((char*)data.data(), dataLength);
+	stream.read(data.data(), dataLength);
 	return true;
 }
 
@@ -39,10 +39,10 @@ bool CompressedIPPacket::unpack(Stream& stream)
 		break;
 	case CONTEXT_ID_PARTIAL_IPV6_HEADER_AND_PARTIAL_UDP_HEADER:
 		ipv6.assign(38, 0);
-		stream.read((char*)ipv6.data(), 38);
+		stream.read(ipv6.data(), 38);
 
 		udp.assign(4, 0);
-		stream.read((char*)udp.data(), 4);
+		stream.read(udp.data(), 4);
 		break;
 	case CONTEXT_ID_NO_COMPRESSED_HEADER:
 		break;
