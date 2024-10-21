@@ -6,9 +6,6 @@
     <ClCompile Include="acascard.cpp">
       <Filter>acas</Filter>
     </ClCompile>
-    <ClCompile Include="acascard.h">
-      <Filter>acas</Filter>
-    </ClCompile>
     <ClCompile Include="bonTuner.cpp">
       <Filter>bondriver</Filter>
     </ClCompile>
@@ -45,9 +42,6 @@
     <ClCompile Include="mhShortEventDescriptor.cpp">
       <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
-    <ClCompile Include="mmtDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
-    </ClCompile>
     <ClCompile Include="mmtGeneralLocationInfo.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
@@ -75,9 +69,6 @@
     <ClCompile Include="mmtp.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
-    <ClCompile Include="IBonDriver2.h">
-      <Filter>bondriver</Filter>
-    </ClCompile>
     <ClCompile Include="ecm.cpp">
       <Filter>mmttlv\tables</Filter>
     </ClCompile>
@@ -85,9 +76,6 @@
       <Filter>stream</Filter>
     </ClCompile>
     <ClCompile Include="mmttlvdemuxer.cpp">
-      <Filter>mmttlv</Filter>
-    </ClCompile>
-    <ClCompile Include="mmttlvdemuxer.h">
       <Filter>mmttlv</Filter>
     </ClCompile>
     <ClCompile Include="mmtDescriptors.cpp">
@@ -113,6 +101,36 @@
     </ClCompile>
     <ClCompile Include="mpuAssembler.cpp">
       <Filter>mmttlv</Filter>
+    </ClCompile>
+    <ClCompile Include="eventPackageDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhLinkageDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhEventGroupDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhParentalRatingDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhSeriesDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhCaContractInformation.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhLogoTransmissionDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhCdt.cpp">
+      <Filter>mmttlv\tables</Filter>
+    </ClCompile>
+    <ClCompile Include="mhStreamIdentificationDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhDataComponentDescriptor.cpp">
+      <Filter>mmttlv\descriptors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -219,6 +237,40 @@
     </ClInclude>
     <ClInclude Include="mpuAssembler.h">
       <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="acascard.h" />
+    <ClInclude Include="IBonDriver2.h" />
+    <ClInclude Include="mmtDescriptor.h" />
+    <ClInclude Include="mmttlvdemuxer.h" />
+    <ClInclude Include="eventPackageDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhLinkageDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhEventGroupDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhParentalRatingDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhSeriesDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhCaContractInformation.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhLogoTransmissionDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhCdt.h">
+      <Filter>mmttlv\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="mhStreamIdentificationDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhDataComponentDescriptor.h">
+      <Filter>mmttlv\descriptors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

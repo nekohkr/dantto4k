@@ -11,6 +11,7 @@
 #include "acascard.h"
 #include "mpuDataProcessorFactory.h"
 #include "mpuAssembler.h"
+#include "mhCdt.h"
 
 MmtTlvDemuxer::MmtTlvDemuxer()
 {
@@ -145,7 +146,7 @@ void MmtTlvDemuxer::processTable(Stream& stream)
     {
         std::shared_ptr<Plt> plt = std::make_shared<Plt>();
         plt->unpack(stream);
-        tables.push_back(std::move(plt));
+        tables.push_back(plt);
         break;
     }
     case MMT_TABLE_ID::MH_EIT:
@@ -168,21 +169,21 @@ void MmtTlvDemuxer::processTable(Stream& stream)
     {
         std::shared_ptr<MhEit> mhEit = std::make_shared<MhEit>();
         mhEit->unpack(stream);
-        tables.push_back(std::move(mhEit));
+        tables.push_back(mhEit);
         break;
     }
     case MMT_TABLE_ID::MH_SDT:
     {
         std::shared_ptr<MhSdt> mhSdt = std::make_shared<MhSdt>();
         mhSdt->unpack(stream);
-        tables.push_back(std::move(mhSdt));
+        tables.push_back(mhSdt);
         break;
     }
     case MMT_TABLE_ID::MH_TOT:
     {
         std::shared_ptr<MhTot> mhTot = std::make_shared<MhTot>();
         mhTot->unpack(stream);
-        tables.push_back(std::move(mhTot));
+        tables.push_back(mhTot);
         break;
     }
     case MMT_TABLE_ID::ECM:
@@ -192,6 +193,13 @@ void MmtTlvDemuxer::processTable(Stream& stream)
         tables.push_back(ecm);
 
         processEcm(ecm);
+        break;
+    }
+    case MMT_TABLE_ID::MH_CDT:
+    {
+        std::shared_ptr<MhCdt> mhCdt = std::make_shared<MhCdt>();
+        mhCdt->unpack(stream);
+        tables.push_back(mhCdt);
         break;
     }
     }
@@ -209,19 +217,17 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
                 switch (asset.assetType) {
                 case makeAssetType('h', 'e', 'v', '1'):
                     mmtStream = getStream(locationInfo.packetId, true);
-                    mmtStream->assetType = asset.assetType;
                     break;
                 case makeAssetType('m', 'p', '4', 'a'):
                     mmtStream = getStream(locationInfo.packetId, true);
-                    mmtStream->assetType = asset.assetType;
                     break;
                 case makeAssetType('s', 't', 'p', 'p'):
                     mmtStream = getStream(locationInfo.packetId, true);
-                    mmtStream->assetType = asset.assetType;
                     break;
                 }
 
                 if (mmtStream) {
+                    mmtStream->assetType = asset.assetType;
                     if (!mmtStream->mpuDataProcessor) {
                         mmtStream->mpuDataProcessor = MpuDataProcessorFactory::create(asset.assetType);
                     }

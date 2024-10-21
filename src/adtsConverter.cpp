@@ -71,11 +71,11 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, int size)
     }
 
     int allStreamSameTimeFraming = (input[0] & 0b01000000) >> 5;
-    // restricted to 0
+    //restricted to 0
     int numSubFrames = (input[0] & 0b00011111) << 1 | (input[1] & 0b10000000);
-    // restricted to 0
+    //restricted to 0
     int numPrograms = input[1] & 0b01111000;
-    // restricted to 0
+    //restricted to 0
     int numLayer = input[1] & 0b00000111;
 
     if (numSubFrames != 0 || numPrograms != 0 || numLayer != 0) {

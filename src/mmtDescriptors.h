@@ -13,6 +13,16 @@
 #include "mpuTimestampDescriptor.h"
 #include "videoComponentDescriptor.h"
 
+#include "eventPackageDescriptor.h"
+#include "mhCaContractInformation.h"
+#include "mhLinkageDescriptor.h"
+#include "mhLogoTransmissionDescriptor.h"
+#include "mhSeriesDescriptor.h"
+#include "mhEventGroupDescriptor.h"
+#include "mhParentalRatingDescriptor.h"
+#include "mhStreamIdentificationDescriptor.h"
+#include "mhDataComponentDescriptor.h"
+
 class MmtDescriptors {
 public:
 	MmtDescriptors();

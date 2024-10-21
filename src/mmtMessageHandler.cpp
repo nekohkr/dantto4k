@@ -11,6 +11,7 @@
 #include "tlvNit.h"
 #include "mpt.h"
 #include "mhTot.h"
+#include "mhCdt.h"
 
 #include "mmttlvdemuxer.h"
 
@@ -100,7 +101,7 @@ static int EITConvertDuration(uint32_t i_duration)
 
 static int assetType2streamType(uint32_t assetType)
 {
-    int stream_type;
+    int stream_type = 0;
     switch (assetType) {
     case makeAssetType('h', 'e', 'v', '1'):
         stream_type = STREAM_TYPE_VIDEO_HEVC;
@@ -110,9 +111,6 @@ static int assetType2streamType(uint32_t assetType)
         break;
     case makeAssetType('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;
-        break;
-    default:
-        stream_type = 0;
         break;
     }
 
@@ -132,10 +130,6 @@ static uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoA
 
 void MmtMessageHandler::onMhEit(const std::shared_ptr<MhEit>& mhEit)
 {
-    if (mhEit->events.size() == 0) {
-        return;
-    }
-
     tsid = mhEit->tlvStreamId;
 
     bool pf;
@@ -273,6 +267,87 @@ void MmtMessageHandler::onMhEit(const std::shared_ptr<MhEit>& mhEit)
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
+            case MhLinkageDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhLinkageDescriptor>(descriptor);
+                ts::LinkageDescriptor tsDescriptor(mmtDescriptor->tlvStreamId, mmtDescriptor->originalNetworkId, mmtDescriptor->serviceId, mmtDescriptor->linkageType);
+                tsEvent.descs.add(duck, tsDescriptor);
+                break;
+            }
+            case MhEventGroupDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhEventGroupDescriptor>(descriptor);
+                ts::EventGroupDescriptor tsDescriptor;
+                tsDescriptor.group_type = mmtDescriptor->groupType;
+
+                for (const auto& event : mmtDescriptor->events) {
+                    ts::EventGroupDescriptor::ActualEvent actualEvent;
+                    actualEvent.service_id = event.serviceId;
+                    actualEvent.event_id = event.eventId;
+                    tsDescriptor.actual_events.push_back(actualEvent);
+                }
+
+                for (const auto& otherNetworkEvent : mmtDescriptor->otherNetworkEvents) {
+                    ts::EventGroupDescriptor::OtherEvent otherEvent;
+                    otherEvent.original_network_id = otherNetworkEvent.originalNetworkId;
+                    otherEvent.transport_stream_id = otherNetworkEvent.tlvStreamId;
+                    otherEvent.service_id = otherNetworkEvent.serviceId;
+                    otherEvent.event_id = otherNetworkEvent.eventId;
+                    tsDescriptor.other_events.push_back(otherEvent);
+                }
+
+                tsDescriptor.private_data.resize(mmtDescriptor->privateDataByte.size());
+                memcpy(tsDescriptor.private_data.data(), mmtDescriptor->privateDataByte.data(), mmtDescriptor->privateDataByte.size());
+
+                tsEvent.descs.add(duck, tsDescriptor);
+                break;
+            }
+            case MhParentalRatingDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhParentalRatingDescriptor>(descriptor);
+                ts::ParentalRatingDescriptor tsDescriptor;
+
+                for (const auto& entry : mmtDescriptor->entries) {
+                    ts::UString countryCode = ts::UString::FromUTF8(entry.countryCode);
+                    ts::ParentalRatingDescriptor::Entry tsEntry(countryCode, entry.rating);
+                    tsDescriptor.entries.push_back(tsEntry);
+                }
+
+                tsEvent.descs.add(duck, tsDescriptor);
+                break;
+            }
+            case MhSeriesDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhSeriesDescriptor>(descriptor);
+                ts::SeriesDescriptor tsDescriptor;
+                tsDescriptor.series_id = mmtDescriptor->seriesId;
+                tsDescriptor.repeat_label = mmtDescriptor->repeatLabel;
+                tsDescriptor.program_pattern = mmtDescriptor->programPattern;
+
+                if (mmtDescriptor->expireDateValidFlag) {
+                    struct tm tm;
+                    EITDecodeMjd(mmtDescriptor->expireDate, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+                    tm.tm_year -= 1900;
+                    tm.tm_mon--;
+                    tm.tm_isdst = 0;
+
+                    try {
+                        tsDescriptor.expire_date = ts::Time(tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0);
+                    }
+                    catch (ts::Time::TimeError) {
+                        return;
+                    }
+                }
+
+                tsDescriptor.episode_number = mmtDescriptor->episodeNumber;
+                tsDescriptor.last_episode_number = mmtDescriptor->lastEpisodeNumber;
+
+                ts::UString seriesName = ts::UString::FromUTF8(mmtDescriptor->seriesNameChar);
+                tsDescriptor.series_name = seriesName;
+
+                tsEvent.descs.add(duck, tsDescriptor);
+                break;
+            }
             }
         }
 
@@ -333,6 +408,26 @@ void MmtMessageHandler::onMhSdt(const std::shared_ptr<MhSdt>& mhSdt)
                     ts::UString::FromUTF8((char*)serviceProviderName.data(), serviceProviderName.size()),
                     ts::UString::FromUTF8((char*)serviceName.data(), serviceName.size()));
                 tsService.descs.add(duck, serviceDescriptor);
+                break;
+            }
+            case MhLogoTransmissionDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MhLogoTransmissionDescriptor>(descriptor);
+                ts::LogoTransmissionDescriptor tsDescriptor;
+                tsDescriptor.logo_transmission_type = mmtDescriptor->logoTransmissionType;
+                if (mmtDescriptor->logoTransmissionType == 0x01) {
+                    tsDescriptor.logo_id = mmtDescriptor->logoId;
+                    tsDescriptor.logo_version = mmtDescriptor->logoVersion;
+                    tsDescriptor.download_data_id = mmtDescriptor->downloadDataId;
+                } else if (mmtDescriptor->logoTransmissionType == 0x02) {
+                    tsDescriptor.logo_id = mmtDescriptor->logoId;
+                }
+                else if (mmtDescriptor->logoTransmissionType == 0x03) {
+                    ts::UString logoChar = ts::UString::FromUTF8(mmtDescriptor->logoChar);
+                    tsDescriptor.logo_char = logoChar;
+                }
+                tsService.descs.add(duck, tsDescriptor);
+                break;
             }
             }
         }
@@ -452,10 +547,24 @@ void MmtMessageHandler::onMpt(const std::shared_ptr<Mpt>& mpt)
 
                 ts::PMT::Stream stream(&tsPmt, streamType);
 
+                /*
                 if (streamType == STREAM_TYPE_VIDEO_HEVC) {
                     ts::RegistrationDescriptor descriptor;
                     descriptor.format_identifier = 0x48455643;
                     stream.descs.add(duck, descriptor);
+                }
+                */
+
+                for (const auto& descriptor : asset.descriptors.list) {
+                    switch (descriptor->getDescriptorTag()) {
+                    case MhStreamIdentificationDescriptor::kDescriptorTag:
+                    {
+                        auto mmtDescriptor = std::dynamic_pointer_cast<MhStreamIdentificationDescriptor>(descriptor);
+                        ts::StreamIdentifierDescriptor tsDescriptor(mmtDescriptor->componentTag);
+                        stream.descs.add(duck, tsDescriptor);
+                        break;
+                    }
+                    }
                 }
 
                 tsPmt.streams[0x100 + streamIndex] = stream;
@@ -508,6 +617,37 @@ void MmtMessageHandler::onMhTot(const std::shared_ptr<MhTot>& mhTot)
         for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_TOT_PID] & 0xF);
             mapCC[DVB_TOT_PID]++;
+
+            if (*outputFormatContext && (*outputFormatContext)->pb) {
+                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
+        }
+    }
+}
+void MmtMessageHandler::onMhCdt(const std::shared_ptr<MhCdt>& mhCdt)
+{
+    ts::CDT cdt;
+    cdt.original_network_id = mhCdt->originalNetworkId;
+    cdt.download_data_id = mhCdt->downloadDataId;
+    cdt.data_type = mhCdt->dataType;
+    cdt.data_module.resize(mhCdt->dataModuleByte.size());
+    memcpy(cdt.data_module.data(), mhCdt->dataModuleByte.data(), mhCdt->dataModuleByte.size());
+
+    ts::BinaryTable table;
+    cdt.serialize(duck, table);
+    ts::OneShotPacketizer packetizer(duck, ISDB_CDT_PID);
+
+    for (int i = 0; i < table.sectionCount(); i++) {
+        const ts::SectionPtr& section = table.sectionAt(i);
+        section.get()->setSectionNumber(mhCdt->sectionNumber);
+        section.get()->setLastSectionNumber(mhCdt->lastSectionNumber);
+        packetizer.addSection(section);
+
+        ts::TSPacketVector packets;
+        packetizer.getPackets(packets);
+        for (auto& packet : packets) {
+            packet.setCC(mapCC[ISDB_CDT_PID] & 0xF);
+            mapCC[ISDB_CDT_PID]++;
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());

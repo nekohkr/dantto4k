@@ -7,6 +7,7 @@
 #define STREAM_TYPE_AUDIO_MPEG2     0x04
 #define STREAM_TYPE_PRIVATE_SECTION 0x05
 #define STREAM_TYPE_PRIVATE_DATA    0x06
+#define STREAM_TYPE_ISO_IEC_13818_6_TYPE_D       0x0d
 #define STREAM_TYPE_AUDIO_AAC       0x0f
 #define STREAM_TYPE_AUDIO_AAC_LATM  0x11
 #define STREAM_TYPE_VIDEO_MPEG4     0x10
@@ -32,6 +33,7 @@ class Plt;
 class TlvNit;
 class Mpt;
 class MhTot;
+class MhCdt;
 
 class MmtMessageHandler {
 public:
@@ -43,6 +45,7 @@ public:
 	void onPlt(const std::shared_ptr<Plt>& plt);
 	void onMpt(const std::shared_ptr<Mpt>& mpt);
 	void onMhTot(const std::shared_ptr<MhTot>& mhTot);
+	void onMhCdt(const std::shared_ptr<MhCdt>& mhCdt);
 	void onTlvNit(const std::shared_ptr<TlvNit>& tlvNit);
 
 protected:

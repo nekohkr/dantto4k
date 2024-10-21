@@ -7,6 +7,7 @@
 #include "plt.h"
 #include "mpt.h"
 #include "mhTot.h"
+#include "mhCdt.h"
 #include "mmtTable.h"
 #include "mmtMessageHandler.h"
 #include "tlvNit.h"
@@ -321,6 +322,9 @@ void processMuxing() {
             break;
         case MMT_TABLE_ID::MH_TOT:
             handler.onMhTot(std::dynamic_pointer_cast<MhTot>(table));
+            break;
+        case MMT_TABLE_ID::MH_CDT:
+            handler.onMhCdt(std::dynamic_pointer_cast<MhCdt>(table));
             break;
         }
     }
