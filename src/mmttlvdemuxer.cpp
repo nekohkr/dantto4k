@@ -7,11 +7,11 @@
 #include "mhEit.h"
 #include "mhSdt.h"
 #include "mhTot.h"
-#include "mpuStream.h"
+#include "mmtStream.h"
 #include "MmtTlvDemuxer.h"
 #include "mpt.h"
 #include "fragmentAssembler.h"
-#include "mpuDataProcessorFactory.h"
+#include "mfuDataProcessorFactory.h"
 #include "nit.h"
 #include "paMessage.h"
 #include "plt.h"
@@ -215,48 +215,89 @@ void MmtTlvDemuxer::processMmtTable(Common::Stream& stream)
 
 void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
 {
+    bool changed = false;
+    
+    // Remove streams that do not exist in the MPT
+    std::map<uint16_t, uint32_t> mapMpt; // pid, assetType
     for (auto& asset : mpt->assets) {
-        std::shared_ptr<MpuStream> mpuStream;
+        for (auto& locationInfo : asset.locationInfos) {
+            if (locationInfo.locationType == 0) {
+                mapMpt[locationInfo.packetId] = asset.assetType;
+            }
+        }
+    }
+
+    if (mapMpt.size()) {
+        for (auto it = mapStream.begin(); it != mapStream.end(); ) {
+            auto mptIt = mapMpt.find(it->first);
+            if (mptIt != mapMpt.end()) {
+                if (mptIt->second != it->second->assetType) {
+                    it = mapStream.erase(it);
+                    changed = true;
+                }
+                else {
+                    ++it;
+                }
+            }
+            else {
+                it = mapStream.erase(it);
+                changed = true;
+            }
+        }
+    }
+
+    int streamIndex = 0;
+    for (auto& asset : mpt->assets) {
+        std::shared_ptr<MmtStream> mmtStream;
 
         for (auto& locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
                 if (asset.assetType == makeAssetType('h', 'e', 'v', '1') ||
                     asset.assetType == makeAssetType('m', 'p', '4', 'a') ||
                     asset.assetType == makeAssetType('s', 't', 'p', 'p')) {
-                    mpuStream = getStream(locationInfo.packetId, true);
-                    mpuStream->assetType = asset.assetType;
+                    mmtStream = getStream(locationInfo.packetId, true);
+                    mmtStream->assetType = asset.assetType;
+                    mmtStream->streamIndex = streamIndex;
 
-                    if (!mpuStream->mpuDataProcessor) {
-                        mpuStream->mpuDataProcessor = MpuDataProcessorFactory::create(mpuStream->assetType);
+                    if (!mmtStream->mfuDataProcessor) {
+                        changed = true;
+                        mmtStream->mfuDataProcessor = MfuDataProcessorFactory::create(mmtStream->assetType);
                     }
+
+                    ++streamIndex;
                 }
             }
         }
 
-        if (!mpuStream) {
+        if (!mmtStream) {
             continue;
         }
 
         for (auto& descriptor : asset.descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
             case MpuTimestampDescriptor::kDescriptorTag:
-                processMpuTimestampDescriptor(std::dynamic_pointer_cast<MpuTimestampDescriptor>(descriptor), mpuStream);
+                processMpuTimestampDescriptor(std::dynamic_pointer_cast<MpuTimestampDescriptor>(descriptor), mmtStream);
                 break;
             case MpuExtendedTimestampDescriptor::kDescriptorTag:
-                processMpuExtendedTimestampDescriptor(std::dynamic_pointer_cast<MpuExtendedTimestampDescriptor>(descriptor), mpuStream);
+                processMpuExtendedTimestampDescriptor(std::dynamic_pointer_cast<MpuExtendedTimestampDescriptor>(descriptor), mmtStream);
                 break;
             }
         }
     }
+
+    if (changed) {
+        demuxerHandler->onStreamsChanged();
+    }
+
 }
 
-void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MpuStream> mpuStream)
+void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream)
 {
     for (auto& ts : descriptor->entries) {
         bool find = false;
-        for (int i = 0; i < mpuStream->mpuTimestamps.size(); i++) {
-            if (mpuStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
-                mpuStream->mpuTimestamps[i].mpuPresentationTime = ts.mpuPresentationTime;
+        for (int i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
+            if (mmtStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
+                mmtStream->mpuTimestamps[i].mpuPresentationTime = ts.mpuPresentationTime;
                 find = true;
                 break;
             }
@@ -265,10 +306,10 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimes
             continue;
         }
 
-        for (int i = 0; i < mpuStream->mpuTimestamps.size(); i++) {
-            if (mpuStream->mpuTimestamps[i].mpuSequenceNumber < mpuStream->lastMpuSequenceNumber) {
-                mpuStream->mpuTimestamps[i].mpuSequenceNumber = ts.mpuSequenceNumber;
-                mpuStream->mpuTimestamps[i].mpuPresentationTime = ts.mpuPresentationTime;
+        for (int i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
+            if (mmtStream->mpuTimestamps[i].mpuSequenceNumber < mmtStream->lastMpuSequenceNumber) {
+                mmtStream->mpuTimestamps[i].mpuSequenceNumber = ts.mpuSequenceNumber;
+                mmtStream->mpuTimestamps[i].mpuPresentationTime = ts.mpuPresentationTime;
                 find = true;
                 break;
             }
@@ -278,43 +319,43 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimes
             continue;
         }
 
-        if (mpuStream->mpuTimestamps.size() >= 100) {
+        if (mmtStream->mpuTimestamps.size() >= 100) {
             int minIndex = 0;
             uint32_t minMpuSequenceNumber = 0xFFFFFFFF;
-            for (int i = 0; i < mpuStream->mpuTimestamps.size(); i++) {
-                if (minMpuSequenceNumber > mpuStream->mpuTimestamps[i].mpuSequenceNumber) {
+            for (int i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
+                if (minMpuSequenceNumber > mmtStream->mpuTimestamps[i].mpuSequenceNumber) {
                     minIndex = i;
-                    minMpuSequenceNumber = mpuStream->mpuTimestamps[i].mpuSequenceNumber;
+                    minMpuSequenceNumber = mmtStream->mpuTimestamps[i].mpuSequenceNumber;
                 }
             }
 
-            mpuStream->mpuTimestamps[minIndex].mpuSequenceNumber = ts.mpuSequenceNumber;
-            mpuStream->mpuTimestamps[minIndex].mpuPresentationTime = ts.mpuPresentationTime;
+            mmtStream->mpuTimestamps[minIndex].mpuSequenceNumber = ts.mpuSequenceNumber;
+            mmtStream->mpuTimestamps[minIndex].mpuPresentationTime = ts.mpuPresentationTime;
         }
         else {
-            mpuStream->mpuTimestamps.push_back(ts);
+            mmtStream->mpuTimestamps.push_back(ts);
         }
     }
 }
 
-void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MpuStream> mpuStream)
+void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream)
 {
     if (descriptor->timescaleFlag) {
-        mpuStream->timeBase.num = 1;
-        mpuStream->timeBase.den = descriptor->timescale;
+        mmtStream->timeBase.num = 1;
+        mmtStream->timeBase.den = descriptor->timescale;
     }
 
     for (auto& ts : descriptor->entries) {
-        if (mpuStream->lastMpuSequenceNumber > ts.mpuSequenceNumber)
+        if (mmtStream->lastMpuSequenceNumber > ts.mpuSequenceNumber)
             continue;
 
         bool find = false;
-        for (int i = 0; i < mpuStream->mpuExtendedTimestamps.size(); i++) {
-            if (mpuStream->mpuExtendedTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
-                mpuStream->mpuExtendedTimestamps[i].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
-                mpuStream->mpuExtendedTimestamps[i].numOfAu = ts.numOfAu;
-                mpuStream->mpuExtendedTimestamps[i].ptsOffsets = ts.ptsOffsets;
-                mpuStream->mpuExtendedTimestamps[i].dtsPtsOffsets = ts.dtsPtsOffsets;
+        for (int i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
+            if (mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
+                mmtStream->mpuExtendedTimestamps[i].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
+                mmtStream->mpuExtendedTimestamps[i].numOfAu = ts.numOfAu;
+                mmtStream->mpuExtendedTimestamps[i].ptsOffsets = ts.ptsOffsets;
+                mmtStream->mpuExtendedTimestamps[i].dtsPtsOffsets = ts.dtsPtsOffsets;
                 find = true;
                 break;
             }
@@ -323,13 +364,13 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
             continue;
         }
 
-        for (int i = 0; i < mpuStream->mpuExtendedTimestamps.size(); i++) {
-            if (mpuStream->mpuExtendedTimestamps[i].mpuSequenceNumber < mpuStream->lastMpuSequenceNumber) {
-                mpuStream->mpuExtendedTimestamps[i].mpuSequenceNumber = ts.mpuSequenceNumber;
-                mpuStream->mpuExtendedTimestamps[i].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
-                mpuStream->mpuExtendedTimestamps[i].numOfAu = ts.numOfAu;
-                mpuStream->mpuExtendedTimestamps[i].ptsOffsets = ts.ptsOffsets;
-                mpuStream->mpuExtendedTimestamps[i].dtsPtsOffsets = ts.dtsPtsOffsets;
+        for (int i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
+            if (mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber < mmtStream->lastMpuSequenceNumber) {
+                mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber = ts.mpuSequenceNumber;
+                mmtStream->mpuExtendedTimestamps[i].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
+                mmtStream->mpuExtendedTimestamps[i].numOfAu = ts.numOfAu;
+                mmtStream->mpuExtendedTimestamps[i].ptsOffsets = ts.ptsOffsets;
+                mmtStream->mpuExtendedTimestamps[i].dtsPtsOffsets = ts.dtsPtsOffsets;
                 find = true;
                 break;
             }
@@ -338,24 +379,24 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
             continue;
         }
 
-        if (mpuStream->mpuExtendedTimestamps.size() >= 100) {
+        if (mmtStream->mpuExtendedTimestamps.size() >= 100) {
             int minIndex = 0;
             uint32_t minMpuSequenceNumber = 0xFFFFFFFF;
-            for (int i = 0; i < mpuStream->mpuExtendedTimestamps.size(); i++) {
-                if (minMpuSequenceNumber > mpuStream->mpuExtendedTimestamps[i].mpuSequenceNumber) {
+            for (int i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
+                if (minMpuSequenceNumber > mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber) {
                     minIndex = i;
-                    minMpuSequenceNumber = mpuStream->mpuExtendedTimestamps[i].mpuSequenceNumber;
+                    minMpuSequenceNumber = mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber;
                 }
             }
 
-            mpuStream->mpuExtendedTimestamps[minIndex].mpuSequenceNumber = ts.mpuSequenceNumber;
-            mpuStream->mpuExtendedTimestamps[minIndex].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
-            mpuStream->mpuExtendedTimestamps[minIndex].numOfAu = ts.numOfAu;
-            mpuStream->mpuExtendedTimestamps[minIndex].ptsOffsets = ts.ptsOffsets;
-            mpuStream->mpuExtendedTimestamps[minIndex].dtsPtsOffsets = ts.dtsPtsOffsets;
+            mmtStream->mpuExtendedTimestamps[minIndex].mpuSequenceNumber = ts.mpuSequenceNumber;
+            mmtStream->mpuExtendedTimestamps[minIndex].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
+            mmtStream->mpuExtendedTimestamps[minIndex].numOfAu = ts.numOfAu;
+            mmtStream->mpuExtendedTimestamps[minIndex].ptsOffsets = ts.ptsOffsets;
+            mmtStream->mpuExtendedTimestamps[minIndex].dtsPtsOffsets = ts.dtsPtsOffsets;
         }
         else {
-            mpuStream->mpuExtendedTimestamps.push_back(ts);
+            mmtStream->mpuExtendedTimestamps.push_back(ts);
         }
     }
 }
@@ -373,9 +414,8 @@ void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm)
 void MmtTlvDemuxer::clear()
 {
     mapAssembler.clear();
-    mpuData.clear();
+    mfuData.clear();
     mapStream.clear();
-    streamIndex = 0;
 
     if (acasCard) {
         acasCard->clear();
@@ -394,12 +434,11 @@ std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t pid)
     }
 }
 
-std::shared_ptr<MpuStream> MmtTlvDemuxer::getStream(uint16_t pid, bool create)
+std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid, bool create)
 {
     if (mapStream.find(pid) == mapStream.end()) {
         if (create) {
-            auto stream = std::make_shared<MpuStream>();
-            stream->streamIndex = streamIndex++;
+            auto stream = std::make_shared<MmtStream>();
             stream->pid = pid;
             mapStream[pid] = stream;
             return stream;
@@ -413,7 +452,7 @@ std::shared_ptr<MpuStream> MmtTlvDemuxer::getStream(uint16_t pid, bool create)
     }
 }
 
-std::shared_ptr<MpuStream> MmtTlvDemuxer::getStream(uint16_t pid)
+std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid)
 {
     return getStream(pid, false);
 }
@@ -425,9 +464,9 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
 
     auto assembler = getAssembler(mmt.packetId);
     Common::Stream nstream(mpu.payload);
-    std::shared_ptr<MpuStream> mpuStream = getStream(mmt.packetId);
+    std::shared_ptr<MmtStream> mmtStream = getStream(mmt.packetId);
 
-    if (!mpuStream) {
+    if (!mmtStream) {
         return;
     }
 
@@ -444,14 +483,14 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
     }
 
     if (assembler->state == FragmentAssembler::State::Init) {
-        mpuStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
+        mmtStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
     }
-    else if (mpu.mpuSequenceNumber == mpuStream->lastMpuSequenceNumber + 1) {
-        mpuStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
-        mpuStream->auIndex = 0;
+    else if (mpu.mpuSequenceNumber == mmtStream->lastMpuSequenceNumber + 1) {
+        mmtStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
+        mmtStream->auIndex = 0;
     }
-    else if (mpu.mpuSequenceNumber != mpuStream->lastMpuSequenceNumber) {
-        std::cerr << "drop found (" << mpuStream->lastMpuSequenceNumber << " != " << mpu.mpuSequenceNumber << ")" << std::endl;
+    else if (mpu.mpuSequenceNumber != mmtStream->lastMpuSequenceNumber) {
+        std::cerr << "drop found (" << mmtStream->lastMpuSequenceNumber << " != " << mpu.mpuSequenceNumber << ")" << std::endl;
         assembler->state = FragmentAssembler::State::Init;
         return;
     }
@@ -459,7 +498,7 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
     assembler->checkState(mmt.packetSequenceNumber);
 
     if (mmt.rapFlag) {
-        mpuStream->flags |= AV_PKT_FLAG_KEY;
+        mmtStream->flags |= AV_PKT_FLAG_KEY;
     }
 
     if (mpu.aggregateFlag == 0) {
@@ -470,7 +509,7 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
 
         if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmt.packetSequenceNumber)) {
             Common::Stream dataStream(assembler->data);
-            processMpuData(dataStream);
+            processMfuData(dataStream);
             assembler->clear();
         }
     }
@@ -484,49 +523,49 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
 
             if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmt.packetSequenceNumber)) {
                 Common::Stream dataStream(assembler->data);
-                processMpuData(dataStream);
+                processMfuData(dataStream);
                 assembler->clear();
             }
         }
     }
 }
 
-void MmtTlvDemuxer::processMpuData(Common::Stream& stream)
+void MmtTlvDemuxer::processMfuData(Common::Stream& stream)
 {
-    std::shared_ptr<MpuStream> mpuStream = getStream(mmt.packetId);
-    if (!mpuStream) {
+    std::shared_ptr<MmtStream> mmtStream = getStream(mmt.packetId);
+    if (!mmtStream) {
         return;
     }
 
-    if (!mpuStream->mpuDataProcessor) {
+    if (!mmtStream->mfuDataProcessor) {
         return;
     }
 
     std::vector<uint8_t> data(stream.leftBytes());
     stream.read(data.data(), stream.leftBytes());
 
-    const auto ret = mpuStream->mpuDataProcessor->process(mpuStream, data);
+    const auto ret = mmtStream->mfuDataProcessor->process(mmtStream, data);
     if (ret.has_value()) {
-        const auto& mpuData = ret.value();
-        auto it = std::next(mapStream.begin(), mpuData.streamIndex);
+        const auto& mfuData = ret.value();
+        auto it = std::next(mapStream.begin(), mfuData.streamIndex);
         if (it == mapStream.end()) {
             return;
         }
 
-        switch (mpuStream->assetType) {
+        switch (mmtStream->assetType) {
         case makeAssetType('h', 'e', 'v', '1'):
             if(demuxerHandler) {
-                demuxerHandler->onVideoData(it->second, std::make_shared<MpuData>(mpuData));
+                demuxerHandler->onVideoData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
         case makeAssetType('m', 'p', '4', 'a'):
             if(demuxerHandler) {
-                demuxerHandler->onAudioData(it->second, std::make_shared<MpuData>(mpuData));
+                demuxerHandler->onAudioData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
         case makeAssetType('s', 't', 'p', 'p'):
             if(demuxerHandler) {
-                demuxerHandler->onSubtitleData(it->second, std::make_shared<MpuData>(mpuData));
+                demuxerHandler->onSubtitleData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
         }

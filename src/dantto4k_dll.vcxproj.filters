@@ -67,20 +67,20 @@
     <ClCompile Include="adtsConverter.cpp">
       <Filter>dantto4k\adts</Filter>
     </ClCompile>
-    <ClCompile Include="videoMpuDataProcessor.cpp">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClCompile Include="videoMfuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClCompile>
-    <ClCompile Include="mpuStream.cpp">
+    <ClCompile Include="mmtStream.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
-    <ClCompile Include="mpuDataProcessorFactory.cpp">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClCompile Include="mfuDataProcessorFactory.cpp">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClCompile>
-    <ClCompile Include="audioMpuDataProcessor.cpp">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClCompile Include="audioMfuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClCompile>
-    <ClCompile Include="subtitleMpuDataProcessor.cpp">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClCompile Include="subtitleMfuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClCompile>
     <ClCompile Include="fragmentAssembler.cpp">
       <Filter>mmttlv</Filter>
@@ -264,23 +264,23 @@
     <ClInclude Include="adtsConverter.h">
       <Filter>dantto4k\adts</Filter>
     </ClInclude>
-    <ClInclude Include="mpuDataProcessorBase.h">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClInclude Include="mfuDataProcessorBase.h">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClInclude>
-    <ClInclude Include="videoMpuDataProcessor.h">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClInclude Include="videoMfuDataProcessor.h">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClInclude>
-    <ClInclude Include="mpuStream.h">
+    <ClInclude Include="mmtStream.h">
       <Filter>mmttlv</Filter>
     </ClInclude>
-    <ClInclude Include="mpuDataProcessorFactory.h">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClInclude Include="mfuDataProcessorFactory.h">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClInclude>
-    <ClInclude Include="audioMpuDataProcessor.h">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClInclude Include="audioMfuDataProcessor.h">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClInclude>
-    <ClInclude Include="subtitleMpuDataProcessor.h">
-      <Filter>mmttlv\mmt\mpuData</Filter>
+    <ClInclude Include="subtitleMfuDataProcessor.h">
+      <Filter>mmttlv\mmt\mfu</Filter>
     </ClInclude>
     <ClInclude Include="fragmentAssembler.h">
       <Filter>mmttlv</Filter>
@@ -473,7 +473,7 @@
     <Filter Include="mmttlv\tlv\tables">
       <UniqueIdentifier>{5028c261-c9a8-4e76-ba4b-ba2fcbea2d44}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mmttlv\mmt\mpuData">
+    <Filter Include="mmttlv\mmt\mfu">
       <UniqueIdentifier>{39e74407-f57e-47e0-97fc-4c84f854aa1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

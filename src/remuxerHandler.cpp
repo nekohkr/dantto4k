@@ -33,7 +33,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 }
-#include "mpuDataProcessorBase.h"
+#include "mfuDataProcessorBase.h"
 
 namespace {
 int convertRunningStatus(int runningStatus) {
@@ -143,31 +143,31 @@ uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoAspectRa
 
 } // anonymous namespace
 
-void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData)
+void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
-    writeStream(mpuStream, mpuData, mpuData->data);
+    writeStream(mmtStream, mfuData, mfuData->data);
 }
 
-void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData)
+void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
     ADTSConverter converter;
     std::vector<uint8_t> output;
-    if (!converter.convert(mpuData->data.data(), mpuData->data.size(), output)) {
+    if (!converter.convert(mfuData->data.data(), mfuData->data.size(), output)) {
         return;
     }
 
-    writeStream(mpuStream, mpuData, output);
+    writeStream(mmtStream, mfuData, output);
 }
 
-void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData)
+void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
-    writeStream(mpuStream, mpuData, mpuData->data);
+    writeStream(mmtStream, mfuData, mfuData->data);
 }
 
-void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData, std::vector<uint8_t> streamData)
+void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, std::vector<uint8_t> streamData)
 {
-    AVStream* outStream = (*outputFormatContext)->streams[mpuData->streamIndex];
-    AVRational timeBase = { mpuStream->timeBase.num, mpuStream->timeBase.den };
+    AVStream* outStream = (*outputFormatContext)->streams[mfuData->streamIndex];
+    AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
 
     uint8_t* data = (uint8_t*)malloc(streamData.size() + AV_INPUT_BUFFER_PADDING_SIZE);
     memcpy(data, streamData.data(), streamData.size());
@@ -180,10 +180,10 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MpuStream> mpuStr
     AVPacket* packet = av_packet_alloc();
     packet->buf = buf;
     packet->data = buf->data;
-    packet->pts = mpuData->pts;
-    packet->dts = mpuData->dts;
-    packet->stream_index = mpuData->streamIndex;
-    packet->flags = mpuData->flags;
+    packet->pts = mfuData->pts;
+    packet->dts = mfuData->dts;
+    packet->stream_index = mfuData->streamIndex;
+    packet->flags = mfuData->flags;
     packet->pos = -1;
     packet->duration = 0;
     packet->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
@@ -616,10 +616,6 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
     uint16_t serviceId;
     uint16_t pid;
 
-    if(streamCount != demuxer.mapStream.size()) {
-        initStreams();
-    }
-
     if (mpt->mmtPackageIdLength != 2) {
         return;
     }
@@ -715,8 +711,6 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
             break;
         }
         }
-
-        
     }
 
     ts::BinaryTable table;
@@ -867,7 +861,7 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
     }
 }
 
-void RemuxerHandler::initStreams()
+void RemuxerHandler::onStreamsChanged()
 {
     if (demuxer.mapStream.size() == 0) {
         return;
@@ -888,10 +882,10 @@ void RemuxerHandler::initStreams()
     (*outputFormatContext)->flags |= AVFMT_FLAG_CUSTOM_IO;
 
     streamCount = 0;
-    for (const auto& mpuStream : demuxer.mapStream) {
+    for (const auto& mmtStream : demuxer.mapStream) {
         AVStream* outStream = avformat_new_stream(*outputFormatContext, nullptr);
 
-        switch (mpuStream.second->assetType) {
+        switch (mmtStream.second->assetType) {
         case MmtTlv::makeAssetType('h', 'e', 'v', '1'):
             outStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
             outStream->codecpar->codec_id = AV_CODEC_ID_HEVC;
@@ -915,6 +909,4 @@ void RemuxerHandler::initStreams()
         avformat_free_context(*outputFormatContext);
         return;
     }
-
-    return;
 }

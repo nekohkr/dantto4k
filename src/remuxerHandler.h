@@ -39,7 +39,7 @@ class Mpt;
 class MhTot;
 class MhCdt;
 class Nit;
-class MpuStream;
+class MmtStream;
 class MmtTlvDemuxer;
 
 }
@@ -51,9 +51,9 @@ public:
 	}
 
 	// MPU data
-	void onVideoData(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData) override;
-	void onAudioData(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData) override;
-	void onSubtitleData(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<struct MmtTlv::MpuData>& mpuData) override;
+	void onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
+	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
+	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
 
 	// MMT message
 	void onEcm(const std::shared_ptr<MmtTlv::Ecm>& ecm) override {}
@@ -67,9 +67,10 @@ public:
 	// TLV message
 	void onNit(const std::shared_ptr<MmtTlv::Nit>& nit) override;
 
+	void onStreamsChanged() override;
+
 private:
-	void writeStream(const std::shared_ptr<MmtTlv::MpuStream> mpuStream, const std::shared_ptr<MmtTlv::MpuData>& mpuData, std::vector<uint8_t> data);
-	void initStreams();
+	void writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, std::vector<uint8_t> data);
 
 	struct AVFormatContext** outputFormatContext;
 	struct AVIOContext** avioContext;

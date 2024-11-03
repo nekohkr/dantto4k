@@ -14,9 +14,9 @@
 #include "mpuExtendedTimestampDescriptor.h"
 #include "mpuTimestampDescriptor.h"
 #include "mpt.h"
-#include "mpuStream.h"
+#include "mmtStream.h"
 #include "compressedIPPacket.h"
-#include "mpuDataProcessorBase.h"
+#include "mfuDataProcessorBase.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -48,7 +48,7 @@ public:
 
 private:
 	void processMpu(Common::Stream& stream);
-	void processMpuData(Common::Stream& stream);
+	void processMfuData(Common::Stream& stream);
 
 	void processSignalingMessages(Common::Stream& stream);
 	void processSignalingMessage(Common::Stream& stream);
@@ -63,14 +63,14 @@ private:
 	void processMmtTable(Common::Stream& stream);
 
 	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
-	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MpuStream> MpuStream);
-	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MpuStream> MpuStream);
+	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
+	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
 
 	void processEcm(std::shared_ptr<Ecm> ecm);
 
 private:
 	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
-	std::shared_ptr<MpuStream> getStream(uint16_t pid, bool create);
+	std::shared_ptr<MmtStream> getStream(uint16_t pid, bool create);
 
 	std::shared_ptr<Acas::SmartCard> smartCard;
 	std::shared_ptr<Acas::AcasCard> acasCard;
@@ -83,15 +83,14 @@ private:
 	Mpu mpu;
 
 	ts::DuckContext duck;
-	uint32_t streamIndex = 0;
 
-	std::map<uint16_t, std::vector<uint8_t>> mpuData;
+	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	DemuxerHandler* demuxerHandler = nullptr;
 
 public:
-	std::shared_ptr<MpuStream> getStream(uint16_t pid);
+	std::shared_ptr<MmtStream> getStream(uint16_t pid);
 
-	std::map<uint16_t, std::shared_ptr<MpuStream>> mapStream;
+	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
 
 };
 }

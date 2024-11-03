@@ -1,8 +1,8 @@
-#include "subtitleMpuDataProcessor.h"
+#include "subtitleMfuDataProcessor.h"
 
 namespace MmtTlv {
 
-std::optional<MpuData> SubtitleMpuDataProcessor::process(const std::shared_ptr<MpuStream>& mpuStream, const std::vector<uint8_t>& data)
+std::optional<MfuData> SubtitleMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
 {
     Common::Stream stream(data);
     uint32_t size = stream.leftBytes();
@@ -42,16 +42,16 @@ std::optional<MpuData> SubtitleMpuDataProcessor::process(const std::shared_ptr<M
         return std::nullopt;
     }
 
-    MpuData mpuData;
-    mpuData.data.resize(dataSize);
-    stream.read(mpuData.data.data(), dataSize);
+    MfuData mfuData;
+    mfuData.data.resize(dataSize);
+    stream.read(mfuData.data.data(), dataSize);
 
-    mpuData.streamIndex = mpuStream->streamIndex;
-    mpuData.flags = mpuStream->flags;
+    mfuData.streamIndex = mmtStream->streamIndex;
+    mfuData.flags = mmtStream->flags;
 
-    mpuStream->flags = 0;
+    mmtStream->flags = 0;
 
-    return mpuData;
+    return mfuData;
 }
 
 }

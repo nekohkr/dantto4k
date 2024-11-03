@@ -1,18 +1,21 @@
-#include "videoMpuDataProcessor.h"
+#include "videoMfuDataProcessor.h"
 #include "stream.h"
 #include "mmttlvdemuxer.h"
 
 namespace MmtTlv {
 
-std::optional<MpuData> VideoMpuDataProcessor::process(const std::shared_ptr<MpuStream>& mpuStream, const std::vector<uint8_t>& data)
+std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
 {
     Common::Stream stream(data);
     if (stream.leftBytes() < 4) {
+        std::cerr << "MFU data appears to be corrupted." << std::endl;
         return std::nullopt;
     }
 
     uint32_t size = stream.getBe32U();
     if (size != stream.leftBytes()) {
+        size = stream.leftBytes();
+        std::cerr << "MFU data appears to be corrupted." << std::endl;
         return std::nullopt;
     }
 
@@ -36,24 +39,24 @@ std::optional<MpuData> VideoMpuDataProcessor::process(const std::shared_ptr<MpuS
     if (((uint8 >> 1) & 0b111111) < 0x20) {
         std::pair<int64_t, int64_t> ptsDts;
         try {
-            ptsDts = mpuStream->calcPtsDts();
+            ptsDts = mmtStream->calcPtsDts();
         }
         catch (const std::out_of_range& e) {
             std::cerr << e.what() << std::endl;
             return std::nullopt;
         }
 
-        mpuStream->incrementAuIndex();
+        mmtStream->incrementAuIndex();
 
-        MpuData mpuData;
-        mpuData.data = std::move(pendingData);
-        mpuData.pts = ptsDts.first;
-        mpuData.dts = ptsDts.second;
-        mpuData.streamIndex = mpuStream->streamIndex;
-        mpuData. flags = mpuStream->flags;
+        MfuData mfuData;
+        mfuData.data = std::move(pendingData);
+        mfuData.pts = ptsDts.first;
+        mfuData.dts = ptsDts.second;
+        mfuData.streamIndex = mmtStream->streamIndex;
+        mfuData. flags = mmtStream->flags;
 
-        mpuStream->flags = 0;
-        return mpuData;
+        mmtStream->flags = 0;
+        return mfuData;
     }
 
 	return std::nullopt;

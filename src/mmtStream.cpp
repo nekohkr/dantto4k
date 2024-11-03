@@ -1,4 +1,4 @@
-#include "mpuStream.h"
+#include "mmtStream.h"
 
 namespace MmtTlv {
 
@@ -58,7 +58,7 @@ int64_t av_rescale(int64_t a, int64_t b, int64_t c) {
 
 } // anonymous namespace
 
-std::pair<int64_t, int64_t> MpuStream::calcPtsDts() const
+std::pair<int64_t, int64_t> MmtStream::calcPtsDts() const
 {
     const auto timestamp = getCurrentTimestamp();
 
@@ -80,7 +80,7 @@ std::pair<int64_t, int64_t> MpuStream::calcPtsDts() const
     return std::pair<int64_t, int64_t>(pts, dts);
 }
 
-std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> MpuStream::getCurrentTimestamp() const
+std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> MmtStream::getCurrentTimestamp() const
 {
     int mpuTimestampIndex = -1;
     int extendedTimestampIndex = -1;
@@ -108,12 +108,12 @@ std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescrip
     return { mpuTimestamps[mpuTimestampIndex], mpuExtendedTimestamps[extendedTimestampIndex] };
 }
 
-void MpuStream::incrementAuIndex()
+void MmtStream::incrementAuIndex()
 {
     auIndex++;
 }
 
-uint32_t MpuStream::getAuIndex() const
+uint32_t MmtStream::getAuIndex() const
 {
     return auIndex;
 }

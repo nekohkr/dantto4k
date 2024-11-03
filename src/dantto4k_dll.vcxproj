@@ -162,7 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="accessControlDescriptor.cpp" />
-    <ClCompile Include="audioMpuDataProcessor.cpp" />
+    <ClCompile Include="audioMfuDataProcessor.cpp" />
     <ClCompile Include="acascard.cpp" />
     <ClCompile Include="adtsConverter.cpp" />
     <ClCompile Include="bonTuner.cpp" />
@@ -178,7 +178,7 @@
     <ClCompile Include="multimediaServiceInformationDescriptor.cpp" />
     <ClCompile Include="tlvDescriptorFactory.cpp" />
     <ClCompile Include="tlvTableFactory.cpp" />
-    <ClCompile Include="videoMpuDataProcessor.cpp" />
+    <ClCompile Include="videoMfuDataProcessor.cpp" />
     <ClCompile Include="ipv6Header.cpp" />
     <ClCompile Include="m2SectionMessage.cpp" />
     <ClCompile Include="m2ShortSectionMessage.cpp" />
@@ -204,12 +204,12 @@
     <ClCompile Include="mmtDescriptors.cpp" />
     <ClCompile Include="mmtGeneralLocationInfo.cpp" />
     <ClCompile Include="remuxerHandler.cpp" />
-    <ClCompile Include="mpuStream.cpp" />
+    <ClCompile Include="mmtStream.cpp" />
     <ClCompile Include="mmtTlvDemuxer.cpp" />
     <ClCompile Include="mpt.cpp" />
     <ClCompile Include="mpu.cpp" />
     <ClCompile Include="fragmentAssembler.cpp" />
-    <ClCompile Include="mpuDataProcessorFactory.cpp" />
+    <ClCompile Include="mfuDataProcessorFactory.cpp" />
     <ClCompile Include="mpuExtendedTimestampDescriptor.cpp" />
     <ClCompile Include="mpuTimestampDescriptor.cpp" />
     <ClCompile Include="networkNameDescriptor.cpp" />
@@ -224,12 +224,12 @@
     <ClCompile Include="smartcard.cpp" />
     <ClCompile Include="tlvDescriptors.cpp" />
     <ClCompile Include="transmissionControlSignal.cpp" />
-    <ClCompile Include="subtitleMpuDataProcessor.cpp" />
+    <ClCompile Include="subtitleMfuDataProcessor.cpp" />
     <ClCompile Include="videoComponentDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="accessControlDescriptor.h" />
-    <ClInclude Include="audioMpuDataProcessor.h" />
+    <ClInclude Include="audioMfuDataProcessor.h" />
     <ClInclude Include="acascard.h" />
     <ClInclude Include="adtsConverter.h" />
     <ClInclude Include="bonTuner.h" />
@@ -248,7 +248,7 @@
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
     <ClInclude Include="tlvDescriptorFactory.h" />
     <ClInclude Include="tlvTableFactory.h" />
-    <ClInclude Include="videoMpuDataProcessor.h" />
+    <ClInclude Include="videoMfuDataProcessor.h" />
     <ClInclude Include="IBonDriver.h" />
     <ClInclude Include="ip.h" />
     <ClInclude Include="ipv6Header.h" />
@@ -275,12 +275,12 @@
     <ClInclude Include="mmtDescriptors.h" />
     <ClInclude Include="mmtGeneralLocationInfo.h" />
     <ClInclude Include="remuxerHandler.h" />
-    <ClInclude Include="mpuStream.h" />
+    <ClInclude Include="mmtStream.h" />
     <ClInclude Include="mpt.h" />
     <ClInclude Include="mpu.h" />
     <ClInclude Include="fragmentAssembler.h" />
-    <ClInclude Include="mpuDataProcessorBase.h" />
-    <ClInclude Include="mpuDataProcessorFactory.h" />
+    <ClInclude Include="mfuDataProcessorBase.h" />
+    <ClInclude Include="mfuDataProcessorFactory.h" />
     <ClInclude Include="mpuExtendedTimestampDescriptor.h" />
     <ClInclude Include="mpuTimestampDescriptor.h" />
     <ClInclude Include="networkNameDescriptor.h" />
@@ -299,7 +299,7 @@
     <ClInclude Include="tlvDescriptors.h" />
     <ClInclude Include="tlvTableBase.h" />
     <ClInclude Include="transmissionControlSignal.h" />
-    <ClInclude Include="subtitleMpuDataProcessor.h" />
+    <ClInclude Include="subtitleMfuDataProcessor.h" />
     <ClInclude Include="videoComponentDescriptor.h" />
     <ClInclude Include="IBonDriver2.h" />
     <ClInclude Include="mmtDescriptorBase.h" />

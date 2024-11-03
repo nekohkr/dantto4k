@@ -2,8 +2,8 @@
 
 namespace MmtTlv {
 
-struct MpuData;
-class MpuStream;
+struct MfuData;
+class MmtStream;
 class Ecm;
 class MhCdt;
 class MhEit;
@@ -18,9 +18,9 @@ public:
 	virtual ~DemuxerHandler() = default;
 
 	// MPU data
-	virtual void onVideoData(const std::shared_ptr<MpuStream> mpuStream, const std::shared_ptr<struct MpuData>& mpuData) {}
-	virtual void onAudioData(const std::shared_ptr<MpuStream> mpuStream, const std::shared_ptr<struct MpuData>& mpuData) {}
-	virtual void onSubtitleData(const std::shared_ptr<MpuStream> mpuStream, const std::shared_ptr<struct MpuData>& mpuData) {}
+	virtual void onVideoData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
+	virtual void onAudioData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
+	virtual void onSubtitleData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
 
 	// MMT message
 	virtual void onEcm(const std::shared_ptr<Ecm>& ecm) {}
@@ -33,7 +33,9 @@ public:
 
 	// TLV message
 	virtual void onNit(const std::shared_ptr<Nit>& nit) {}
-
+	
+	
+	virtual void onStreamsChanged() {}
 };
 
 }
