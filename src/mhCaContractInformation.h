@@ -1,14 +1,17 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
 #include <list>
+
+namespace MmtTlv {
+
 class MhCaContractInformation
-    : public MmtDescriptor<0x8041> {
+    : public MmtDescriptorTemplate<0x8041> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     uint16_t caSystemId;
-    uint8_t caUnitId; //4 bits
-    uint8_t numOfComponent; //4 bits
+    uint8_t caUnitId;
+    uint8_t numOfComponent;
 
     std::list<uint16_t> componentTags;
 
@@ -19,3 +22,5 @@ public:
     std::string feeName;
 
 };
+
+}

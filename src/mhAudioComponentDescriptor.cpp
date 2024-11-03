@@ -1,13 +1,15 @@
 #include "mhAudioComponentDescriptor.h"
 
-bool MhAudioComponentDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhAudioComponentDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         uint8_t uint8 = nstream.get8U();
         streamContent = uint8 & 0b00001111;
@@ -43,4 +45,6 @@ bool MhAudioComponentDescriptor::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

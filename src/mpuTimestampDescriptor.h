@@ -1,10 +1,12 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MpuTimestampDescriptor
-	: public MmtDescriptor<0x0001> {
+	: public MmtDescriptorTemplate<0x0001> {
 public:
-	bool unpack(Stream& stream) override;
+	bool unpack(Common::Stream& stream) override;
 
 	class Entry {
 	public:
@@ -14,3 +16,5 @@ public:
 
 	std::vector<Entry> entries;
 };
+
+}

@@ -1,14 +1,12 @@
 #include "mhSdt.h"
 #include "mhServiceDescriptor.h"
 
-MhSdt::~MhSdt()
-{
-}
+namespace MmtTlv {
 
-bool MhSdt::unpack(Stream& stream)
+bool MhSdt::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtTable::unpack(stream)) {
+        if (!MmtTableBase::unpack(stream)) {
             return false;
         }
 
@@ -26,7 +24,7 @@ bool MhSdt::unpack(Stream& stream)
         stream.skip(1);
 
         while (stream.leftBytes() > 4) {
-            std::shared_ptr<MhSdtService> service = std::make_shared<MhSdtService>();
+            std::shared_ptr<Service> service = std::make_shared<Service>();
             if (!service->unpack(stream)) {
                 return false;
             }
@@ -44,14 +42,10 @@ bool MhSdt::unpack(Stream& stream)
         return false;
     }
 
-	return true;
+    return true;
 }
 
-MhSdtService::~MhSdtService()
-{
-}
-
-bool MhSdtService::unpack(Stream& stream)
+bool MhSdt::Service::unpack(Common::Stream& stream)
 {
     if (stream.leftBytes() < 2 + 1 + 2) {
         return false;
@@ -73,9 +67,11 @@ bool MhSdtService::unpack(Stream& stream)
         return false;
     }
 
-    Stream nstream(stream, descriptorsLoopLength);
+    Common::Stream nstream(stream, descriptorsLoopLength);
     descriptors.unpack(nstream);
     stream.skip(descriptorsLoopLength);
 
     return true;
+}
+
 }

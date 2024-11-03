@@ -1,9 +1,11 @@
 #include "plt.h"
 
-bool Plt::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool Plt::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtTable::unpack(stream)) {
+		if (!MmtTableBase::unpack(stream)) {
 			return false;
 		}
 
@@ -12,9 +14,9 @@ bool Plt::unpack(Stream& stream)
 		numOfPackage = stream.get8U();
 
 		for (int i = 0; i < numOfPackage; i++) {
-			PltItem item;
+			Entry item;
 			item.unpack(stream);
-			items.push_back(item);
+			entries.push_back(item);
 		}
 	}
 	catch (const std::out_of_range&) {
@@ -23,7 +25,7 @@ bool Plt::unpack(Stream& stream)
 	return true;
 }
 
-bool PltItem::unpack(Stream& stream)
+bool Plt::Entry::unpack(Common::Stream& stream)
 {
 	try {
 		mmtPackageIdLength = stream.get8U();
@@ -41,4 +43,6 @@ bool PltItem::unpack(Stream& stream)
 	}
 
 	return true;
+}
+
 }

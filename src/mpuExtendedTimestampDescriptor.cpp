@@ -1,9 +1,11 @@
 #include "mpuExtendedTimestampDescriptor.h"
 
-bool MpuExtendedTimestampDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MpuExtendedTimestampDescriptor::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtDescriptor::unpack(stream)) {
+		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
@@ -20,7 +22,7 @@ bool MpuExtendedTimestampDescriptor::unpack(Stream& stream)
 		}
 
 		entries.reserve(50);
-		while (!stream.isEOF()) {
+		while (!stream.isEof()) {
 			Entry entry;
 			entry.unpack(stream, ptsOffsetType, defaultPtsOffset);
 
@@ -34,7 +36,7 @@ bool MpuExtendedTimestampDescriptor::unpack(Stream& stream)
 	return true;
 }
 
-bool MpuExtendedTimestampDescriptor::Entry::unpack(Stream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset)
+bool MpuExtendedTimestampDescriptor::Entry::unpack(Common::Stream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset)
 {
 	try {
 		mpuSequenceNumber = stream.getBe32U();
@@ -61,4 +63,6 @@ bool MpuExtendedTimestampDescriptor::Entry::unpack(Stream& stream, uint8_t ptsOf
 	}
 
 	return true;
+}
+
 }

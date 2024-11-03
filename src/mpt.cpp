@@ -1,9 +1,11 @@
 #include "mpt.h"
 
-bool Mpt::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool Mpt::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtTable::unpack(stream)) {
+		if (!MmtTableBase::unpack(stream)) {
 			return false;
 		}
 
@@ -22,12 +24,14 @@ bool Mpt::unpack(Stream& stream)
 		stream.read(mmtPackageIdByte.data(), mmtPackageIdLength);
 
 		mptDescriptorsLength = stream.getBe16U();
-		mptDescriptorsByte.resize(mptDescriptorsLength);
-		stream.read(mptDescriptorsByte.data(), mptDescriptorsLength);
+		
+		Common::Stream nstream(stream, mptDescriptorsLength);
+		descriptors.unpack(nstream);
+		stream.skip(mptDescriptorsLength);
 
 		numberOfAssets = stream.get8U();
 		for (int i = 0; i < numberOfAssets; i++) {
-			MptAsset asset;
+			Asset asset;
 			asset.unpack(stream);
 			assets.push_back(asset);
 		}
@@ -39,7 +43,7 @@ bool Mpt::unpack(Stream& stream)
 	return true;
 }
 
-bool MptAsset::unpack(Stream& stream)
+bool Mpt::Asset::unpack(Common::Stream& stream)
 {
 	try {
 		identifierType = stream.get8U();
@@ -62,7 +66,7 @@ bool MptAsset::unpack(Stream& stream)
 
 		assetDescriptorsLength = stream.getBe16U();
 
-		Stream nstream(stream, assetDescriptorsLength);
+		Common::Stream nstream(stream, assetDescriptorsLength);
 		descriptors.unpack(nstream);
 		stream.skip(assetDescriptorsLength);
 	}
@@ -70,4 +74,6 @@ bool MptAsset::unpack(Stream& stream)
 		return false;
 	}
 	return true;
+}
+
 }

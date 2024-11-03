@@ -1,31 +1,29 @@
 #pragma once
-#include "mmtTable.h"
-#include "mmtp.h"
-#include "mmtDescriptors.h"
 #include <list>
+#include "mmtTableBase.h"
+#include "mmtDescriptors.h"
 
-class MmtDescriptorBase;
+namespace MmtTlv {
 
-class MhSdtService {
+// Mh-Service Description Table 
+class MhSdt : public MmtTableBase {
 public:
-    virtual ~MhSdtService();
-    bool unpack(Stream& stream);
+    bool unpack(Common::Stream& stream);
 
-    uint16_t serviceId;
-    int8_t eitUserDefinedFlags;
-    bool eitScheduleFlag;
-    bool eitPresentFollowingFlag;
-    uint8_t runningStatus;
-    bool freeCaMode;
-    uint16_t descriptorsLoopLength;
+    class Service {
+    public:
+        bool unpack(Common::Stream& stream);
 
-    MmtDescriptors descriptors;
-};
+        uint16_t serviceId;
+        int8_t eitUserDefinedFlags;
+        bool eitScheduleFlag;
+        bool eitPresentFollowingFlag;
+        uint8_t runningStatus;
+        bool freeCaMode;
+        uint16_t descriptorsLoopLength;
 
-class MhSdt : public MmtTable {
-public:
-    virtual ~MhSdt();
-    bool unpack(Stream& stream);
+        MmtDescriptors descriptors;
+    };
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
@@ -37,6 +35,8 @@ public:
 
     uint16_t originalNetworkId;
 
-    std::list<std::shared_ptr<MhSdtService>> services;
+    std::list<std::shared_ptr<Service>> services;
     uint32_t crc32;
 };
+
+}

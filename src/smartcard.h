@@ -1,15 +1,14 @@
 #pragma once
-#ifndef SMARTCARD_H
-#define SMARTCARD_H
-
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
+#define _WINSOCKAPI_
 #include <Windows.h>
 #include <winscard.h>
-
 #pragma comment(lib, "Winscard.lib")
+
+namespace MmtTlv::Acas {
 
 class ApduResponse {
 public:
@@ -64,7 +63,7 @@ public:
         return apdu;
     }
 
-protected:
+private:
     uint8_t cla;
     uint8_t ins;
     uint8_t p1;
@@ -73,20 +72,16 @@ protected:
 
 class SmartCard {
 public:
-    SmartCard();
-    ~SmartCard();
-
     bool initCard();
     bool isConnected();
     void connect();
     ApduResponse transmit(const std::vector<BYTE>& sendData);
-
     void disconnect();
 
-protected:
+private:
     SCARDCONTEXT hContext = NULL;
     SCARDHANDLE hCard = NULL;
     DWORD dwActiveProtocol = 0;
-
 };
-#endif
+
+}

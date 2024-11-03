@@ -1,13 +1,15 @@
 #include "mhEventGroupDescriptor.h"
 
-bool MhEventGroupDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhEventGroupDescriptor::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtDescriptor::unpack(stream)) {
+		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-		Stream nstream(stream, descriptorLength);
+		Common::Stream nstream(stream, descriptorLength);
 
 		uint8_t uint8 = nstream.get8U();
 		groupType = (uint8 & 0b11110000) >> 4;
@@ -20,7 +22,7 @@ bool MhEventGroupDescriptor::unpack(Stream& stream)
 		}
 
 		if (groupType == 4 || groupType == 5) {
-			while (!nstream.isEOF()) {
+			while (!nstream.isEof()) {
 				OtherNetworkEvent otherNetworkEvent;
 				otherNetworkEvent.unpack(nstream);
 				otherNetworkEvents.push_back(otherNetworkEvent);
@@ -40,18 +42,20 @@ bool MhEventGroupDescriptor::unpack(Stream& stream)
 	return true;
 }
 
-bool MhEventGroupDescriptor::Event::unpack(Stream& stream)
+bool MhEventGroupDescriptor::Event::unpack(Common::Stream& stream)
 {
 	serviceId = stream.getBe16U();
 	eventId = stream.getBe16U();
 	return true;
 }
 
-bool MhEventGroupDescriptor::OtherNetworkEvent::unpack(Stream& stream)
+bool MhEventGroupDescriptor::OtherNetworkEvent::unpack(Common::Stream& stream)
 {
 	originalNetworkId = stream.getBe16U();
 	tlvStreamId = stream.getBe16U();
 	serviceId = stream.getBe16U();
 	eventId = stream.getBe16U();
 	return true;
+}
+
 }

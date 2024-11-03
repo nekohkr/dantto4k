@@ -1,15 +1,17 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
 #include <list>
 
+namespace MmtTlv {
+
 class MhContentDescriptor
-    : public MmtDescriptor<0x8012> {
+    : public MmtDescriptorTemplate<0x8012> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     class Entry {
     public:
-        bool unpack(Stream& stream);
+        bool unpack(Common::Stream& stream);
 
         uint8_t contentNibbleLevel1;
         uint8_t contentNibbleLevel2;
@@ -19,3 +21,5 @@ public:
 
     std::list<Entry> entries;
 };
+
+}

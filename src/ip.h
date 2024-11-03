@@ -1,6 +1,10 @@
 #pragma once
 
-struct nn_in6_addr
+namespace MmtTlv {
+
+namespace Common {
+
+struct in6_addr
 {
 	union
 	{
@@ -9,3 +13,7 @@ struct nn_in6_addr
 		uint32_t                u6_addr32[4];
 	} in6_u;
 };
+
+}
+
+}

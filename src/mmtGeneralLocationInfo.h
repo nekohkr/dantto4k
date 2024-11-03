@@ -1,17 +1,24 @@
 #pragma once
+#include <vector>
 #include "stream.h"
 #include "ip.h"
 
+namespace MmtTlv {
+	
+namespace Common {
+	class Stream;
+}
+
 class MmtGeneralLocationInfo {
 public:
-	bool unpack(Stream& stream);
+	bool unpack(Common::Stream& stream);
 
 	uint8_t locationType;
 	uint16_t packetId;
 	uint32_t ipv4SrcAddr;
 	uint32_t ipv4DstAddr;
-	struct nn_in6_addr ipv6SrcAddr;
-	struct nn_in6_addr ipv6DstAddr;
+	struct Common::in6_addr ipv6SrcAddr;
+	struct Common::in6_addr ipv6DstAddr;
 	uint16_t dstPort;
 	uint16_t networkId;
 
@@ -22,3 +29,5 @@ public:
 	uint8_t urlLength;
 	std::vector<uint8_t> urlByte;
 };
+
+}

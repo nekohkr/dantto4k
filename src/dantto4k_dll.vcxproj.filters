@@ -1,304 +1,479 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="dantto4k.cpp" />
-    <ClCompile Include="mmtMessageHandler.cpp" />
     <ClCompile Include="acascard.cpp">
-      <Filter>acas</Filter>
+      <Filter>mmttlv\acas</Filter>
     </ClCompile>
     <ClCompile Include="bonTuner.cpp">
-      <Filter>bondriver</Filter>
+      <Filter>dantto4k\bondriver</Filter>
     </ClCompile>
     <ClCompile Include="config.cpp">
-      <Filter>config</Filter>
+      <Filter>dantto4k\config</Filter>
     </ClCompile>
     <ClCompile Include="mhEit.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="mhSdt.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="plt.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="mpt.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="mhTot.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="mhAudioComponentDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhContentDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhExtendedEventDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhServiceDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhShortEventDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
-    </ClCompile>
-    <ClCompile Include="mmtGeneralLocationInfo.cpp">
-      <Filter>mmttlv</Filter>
-    </ClCompile>
-    <ClCompile Include="mmtTable.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="smartcard.cpp">
-      <Filter>acas</Filter>
+      <Filter>mmttlv\acas</Filter>
     </ClCompile>
     <ClCompile Include="videoComponentDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mpuTimestampDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mpuExtendedTimestampDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
-    </ClCompile>
-    <ClCompile Include="tlv.cpp">
-      <Filter>mmttlv</Filter>
-    </ClCompile>
-    <ClCompile Include="tlvNit.cpp">
-      <Filter>mmttlv</Filter>
-    </ClCompile>
-    <ClCompile Include="mmtp.cpp">
-      <Filter>mmttlv</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="ecm.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="stream.cpp">
-      <Filter>stream</Filter>
+      <Filter>mmttlv\common</Filter>
     </ClCompile>
-    <ClCompile Include="mmttlvdemuxer.cpp">
+    <ClCompile Include="mmtTlvDemuxer.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
     <ClCompile Include="mmtDescriptors.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="adtsConverter.cpp">
-      <Filter>adts</Filter>
+      <Filter>dantto4k\adts</Filter>
     </ClCompile>
-    <ClCompile Include="hevcMpuDataProcessor.cpp">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+    <ClCompile Include="videoMpuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClCompile>
-    <ClCompile Include="mmtStream.cpp">
+    <ClCompile Include="mpuStream.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
     <ClCompile Include="mpuDataProcessorFactory.cpp">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClCompile>
-    <ClCompile Include="aacMpuDataProcessor.cpp">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+    <ClCompile Include="audioMpuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClCompile>
-    <ClCompile Include="ttmlMpuDataProcessor.cpp">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+    <ClCompile Include="subtitleMpuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClCompile>
-    <ClCompile Include="mpuAssembler.cpp">
+    <ClCompile Include="fragmentAssembler.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
     <ClCompile Include="eventPackageDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhLinkageDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhEventGroupDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhParentalRatingDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhSeriesDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhCaContractInformation.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhLogoTransmissionDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhCdt.cpp">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClCompile>
     <ClCompile Include="mhStreamIdentificationDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
     <ClCompile Include="mhDataComponentDescriptor.cpp">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="dantto4k.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="remuxerHandler.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtGeneralLocationInfo.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="paMessage.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="m2SectionMessage.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="m2ShortSectionMessage.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="dataUnit.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="mpu.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="signalingMessage.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="extensionHeaderScrambling.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="mmt.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="tlv.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="transmissionControlSignal.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="compressedIPPacket.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="ipv6Header.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="nit.cpp">
+      <Filter>mmttlv\tlv\tables</Filter>
+    </ClCompile>
+    <ClCompile Include="serviceListDescriptor.cpp">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="networkNameDescriptor.cpp">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="remoteControlKeyDescriptor.cpp">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="tlvDescriptors.cpp">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="tlvDescriptorFactory.cpp">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtDescriptorFactory.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mmtTableFactory.cpp">
+      <Filter>mmttlv\mmt\tables</Filter>
+    </ClCompile>
+    <ClCompile Include="tlvTableFactory.cpp">
+      <Filter>mmttlv\tlv\tables</Filter>
+    </ClCompile>
+    <ClCompile Include="contentCopyControlDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="multimediaServiceInformationDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="accessControlDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mmtMessageHandler.h" />
     <ClInclude Include="bonTuner.h">
-      <Filter>bondriver</Filter>
+      <Filter>dantto4k\bondriver</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
-      <Filter>config</Filter>
+      <Filter>dantto4k\config</Filter>
     </ClInclude>
     <ClInclude Include="mhEit.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="mhSdt.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="plt.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="mpt.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="mhTot.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="mhAudioComponentDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhContentDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhExtendedEventDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhServiceDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhShortEventDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
-    <ClInclude Include="mmtGeneralLocationInfo.h">
-      <Filter>mmttlv</Filter>
-    </ClInclude>
-    <ClInclude Include="mmtTable.h">
-      <Filter>mmttlv\tables</Filter>
+    <ClInclude Include="mmtTableBase.h">
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="smartcard.h">
-      <Filter>acas</Filter>
+      <Filter>mmttlv\acas</Filter>
     </ClInclude>
     <ClInclude Include="videoComponentDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mpuTimestampDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mpuExtendedTimestampDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
-    </ClInclude>
-    <ClInclude Include="tlv.h">
-      <Filter>mmttlv</Filter>
-    </ClInclude>
-    <ClInclude Include="tlvNit.h">
-      <Filter>mmttlv</Filter>
-    </ClInclude>
-    <ClInclude Include="mmtp.h">
-      <Filter>mmttlv</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="IBonDriver.h">
-      <Filter>bondriver</Filter>
+      <Filter>dantto4k\bondriver</Filter>
     </ClInclude>
     <ClInclude Include="ecm.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="stream.h">
-      <Filter>stream</Filter>
-    </ClInclude>
-    <ClInclude Include="dantto4k.h" />
-    <ClInclude Include="ip.h">
-      <Filter>mmttlv</Filter>
+      <Filter>mmttlv\common</Filter>
     </ClInclude>
     <ClInclude Include="mmtDescriptors.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="adtsConverter.h">
-      <Filter>adts</Filter>
+      <Filter>dantto4k\adts</Filter>
     </ClInclude>
     <ClInclude Include="mpuDataProcessorBase.h">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClInclude>
-    <ClInclude Include="hevcMpuDataProcessor.h">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+    <ClInclude Include="videoMpuDataProcessor.h">
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClInclude>
-    <ClInclude Include="mmtStream.h">
+    <ClInclude Include="mpuStream.h">
       <Filter>mmttlv</Filter>
     </ClInclude>
     <ClInclude Include="mpuDataProcessorFactory.h">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClInclude>
-    <ClInclude Include="aacMpuDataProcessor.h">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+    <ClInclude Include="audioMpuDataProcessor.h">
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClInclude>
-    <ClInclude Include="ttmlMpuDataProcessor.h">
-      <Filter>mmttlv\mpuDataProcessor</Filter>
+    <ClInclude Include="subtitleMpuDataProcessor.h">
+      <Filter>mmttlv\mmt\mpuData</Filter>
     </ClInclude>
-    <ClInclude Include="mpuAssembler.h">
+    <ClInclude Include="fragmentAssembler.h">
       <Filter>mmttlv</Filter>
     </ClInclude>
-    <ClInclude Include="acascard.h" />
-    <ClInclude Include="IBonDriver2.h" />
-    <ClInclude Include="mmtDescriptor.h" />
-    <ClInclude Include="mmttlvdemuxer.h" />
     <ClInclude Include="eventPackageDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhLinkageDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhEventGroupDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhParentalRatingDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhSeriesDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhCaContractInformation.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhLogoTransmissionDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhCdt.h">
-      <Filter>mmttlv\tables</Filter>
+      <Filter>mmttlv\mmt\tables</Filter>
     </ClInclude>
     <ClInclude Include="mhStreamIdentificationDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="mhDataComponentDescriptor.h">
-      <Filter>mmttlv\descriptors</Filter>
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="IBonDriver2.h">
+      <Filter>dantto4k\bondriver</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtTlvDemuxer.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtDescriptorBase.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="acascard.h">
+      <Filter>mmttlv\acas</Filter>
+    </ClInclude>
+    <ClInclude Include="dantto4k.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="remuxerHandler.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtGeneralLocationInfo.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="paMessage.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="m2SectionMessage.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="m2ShortSectionMessage.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="dataUnit.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="mpu.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="signalingMessage.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="extensionHeaderScrambling.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="mmt.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="swap.h">
+      <Filter>mmttlv\common</Filter>
+    </ClInclude>
+    <ClInclude Include="tlv.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="transmissionControlSignal.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="compressedIPPacket.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="ipv6Header.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="nit.h">
+      <Filter>mmttlv\tlv\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="tlvTableBase.h">
+      <Filter>mmttlv\tlv\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="tlvDescriptorBase.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="serviceListDescriptor.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="networkNameDescriptor.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="remoteControlKeyDescriptor.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="tlvDescriptors.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="ip.h">
+      <Filter>mmttlv\common</Filter>
+    </ClInclude>
+    <ClInclude Include="demuxerHandler.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="tlvDescriptorFactory.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtDescriptorFactory.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtTableFactory.h">
+      <Filter>mmttlv\mmt\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="tlvTableFactory.h">
+      <Filter>mmttlv\tlv\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="mmtFragment.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="contentCopyControlDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="multimediaServiceInformationDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="accessControlDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="acas">
-      <UniqueIdentifier>{5dccb4d7-560f-4244-9d84-334de3cf19f2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mmttlv">
       <UniqueIdentifier>{4f5b7383-f468-4008-b0d7-ba1a595e01c0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="bondriver">
-      <UniqueIdentifier>{2ed2741f-a39d-4175-b9e8-d350d2a84927}</UniqueIdentifier>
+    <Filter Include="mmttlv\acas">
+      <UniqueIdentifier>{5dccb4d7-560f-4244-9d84-334de3cf19f2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="config">
+    <Filter Include="dantto4k">
+      <UniqueIdentifier>{89d5921c-1305-4fcd-9b4b-b323b85b8375}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dantto4k\config">
       <UniqueIdentifier>{0392b5d1-6a98-4ab7-bab9-4649b64a3cef}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mmttlv\tables">
-      <UniqueIdentifier>{5342f4c7-f651-438c-aecb-3f4a6793dd34}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mmttlv\descriptors">
-      <UniqueIdentifier>{8439f5b9-7d80-4b3e-a5b0-c43597f4c780}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="stream">
-      <UniqueIdentifier>{f40fdc0c-24bd-44cd-9272-d96c62b86634}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="adts">
+    <Filter Include="dantto4k\adts">
       <UniqueIdentifier>{b026877e-512f-4823-9779-1a919bfb08bd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mmttlv\mpuDataProcessor">
+    <Filter Include="dantto4k\bondriver">
+      <UniqueIdentifier>{2ed2741f-a39d-4175-b9e8-d350d2a84927}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\common">
+      <UniqueIdentifier>{f40fdc0c-24bd-44cd-9272-d96c62b86634}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mmt">
+      <UniqueIdentifier>{acbcb1cb-d4f0-4734-b400-23136ea9b777}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mmt\structs">
+      <UniqueIdentifier>{1de159de-adf7-4bbf-9464-7d8bea62cab7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mmt\tables">
+      <UniqueIdentifier>{5342f4c7-f651-438c-aecb-3f4a6793dd34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mmt\descriptors">
+      <UniqueIdentifier>{8439f5b9-7d80-4b3e-a5b0-c43597f4c780}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\tlv">
+      <UniqueIdentifier>{cc259d6d-f43c-48ee-a83c-343ef27089a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\tlv\structs">
+      <UniqueIdentifier>{4234337d-71b8-48ab-b08d-cd06ed85a366}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\tlv\descriptors">
+      <UniqueIdentifier>{9ffe2bba-aa06-4e62-8810-99e17034fbdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\tlv\tables">
+      <UniqueIdentifier>{5028c261-c9a8-4e76-ba4b-ba2fcbea2d44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\mmt\mpuData">
       <UniqueIdentifier>{39e74407-f57e-47e0-97fc-4c84f854aa1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

@@ -1,9 +1,11 @@
 #include "ecm.h"
 
-bool Ecm::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool Ecm::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtTable::unpack(stream)) {
+        if (!MmtTableBase::unpack(stream)) {
             return false;
         }
 
@@ -28,4 +30,6 @@ bool Ecm::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

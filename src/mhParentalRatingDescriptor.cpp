@@ -1,15 +1,17 @@
 #include "mhParentalRatingDescriptor.h"
 
-bool MhParentalRatingDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhParentalRatingDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
-        while (!nstream.isEOF()) {
+        while (!nstream.isEof()) {
             Entry entry;
             entry.unpack(nstream);
             entries.push_back(entry);
@@ -24,11 +26,13 @@ bool MhParentalRatingDescriptor::unpack(Stream& stream)
     return true;
 }
 
-bool MhParentalRatingDescriptor::Entry::unpack(Stream& stream) {
+bool MhParentalRatingDescriptor::Entry::unpack(Common::Stream& stream) {
     stream.read(countryCode, 3);
     countryCode[3] = '\0';
 
     rating = stream.get8U();
 
     return true;
+}
+
 }

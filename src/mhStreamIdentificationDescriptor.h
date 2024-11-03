@@ -1,11 +1,15 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MhStreamIdentificationDescriptor
-	: public MmtDescriptor<0x8011> {
+	: public MmtDescriptorTemplate<0x8011> {
 public:
-	bool unpack(Stream& stream) override;
+	bool unpack(Common::Stream& stream) override;
 
 	uint16_t componentTag;
 
 };
+
+}

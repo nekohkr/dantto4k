@@ -1,11 +1,15 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MhDataComponentDescriptor
-    : public MmtDescriptor<0x8020> {
+    : public MmtDescriptorTemplate<0x8020> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     uint16_t dataComponentId;
     std::vector<uint8_t> additionalDataComponentInfo;
 };
+
+}

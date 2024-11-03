@@ -1,6 +1,8 @@
 #include "mmtGeneralLocationInfo.h"
 
-bool MmtGeneralLocationInfo::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MmtGeneralLocationInfo::unpack(Common::Stream& stream)
 {
 	uint16_t uint16;
 
@@ -51,4 +53,6 @@ bool MmtGeneralLocationInfo::unpack(Stream& stream)
 	}
 
 	return true;
+}
+
 }

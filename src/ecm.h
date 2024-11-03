@@ -1,9 +1,12 @@
 #pragma once
-#include "mmtTable.h"
+#include "mmtTableBase.h"
 
-class Ecm : public MmtTable {
+namespace MmtTlv {
+
+// Entitlement Control Message
+class Ecm : public MmtTableBase {
 public:
-    bool unpack(Stream& stream);
+    bool unpack(Common::Stream& stream);
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
@@ -17,3 +20,5 @@ public:
 
     uint32_t crc32;
 };
+
+}

@@ -1,9 +1,11 @@
 #include "mhCdt.h"
 
-bool MhCdt::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhCdt::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtTable::unpack(stream)) {
+        if (!MmtTableBase::unpack(stream)) {
             return false;
         }
 
@@ -30,7 +32,7 @@ bool MhCdt::unpack(Stream& stream)
             return false;
         }
 
-        Stream nstream(stream, descriptorsLoopLength);
+        Common::Stream nstream(stream, descriptorsLoopLength);
         descriptors.unpack(nstream);
         stream.skip(descriptorsLoopLength);
 
@@ -48,4 +50,6 @@ bool MhCdt::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

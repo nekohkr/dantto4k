@@ -2,17 +2,20 @@
 #define _WINSOCKAPI_
 #include <windows.h>
 #include <vector>
-#include "stream.h"
-#include "acascard.h"
 #include <map>
 #include <list>
-#include "mmtp.h"
-#include "tlv.h"
 #include <tsduck.h>
+
+#include "stream.h"
+#include "acascard.h"
+#include "mmt.h"
+#include "tlv.h"
+#include "mpu.h"
 #include "mpuExtendedTimestampDescriptor.h"
 #include "mpuTimestampDescriptor.h"
 #include "mpt.h"
-#include "mmtStream.h"
+#include "mpuStream.h"
+#include "compressedIPPacket.h"
 #include "mpuDataProcessorBase.h"
 
 extern "C" {
@@ -20,71 +23,75 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-enum {
-	PA_MESSAGE_ID = 0x0000,
-	M2_SECTION_MESSAGE = 0x8000,
-	M2_SHORT_SECTION_MESSAGE = 0x8002,
+namespace MmtTlv {
+
+enum class MmtMessageId {
+	PaMessage = 0x0000,
+	M2SectionMessage = 0x8000,
+	M2ShortSectionMessage = 0x8002,
 };
 
-
-
-class MpuAssembler;
-class MmtTable;
+class FragmentAssembler;
+class TableBase;
 class Plt;
-class TlvTable;
 class Ecm;
+class TlvTableBase;
+class DemuxerHandler;
+
 class MmtTlvDemuxer {
 public:
 	MmtTlvDemuxer();
 	bool init();
-	int processPacket(StreamBase& stream);
+	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
+	int processPacket(Common::StreamBase& stream);
 	void clear();
 
-protected:
-	void processMpu(Stream& stream);
-	void processMpuData(Stream& stream);
+private:
+	void processMpu(Common::Stream& stream);
+	void processMpuData(Common::Stream& stream);
 
-	void processSignalingMessages(Stream& stream);
-	void processSignalingMessage(Stream& stream);
+	void processSignalingMessages(Common::Stream& stream);
+	void processSignalingMessage(Common::Stream& stream);
 
-	bool isVaildTlv(StreamBase& stream) const;
+	bool isVaildTlv(Common::StreamBase& stream) const;
 
-	void processPaMessage(Stream& stream);
-	void processM2SectionMessage(Stream& stream);
-	void processM2ShortSectionMessage(Stream& stream);
+	void processPaMessage(Common::Stream& stream);
+	void processM2SectionMessage(Common::Stream& stream);
+	void processM2ShortSectionMessage(Common::Stream& stream);
+	
+	void processTlvTable(Common::Stream& stream);
+	void processMmtTable(Common::Stream& stream);
 
-	void processTable(Stream& stream);
 	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
-	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream> MmtStream);
-	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream> MmtStream);
+	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MpuStream> MpuStream);
+	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MpuStream> MpuStream);
 
 	void processEcm(std::shared_ptr<Ecm> ecm);
 
+private:
+	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
+	std::shared_ptr<MpuStream> getStream(uint16_t pid, bool create);
 
+	std::shared_ptr<Acas::SmartCard> smartCard;
+	std::shared_ptr<Acas::AcasCard> acasCard;
 
-protected:
-	std::shared_ptr<MpuAssembler> getAssembler(uint16_t pid);
-	std::shared_ptr<MmtStream> getStream(uint16_t pid, bool create = false);
-	
-	std::shared_ptr<SmartCard> smartCard;
-	std::shared_ptr<AcasCard> acasCard;
+	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
 
-	std::map<uint16_t, std::shared_ptr<MpuAssembler>> mapAssembler;
-	
-	TLVPacket tlv;
+	Tlv tlv;
 	CompressedIPPacket compressedIPPacket;
-	Mmtp mmtp;
+	Mmt mmt;
 	Mpu mpu;
 
 	ts::DuckContext duck;
 	uint32_t streamIndex = 0;
 
 	std::map<uint16_t, std::vector<uint8_t>> mpuData;
+	DemuxerHandler* demuxerHandler = nullptr;
 
 public:
-	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
+	std::shared_ptr<MpuStream> getStream(uint16_t pid);
 
-	std::list<std::shared_ptr<MpuData>> mpuDatas;
-	std::list<std::shared_ptr<MmtTable>> tables;
-	std::list<std::shared_ptr<TlvTable>> tlvTables;
+	std::map<uint16_t, std::shared_ptr<MpuStream>> mapStream;
+
 };
+}

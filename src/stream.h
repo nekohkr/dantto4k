@@ -4,16 +4,18 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include "swap.h"
 
-uint16_t swapEndian16(uint16_t num);
-uint32_t swapEndian32(uint32_t num);
-uint64_t swapEndian64(uint64_t num);
+namespace MmtTlv {
+    
+namespace Common {
 
 class StreamBase {
 public:
-    virtual ~StreamBase() {};
+    explicit StreamBase() = default;
+    virtual ~StreamBase() = default;
 
-    virtual bool isEOF() const { return true; }
+    virtual bool isEof() const { return true; }
 
     virtual size_t leftBytes() { return 0; }
 
@@ -72,16 +74,22 @@ public:
     }
 
 };
+
 class Stream : public StreamBase {
 public:
-    Stream(const std::vector<uint8_t>& data);
-    Stream(const std::vector<uint8_t>& data, uint32_t size);
-    Stream(Stream& stream, uint32_t size);
-    Stream(Stream& stream);
+    explicit Stream(const std::vector<uint8_t>& data);
+    explicit Stream(const std::vector<uint8_t>& data, uint32_t size);
+    explicit Stream(Stream& stream, uint32_t size);
+    explicit Stream(Stream& stream);
+    virtual ~Stream() = default;
 
-    virtual ~Stream() {};
+    Stream(const Stream&) = delete;
+    Stream& operator=(const Stream&) = delete;
 
-    virtual bool isEOF() const {
+    Stream(Stream&&) = default;
+    Stream& operator=(Stream&&) = default;
+
+    virtual bool isEof() const {
         return size == cur;
     }
 
@@ -169,60 +177,69 @@ protected:
 
 class FileStream : public StreamBase {
 public:
-    FileStream(const std::string& filename) {
-        fsIn.open(filename, std::ios::in | std::ios::binary);
-        if (!fsIn.is_open()) {
+    explicit FileStream(const std::string& filename) {
+        fs.open(filename, std::ios::in | std::ios::binary);
+        if (!fs.is_open()) {
             throw std::runtime_error("Failed to open file: " + filename);
         }
     }
 
+    FileStream(const FileStream&) = delete;
+    FileStream& operator=(const FileStream&) = delete;
+
+    FileStream(FileStream&&) = default;
+    FileStream& operator=(FileStream&&) = default;
+
     ~FileStream() override {
-        if (fsIn.is_open()) {
-            fsIn.close();
+        if (fs.is_open()) {
+            fs.close();
         }
     }
 
     virtual size_t leftBytes() {
-        std::streampos current = fsIn.tellg();
-        fsIn.seekg(0, std::ios::end);
-        std::streampos end = fsIn.tellg();
-        fsIn.seekg(current, std::ios::beg);
+        std::streampos current = fs.tellg();
+        fs.seekg(0, std::ios::end);
+        std::streampos end = fs.tellg();
+        fs.seekg(current, std::ios::beg);
 
         return end - current;
     }
 
-    virtual bool isEOF() const {
-        return fsIn.eof();
+    virtual bool isEof() const {
+        return fs.eof();
     }
 
     void skip(uint64_t pos) override {
-        fsIn.seekg(pos, std::ios::cur);
+        fs.seekg(pos, std::ios::cur);
 
-        if (fsIn.fail()) {
+        if (fs.fail()) {
             throw std::out_of_range("Failed to seek in file.");
         }
     }
 
     size_t read(void* buffer, size_t size) override {
-        fsIn.read((char*)buffer, size);
-        if (fsIn.fail() && !fsIn.eof()) {
+        fs.read((char*)buffer, size);
+        if (fs.fail() && !fs.eof()) {
             throw std::out_of_range("Failed to read from file.");
         }
-        return fsIn.gcount();
+        return fs.gcount();
     }
 
     size_t peek(void* buffer, size_t size) override {
-        std::streampos currentPos = fsIn.tellg();
-        fsIn.read((char*)buffer, size);
+        std::streampos currentPos = fs.tellg();
+        fs.read((char*)buffer, size);
 
-        if (fsIn.fail() && !fsIn.eof()) {
+        if (fs.fail() && !fs.eof()) {
             throw std::out_of_range("Failed to read from file.");
         }
-        fsIn.seekg(currentPos);
-        return fsIn.gcount();
+        fs.seekg(currentPos);
+        return fs.gcount();
     }
 
 private:
-    std::ifstream fsIn;
-    bool writeMode = false;
+    std::ifstream fs;
 };
+
+}
+
+}

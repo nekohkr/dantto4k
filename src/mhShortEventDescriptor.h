@@ -1,13 +1,17 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MhShortEventDescriptor
-	: public MmtDescriptor<0xF001, true> {
+	: public MmtDescriptorTemplate<0xF001, true> {
 public:
-	bool unpack(Stream& stream) override;
+	bool unpack(Common::Stream& stream) override;
 
 	char language[4];
 	std::string eventName;
 	std::string text;
 
 };
+
+}

@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include <map>
 
+namespace MmtTlv::Acas {
+
 struct DecryptedEcm {
 public:
     uint8_t odd[16];
@@ -31,3 +33,5 @@ private:
     std::map<std::vector<uint8_t>, DecryptedEcm> decryptedEcmMap;
     std::shared_ptr<SmartCard> smartCard;
 };
+
+}

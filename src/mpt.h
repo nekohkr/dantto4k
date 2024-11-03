@@ -1,29 +1,32 @@
 #pragma once
-#include "mmtTable.h"
+#include "mmtTableBase.h"
 #include "mmtGeneralLocationInfo.h"
-#include "MmtDescriptors.h"
+#include "mmtDescriptors.h"
 
-class MptAsset {
+namespace MmtTlv {
+
+// MMT Package Table
+class Mpt : public MmtTableBase {
 public:
-	bool unpack(Stream& stream);
+	bool unpack(Common::Stream& stream);
 
-	uint8_t identifierType;
-	uint32_t assetIdScheme;
-	uint8_t assetIdLength;
-	std::vector<uint8_t> assetIdByte;
-	uint32_t assetType;
-	uint8_t reserved;
-	bool assetClockRelationFlag;
-	uint8_t locationCount;
-	std::vector<MmtGeneralLocationInfo> locationInfos;
+	class Asset {
+	public:
+		bool unpack(Common::Stream& stream);
 
-	uint16_t assetDescriptorsLength;
-	MmtDescriptors descriptors;
-};
+		uint8_t identifierType;
+		uint32_t assetIdScheme;
+		uint8_t assetIdLength;
+		std::vector<uint8_t> assetIdByte;
+		uint32_t assetType;
+		uint8_t reserved;
+		bool assetClockRelationFlag;
+		uint8_t locationCount;
+		std::vector<MmtGeneralLocationInfo> locationInfos;
 
-class Mpt : public MmtTable {
-public:
-	bool unpack(Stream& stream);
+		uint16_t assetDescriptorsLength;
+		MmtDescriptors descriptors;
+	};
 
 	uint8_t version;
 	uint16_t length;
@@ -32,7 +35,10 @@ public:
 	uint8_t mmtPackageIdLength;
 	std::vector<uint8_t> mmtPackageIdByte;
 	uint16_t mptDescriptorsLength;
-	std::vector<uint8_t> mptDescriptorsByte;
+	MmtDescriptors descriptors;
+
 	uint8_t numberOfAssets;
-	std::list<MptAsset> assets;
+	std::list<Asset> assets;
 };
+
+}

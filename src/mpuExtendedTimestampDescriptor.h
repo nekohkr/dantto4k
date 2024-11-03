@@ -1,15 +1,16 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
 
+namespace MmtTlv {
 
 class MpuExtendedTimestampDescriptor
-	: public MmtDescriptor<0x8026> {
+	: public MmtDescriptorTemplate<0x8026> {
 public:
-	bool unpack(Stream& stream) override;
+	bool unpack(Common::Stream& stream) override;
 
 	class Entry {
 	public:
-		bool unpack(Stream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset);
+		bool unpack(Common::Stream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset);
 
 		uint32_t mpuSequenceNumber;
 		uint8_t mpuPresentationTimeLeapIndicator;
@@ -29,3 +30,5 @@ public:
 
 	std::vector<Entry> entries;
 };
+
+}

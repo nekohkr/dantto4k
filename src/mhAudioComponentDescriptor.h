@@ -1,10 +1,12 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MhAudioComponentDescriptor
-    : public MmtDescriptor<0x8014> {
+    : public MmtDescriptorTemplate<0x8014> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     uint8_t streamContent;
     uint8_t componentType;
@@ -19,3 +21,5 @@ public:
     char language2[4];
     std::string text;
 };
+
+}

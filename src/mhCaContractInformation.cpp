@@ -1,13 +1,15 @@
 #include "mhCaContractInformation.h"
 
-bool MhCaContractInformation::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhCaContractInformation::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         caSystemId = nstream.getBe16U();
 
@@ -34,4 +36,6 @@ bool MhCaContractInformation::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

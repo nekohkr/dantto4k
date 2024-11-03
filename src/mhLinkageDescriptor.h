@@ -1,10 +1,12 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MhLinkageDescriptor
-    : public MmtDescriptor<0xF000> {
+    : public MmtDescriptorTemplate<0xF000> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     uint16_t tlvStreamId;
     uint16_t originalNetworkId;
@@ -13,3 +15,5 @@ public:
     std::vector<uint8_t> privateDataByte;
 
 };
+
+}

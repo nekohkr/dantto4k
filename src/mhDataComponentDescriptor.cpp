@@ -1,13 +1,15 @@
 #include "mhDataComponentDescriptor.h"
 
-bool MhDataComponentDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhDataComponentDescriptor::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtDescriptor::unpack(stream)) {
+		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-		Stream nstream(stream, descriptorLength);
+		Common::Stream nstream(stream, descriptorLength);
 
 		dataComponentId = nstream.getBe16U();
 		additionalDataComponentInfo.resize(nstream.leftBytes());
@@ -20,4 +22,6 @@ bool MhDataComponentDescriptor::unpack(Stream& stream)
 	}
 
 	return true;
+}
+
 }

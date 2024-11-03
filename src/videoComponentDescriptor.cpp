@@ -1,13 +1,15 @@
 #include "videoComponentDescriptor.h"
 
-bool VideoComponentDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool VideoComponentDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         uint8_t uint8 = nstream.get8U();
         videoResolution = (uint8 & 0b11110000) >> 4;
@@ -36,4 +38,6 @@ bool VideoComponentDescriptor::unpack(Stream& stream)
     }
 
 	return true;
+}
+
 }

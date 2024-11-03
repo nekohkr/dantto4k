@@ -1,9 +1,11 @@
 #include "mhServiceDescriptor.h"
 
-bool MhServiceDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhServiceDescriptor::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtDescriptor::unpack(stream)) {
+		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
@@ -24,4 +26,6 @@ bool MhServiceDescriptor::unpack(Stream& stream)
 		return false;
 	}
 	return true;
+}
+
 }

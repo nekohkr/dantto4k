@@ -1,13 +1,15 @@
 #include "mhLinkageDescriptor.h"
 
-bool MhLinkageDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhLinkageDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         tlvStreamId = nstream.getBe16U();
         originalNetworkId = nstream.getBe16U();
@@ -24,4 +26,6 @@ bool MhLinkageDescriptor::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

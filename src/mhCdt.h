@@ -1,12 +1,14 @@
 #pragma once
-#include "mmtTable.h"
-#include "mmtp.h"
+#include <vector>
+#include "mmtTableBase.h"
 #include "mmtDescriptors.h"
-#include <list>
 
-class MhCdt : public MmtTable {
+namespace MmtTlv {
+
+// Mh-Common Data Table 
+class MhCdt : public MmtTableBase {
 public:
-    bool unpack(Stream& stream);
+    bool unpack(Common::Stream& stream);
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
@@ -25,7 +27,8 @@ public:
 
     MmtDescriptors descriptors;
 
-
     std::vector<uint8_t> dataModuleByte;
     uint32_t crc32;
 };
+
+}

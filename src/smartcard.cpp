@@ -1,10 +1,6 @@
 #include "SmartCard.h"
 
-SmartCard::SmartCard() {
-}
-
-SmartCard::~SmartCard() {
-}
+namespace MmtTlv::Acas {
 
 bool SmartCard::initCard() {
     LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
@@ -76,4 +72,6 @@ void SmartCard::disconnect() {
         SCardDisconnect(hCard, SCARD_UNPOWER_CARD);
         hCard = NULL;
     }
+}
+
 }

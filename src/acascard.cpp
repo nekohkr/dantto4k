@@ -1,9 +1,9 @@
 #include "acascard.h"
 #include <random>
-#include <iomanip>
-#include <sstream>
 #include <openssl/evp.h>
 #pragma comment(lib, "Winscard.lib")
+
+namespace MmtTlv::Acas {
 
 AcasCard::AcasCard(std::shared_ptr<SmartCard> smartCard)
     : smartCard(smartCard)
@@ -20,7 +20,7 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
 {
     std::default_random_engine engine(std::random_device{}());
     std::uniform_int_distribution<int> distrib(0, 255);
-    
+
     std::vector<uint8_t> data = { 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x8A, 0xF7 };
     std::vector<uint8_t> a0init(8);
     for (size_t i = 0; i < 8; ++i) {
@@ -131,4 +131,6 @@ void AcasCard::clear()
 {
     ready = false;
     decryptedEcmMap.clear();
+}
+
 }

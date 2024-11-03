@@ -45,9 +45,9 @@ bool ADTSConverter::convert(uint8_t* input, int size, std::vector<uint8_t>& outp
 
     output.resize(frameLength);
 
-    //adts header
+    // adts header
     output.data()[0] = (0xFFF >> 4) & 0xFF;
-    output.data()[1] = ((0xFFF & 0b111100000000) >> 8) << 4 | 0 << 3 /* MPEG Version */ | 0 << 1 /* Layer */ | 1 /* protection absent */;
+    output.data()[1] = ((0xFFF & 0b111100000000) >> 8) << 4 | 0 << 3 /* mpeg version */ | 0 << 1 /* layer */ | 1 /* protection absent */;
     output.data()[2] = (convertAdtsAudioObjectType(audioObjectType) & 0b11) << 6 | sampleRate << 2 | 1 << 1 /* private bit */ | (channelConfig & 0b100) >> 2;
     output.data()[3] = (channelConfig & 0b011) << 6 | 1 << 5 /* original */ | 1 << 4 /* copy */ | 1 << 3 /* cib */ | 1 << 2 /* cis */ | (frameLength & 0b1100000000000) >> 11;
     output.data()[4] = (frameLength & 0b0011111111000) >> 3;
@@ -65,17 +65,17 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, int size)
 {
     int audioMuxVersion = (input[0] & 0b10000000) >> 7;
 
-    //restricted to 0
+    // restricted to 0
     if (audioMuxVersion) {
         return false;
     }
 
     int allStreamSameTimeFraming = (input[0] & 0b01000000) >> 5;
-    //restricted to 0
+    // restricted to 0
     int numSubFrames = (input[0] & 0b00011111) << 1 | (input[1] & 0b10000000);
-    //restricted to 0
+    // restricted to 0
     int numPrograms = input[1] & 0b01111000;
-    //restricted to 0
+    // restricted to 0
     int numLayer = input[1] & 0b00000111;
 
     if (numSubFrames != 0 || numPrograms != 0 || numLayer != 0) {
@@ -86,7 +86,7 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, int size)
         return false;
     }
 
-    //restricted to 0
+    // restricted to 0
     int frameLengthType = (input[4] & 0b11100000) >> 5;
     if (frameLengthType) {
         return false;
@@ -111,7 +111,7 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, int size)
 bool ADTSConverter::unpackAudioSpecificConfig(uint8_t* input, int size)
 {
     audioObjectType = (input[2] & 0b11111000) >> 3;
-    if (audioObjectType == 28/*AOT_ESCAPE*/) {
+    if (audioObjectType == 28) {
         return false;
     }
 

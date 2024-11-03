@@ -1,13 +1,15 @@
 #include "mhStreamIdentificationDescriptor.h"
 
-bool MhStreamIdentificationDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhStreamIdentificationDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         componentTag = nstream.getBe16U();
 
@@ -18,4 +20,6 @@ bool MhStreamIdentificationDescriptor::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

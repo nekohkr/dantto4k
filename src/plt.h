@@ -1,23 +1,28 @@
 #pragma once
-#include "mmtTable.h"
 #include <list>
+#include "mmtTableBase.h"
 #include "mmtGeneralLocationInfo.h"
 
-class PltItem {
-public:
-	bool unpack(Stream& stream);
+namespace MmtTlv {
 
-	uint8_t mmtPackageIdLength;
-	std::vector<uint8_t> mmtPackageIdByte;
-	MmtGeneralLocationInfo locationInfos;
-};
-
-class Plt : public MmtTable {
+// Package List Table
+class Plt : public MmtTableBase {
 public:
-	bool unpack(Stream& stream);
+	bool unpack(Common::Stream& stream);
+
+	class Entry {
+	public:
+		bool unpack(Common::Stream& stream);
+
+		uint8_t mmtPackageIdLength;
+		std::vector<uint8_t> mmtPackageIdByte;
+		MmtGeneralLocationInfo locationInfos;
+	};
 
 	uint8_t version;
 	uint16_t length;
 	uint8_t numOfPackage;
-	std::list<PltItem> items;
+	std::list<Entry> entries;
 };
+
+}

@@ -1,10 +1,11 @@
 #include "mhShortEventDescriptor.h"
 
+namespace MmtTlv {
 
-bool MhShortEventDescriptor::unpack(Stream& stream)
+bool MhShortEventDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
@@ -27,4 +28,6 @@ bool MhShortEventDescriptor::unpack(Stream& stream)
     }
 
 	return true;
+}
+
 }

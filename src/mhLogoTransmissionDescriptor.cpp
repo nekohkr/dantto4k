@@ -1,13 +1,15 @@
 #include "mhLogoTransmissionDescriptor.h"
 
-bool MhLogoTransmissionDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhLogoTransmissionDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         logoTransmissionType = nstream.get8U();
         if (logoTransmissionType == 0x01) {
@@ -20,7 +22,7 @@ bool MhLogoTransmissionDescriptor::unpack(Stream& stream)
             logoVersion = uint16 & 0b0000111111111111;
             downloadDataId = nstream.getBe16U();
 
-            while (!nstream.isEOF()) {
+            while (!nstream.isEof()) {
                 Entry entry;
                 entry.unpack(nstream);
                 entries.push_back(entry);
@@ -45,10 +47,12 @@ bool MhLogoTransmissionDescriptor::unpack(Stream& stream)
     return true;
 }
 
-bool MhLogoTransmissionDescriptor::Entry::unpack(Stream& stream)
+bool MhLogoTransmissionDescriptor::Entry::unpack(Common::Stream& stream)
 {
     logoType = stream.get8U();
     startSectionNumber = stream.get8U();
     numOfSections = stream.get8U();
     return true;
+}
+
 }

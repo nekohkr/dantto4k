@@ -1,9 +1,13 @@
 #include "mpuTimestampDescriptor.h"
 
+namespace MmtTlv {
+
+namespace {
+
 #define 	NTP_OFFSET   2208988800ULL
 #define 	NTP_OFFSET_US   (NTP_OFFSET * 1000000ULL)
 
-static uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
+uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
 {
 	uint64_t sec = ntp_ts >> 32;
 	uint64_t frac_part = ntp_ts & 0xFFFFFFFFULL;
@@ -12,10 +16,12 @@ static uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
 	return (sec * 1000000) + usec;
 }
 
-bool MpuTimestampDescriptor::unpack(Stream& stream)
+} // anonymous namespace
+
+bool MpuTimestampDescriptor::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtDescriptor::unpack(stream)) {
+		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
@@ -32,4 +38,6 @@ bool MpuTimestampDescriptor::unpack(Stream& stream)
 	}
 
 	return true;
+}
+
 }

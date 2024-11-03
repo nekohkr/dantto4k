@@ -44,29 +44,28 @@ bool CBonTuner::init(Config& config)
 		while (1) {
 			Sleep(1);
 
-			inputMutex.lock();
-			if (inputBuffer.size() < 1024*1024) {
-				inputMutex.unlock();
-				continue;
+			{
+				std::lock_guard<std::mutex> lock(inputMutex);
+				if (inputBuffer.size() < 1024*1024) {
+					continue;
+				}
+
+				buffer.insert(buffer.end(), inputBuffer.begin(), inputBuffer.end());
+				inputBuffer.clear();
 			}
 
-			buffer.insert(buffer.end(), inputBuffer.begin(), inputBuffer.end());
-			inputBuffer.clear();
-			inputMutex.unlock();
-
 			int lastTlvPos = 0;
-			Stream input(buffer);
-			while (!input.isEOF()) {
+			MmtTlv::Common::Stream input(buffer);
+			while (!input.isEof()) {
 				int pos = input.cur;
 				int n = demuxer.processPacket(input);
-				processMuxing();
 
-				//not valid tlv
+				// not valid tlv
 				if (n == -2) {
 					continue;
 				}
 
-				//not enough buffer for tlv payload
+				// not enough buffer for tlv payload
 				if (n == -1) {
 					input.cur = pos;
 					break;
@@ -129,23 +128,24 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 		if (fp) {
 			fwrite(*ppDst, 1, *pdwSize, fp);
 		}
-
-		inputMutex.lock();
-		inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
-		inputMutex.unlock();
+		
+		{
+			std::lock_guard<std::mutex> lock(inputMutex);
+			inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
+		}
 	}
 
 	int remain = 0;
-	outputMutex.lock();
+	{
+		std::lock_guard<std::mutex> lock(outputMutex);
 
-	if (!muxedOutput.size()) {
-		outputMutex.unlock();
-		return false;
+		if (!muxedOutput.size()) {
+			return false;
+		}
+
+		outputBuffer = muxedOutput;
+		muxedOutput.clear();
 	}
-
-	outputBuffer = muxedOutput;
-	muxedOutput.clear();
-	outputMutex.unlock();
 
 	*ppDst = outputBuffer.data();
 	*pdwSize = outputBuffer.size();
@@ -180,13 +180,14 @@ const char* CBonTuner::EnumChannelName(const uint32_t dwSpace, const uint32_t dw
 
 const bool CBonTuner::SetChannel(const uint32_t dwSpace, const uint32_t dwChannel)
 {
-	inputMutex.lock();
-	inputBuffer.clear();
-	inputMutex.unlock();
-
-	outputMutex.lock();
-	muxedOutput.clear();
-	outputMutex.unlock();
+	{
+		std::lock_guard<std::mutex> lock(inputMutex);
+		inputBuffer.clear();
+	}
+	{
+		std::lock_guard<std::mutex> lock(outputMutex);
+		muxedOutput.clear();
+	}
 
 	if (config.mmtsDumpPath != "") {
 		if (fp) {

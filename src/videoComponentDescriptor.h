@@ -1,10 +1,12 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class VideoComponentDescriptor
-    : public MmtDescriptor<0x8010> {
+    : public MmtDescriptorTemplate<0x8010> {
 public:
-	bool unpack(Stream& stream) override;
+	bool unpack(Common::Stream& stream) override;
 
     uint8_t videoResolution;
     uint8_t videoAspectRatio;
@@ -15,3 +17,5 @@ public:
     char language[4];
     std::string text;
 };
+
+}

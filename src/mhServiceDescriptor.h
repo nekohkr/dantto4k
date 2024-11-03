@@ -1,11 +1,13 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class MhServiceDescriptor
-	: public MmtDescriptor<0x8019> {
+	: public MmtDescriptorTemplate<0x8019> {
 public:
 	virtual ~MhServiceDescriptor() {}
-	bool unpack(Stream& stream) override;
+	bool unpack(Common::Stream& stream) override;
 
 	uint8_t serviceType;
 	uint8_t serviceProviderNameLength;
@@ -13,3 +15,5 @@ public:
 	uint8_t serviceNameLength;
 	std::string serviceName;
 };
+
+}

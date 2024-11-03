@@ -1,15 +1,17 @@
 #include "mhContentDescriptor.h"
 
-bool MhContentDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhContentDescriptor::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtDescriptor::unpack(stream)) {
+		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-		Stream nstream(stream, descriptorLength);
+		Common::Stream nstream(stream, descriptorLength);
 
-		while (!nstream.isEOF()) {
+		while (!nstream.isEof()) {
 			Entry entry;
 			if (!entry.unpack(nstream)) {
 				return false;
@@ -26,7 +28,7 @@ bool MhContentDescriptor::unpack(Stream& stream)
 	return true;
 }
 
-bool MhContentDescriptor::Entry::unpack(Stream& stream)
+bool MhContentDescriptor::Entry::unpack(Common::Stream& stream)
 {
 	try {
 		uint8_t uint8 = stream.get8U();
@@ -42,4 +44,6 @@ bool MhContentDescriptor::Entry::unpack(Stream& stream)
 	}
 
 	return true;
+}
+
 }

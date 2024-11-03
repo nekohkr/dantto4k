@@ -1,18 +1,22 @@
 #include "mpuDataProcessorFactory.h"
-#include "hevcMpuDataProcessor.h"
-#include "aacMpuDataProcessor.h"
-#include "ttmlMpuDataProcessor.h"
+#include "videoMpuDataProcessor.h"
+#include "audioMpuDataProcessor.h"
+#include "subtitleMpuDataProcessor.h"
+
+namespace MmtTlv {
 
 std::shared_ptr<MpuDataProcessorBase> MpuDataProcessorFactory::create(uint32_t tag)
 {
 	switch (tag) {
-	case HevcMpuDataProcessor::kAssetType:
-		return std::make_shared<HevcMpuDataProcessor>();
-	case AacMpuDataProcessor::kAssetType:
-		return std::make_shared<AacMpuDataProcessor>();
-	case TtmlMpuDataProcessor::kAssetType:
-		return std::make_shared<TtmlMpuDataProcessor>();
+	case VideoMpuDataProcessor::kAssetType:
+		return std::make_shared<VideoMpuDataProcessor>();
+	case AudioMpuDataProcessor::kAssetType:
+		return std::make_shared<AudioMpuDataProcessor>();
+	case SubtitleMpuDataProcessor::kAssetType:
+		return std::make_shared<SubtitleMpuDataProcessor>();
 	}
 
 	return {};
+}
+
 }

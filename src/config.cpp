@@ -1,5 +1,6 @@
 #include "config.h"
 #include <iostream>
+#define _WINSOCKAPI_
 #include <windows.h>
 
 static std::string trim(const std::string& str) {

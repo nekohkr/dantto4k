@@ -1,9 +1,11 @@
 #include "mhExtendedEventDescriptor.h"
 
-bool MhExtendedEventDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhExtendedEventDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
@@ -14,8 +16,8 @@ bool MhExtendedEventDescriptor::unpack(Stream& stream)
         language[3] = '\0';
 
         lengthOfItems = stream.getBe16U();
-        Stream nstream(stream, lengthOfItems);
-        while (!nstream.isEOF()) {
+        Common::Stream nstream(stream, lengthOfItems);
+        while (!nstream.isEof()) {
             Entry entry;
             if (!entry.unpack(nstream)) {
                 return false;
@@ -39,7 +41,7 @@ bool MhExtendedEventDescriptor::unpack(Stream& stream)
 	return true;
 }
 
-bool MhExtendedEventDescriptor::Entry::unpack(Stream& stream)
+bool MhExtendedEventDescriptor::Entry::unpack(Common::Stream& stream)
 {
     try {
         itemDescriptionLength = stream.get8U();
@@ -59,4 +61,6 @@ bool MhExtendedEventDescriptor::Entry::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

@@ -1,15 +1,11 @@
 #include "mhEit.h"
 
-#include "videoComponentDescriptor.h"
-#include "mhAudioComponentDescriptor.h"
-#include "mhShortEventDescriptor.h"
-#include "mhExtendedEventDescriptor.h"
-#include "mhContentDescriptor.h"
+namespace MmtTlv {
 
-bool MhEit::unpack(Stream& stream)
+bool MhEit::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtTable::unpack(stream)) {
+        if (!MmtTableBase::unpack(stream)) {
             return false;
         }
 
@@ -30,7 +26,7 @@ bool MhEit::unpack(Stream& stream)
         lastTableId = stream.get8U();
 
         while (stream.leftBytes() - 4 > 0) {
-            std::shared_ptr<MHEvent> event = std::make_shared<MHEvent>();
+            std::shared_ptr<Event> event = std::make_shared<Event>();
             if (!event->unpack(stream)) {
                 return false;
             }
@@ -48,10 +44,10 @@ bool MhEit::unpack(Stream& stream)
         return false;
     }
 
-	return true;
+    return true;
 }
 
-bool MHEvent::unpack(Stream& stream)
+bool MhEit::Event::unpack(Common::Stream& stream)
 {
     try {
         eventId = stream.getBe16U();
@@ -69,7 +65,7 @@ bool MHEvent::unpack(Stream& stream)
             return false;
         }
 
-        Stream nstream(stream, descriptorsLoopLength);
+        Common::Stream nstream(stream, descriptorsLoopLength);
         descriptors.unpack(nstream);
         stream.skip(descriptorsLoopLength);
     }
@@ -78,4 +74,6 @@ bool MHEvent::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

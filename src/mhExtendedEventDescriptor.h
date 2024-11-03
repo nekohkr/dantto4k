@@ -1,15 +1,17 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
 #include <list>
 
+namespace MmtTlv {
+
 class MhExtendedEventDescriptor
-    : public MmtDescriptor<0xF002, true> {
+    : public MmtDescriptorTemplate<0xF002, true> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     class Entry {
     public:
-        bool unpack(Stream& stream);
+        bool unpack(Common::Stream& stream);
 
         uint8_t itemDescriptionLength;
         std::string itemDescriptionChar;
@@ -28,3 +30,5 @@ public:
     uint16_t textLength;
     std::string textChar;
 };
+
+}

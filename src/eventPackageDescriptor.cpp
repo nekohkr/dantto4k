@@ -1,13 +1,15 @@
 #include "eventPackageDescriptor.h"
 
-bool EventPackageDescriptor::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool EventPackageDescriptor::unpack(Common::Stream& stream)
 {
     try {
-        if (!MmtDescriptor::unpack(stream)) {
+        if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Stream nstream(stream, descriptorLength);
+        Common::Stream nstream(stream, descriptorLength);
 
         mmtPackageIdLength = nstream.get8U();
 
@@ -21,4 +23,6 @@ bool EventPackageDescriptor::unpack(Stream& stream)
     }
 
     return true;
+}
+
 }

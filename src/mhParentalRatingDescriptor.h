@@ -1,15 +1,17 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
 #include <list>
 
+namespace MmtTlv {
+
 class MhParentalRatingDescriptor
-    : public MmtDescriptor<0x8013> {
+    : public MmtDescriptorTemplate<0x8013> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     class Entry {
     public:
-        bool unpack(Stream& stream);
+        bool unpack(Common::Stream& stream);
 
         char countryCode[4];
         uint8_t rating;
@@ -17,3 +19,5 @@ public:
     
     std::list<Entry> entries;
 };
+
+}

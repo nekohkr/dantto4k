@@ -1,9 +1,11 @@
 #include "mhTot.h"
 
-bool MhTot::unpack(Stream& stream)
+namespace MmtTlv {
+
+bool MhTot::unpack(Common::Stream& stream)
 {
 	try {
-		if (!MmtTable::unpack(stream)) {
+		if (!MmtTableBase::unpack(stream)) {
 			return false;
 		}
 
@@ -18,4 +20,6 @@ bool MhTot::unpack(Stream& stream)
 		return false;
 	}
 	return true;
+}
+
 }

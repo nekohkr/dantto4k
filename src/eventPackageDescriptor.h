@@ -1,11 +1,15 @@
 #pragma once
-#include "mmtDescriptor.h"
+#include "mmtDescriptorBase.h"
+
+namespace MmtTlv {
 
 class EventPackageDescriptor
-    : public MmtDescriptor<0x8001> {
+    : public MmtDescriptorTemplate<0x8001> {
 public:
-    bool unpack(Stream& stream) override;
+    bool unpack(Common::Stream& stream) override;
 
     uint8_t mmtPackageIdLength;
     std::vector<uint8_t> mmtPackageIdByte;
 };
+
+}
