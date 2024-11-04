@@ -187,6 +187,22 @@ void MmtTlvDemuxer::processMmtTable(Common::Stream& stream)
         }
         break;
     case MmtTableId::MhEit:
+    case MmtTableId::MhEit_1:
+    case MmtTableId::MhEit_2:
+    case MmtTableId::MhEit_3:
+    case MmtTableId::MhEit_4:
+    case MmtTableId::MhEit_5:
+    case MmtTableId::MhEit_6:
+    case MmtTableId::MhEit_7:
+    case MmtTableId::MhEit_8:
+    case MmtTableId::MhEit_9:
+    case MmtTableId::MhEit_10:
+    case MmtTableId::MhEit_11:
+    case MmtTableId::MhEit_12:
+    case MmtTableId::MhEit_13:
+    case MmtTableId::MhEit_14:
+    case MmtTableId::MhEit_15:
+    case MmtTableId::MhEit_16:
         if (demuxerHandler) {
             demuxerHandler->onMhEit(std::dynamic_pointer_cast<MhEit>(table));
         }
