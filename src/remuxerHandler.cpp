@@ -665,7 +665,13 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
                     }
                 }
 
-                tsPmt.streams[0x100 + streamIndex] = stream;
+                const auto& mmtStream = demuxer.mapStreamByStreamIdx[streamIndex];
+                if (mmtStream->componentTag == -1) {
+                    streamIndex++;
+                    continue;
+                }
+
+                tsPmt.streams[mmtStream->getTsPid()] = stream;
                 streamIndex++;
             }
         }

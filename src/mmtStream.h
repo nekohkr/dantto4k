@@ -12,13 +12,14 @@ public:
 	std::pair<int64_t, int64_t> calcPtsDts() const;
 	void incrementAuIndex();
 	uint32_t getAuIndex() const;
-	uint16_t getTsPid() const { return 0x100 + streamIndex; }
+	uint16_t getTsPid() const { return (componentTag == -1) ? 0x200 + streamIndex : 0x100 + componentTag; }
 
 	uint32_t assetType;
 	uint32_t lastMpuSequenceNumber = 0;
 	uint32_t auIndex = 0;
 	uint32_t streamIndex = 0;
 	uint16_t pid = 0;
+	int16_t componentTag = -1;
 
 	int flags = 0;
 

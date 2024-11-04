@@ -21,6 +21,7 @@
 #include "mmtTableFactory.h"
 #include "tlvTableFactory.h"
 #include "demuxerHandler.h"
+#include "mhStreamIdentificationDescriptor.h"
 
 namespace MmtTlv {
 
@@ -246,6 +247,8 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
         }
     }
 
+    mapStreamByStreamIdx.clear();
+
     int streamIndex = 0;
     for (auto& asset : mpt->assets) {
         std::shared_ptr<MmtStream> mmtStream;
@@ -264,6 +267,8 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
                         mmtStream->mfuDataProcessor = MfuDataProcessorFactory::create(mmtStream->assetType);
                     }
 
+                    mapStreamByStreamIdx[streamIndex] = mmtStream;
+
                     ++streamIndex;
                 }
             }
@@ -281,6 +286,12 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             case MpuExtendedTimestampDescriptor::kDescriptorTag:
                 processMpuExtendedTimestampDescriptor(std::dynamic_pointer_cast<MpuExtendedTimestampDescriptor>(descriptor), mmtStream);
                 break;
+            case MhStreamIdentificationDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhStreamIdentificationDescriptor>(descriptor);
+                mmtStream->componentTag = mmtDescriptor->componentTag;
+                break;
+            }
             }
         }
     }

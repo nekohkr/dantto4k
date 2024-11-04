@@ -91,6 +91,7 @@ public:
 	std::shared_ptr<MmtStream> getStream(uint16_t pid);
 
 	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
+	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStreamByStreamIdx;
 
 };
 }

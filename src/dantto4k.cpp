@@ -79,6 +79,16 @@ int outputFilter(void* opaque, const uint8_t* buf, int buf_size) {
         if (pid == 0x1000 && packet.getPriority() == 0) {
             continue;
         }
+
+        // PES
+        if (pid >= 0x100 && pid <= 0x200) {
+            const auto& mmtStream = demuxer.mapStreamByStreamIdx[pid - 0x100];
+            if (mmtStream->componentTag == -1) {
+                continue;
+            }
+
+            packet.setPID(mmtStream->getTsPid());
+        }
         
         {
             std::lock_guard<std::mutex> lock(outputMutex);
