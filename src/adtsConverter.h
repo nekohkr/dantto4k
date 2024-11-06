@@ -5,7 +5,7 @@ class ADTSConverter {
 public:
 	bool convert(uint8_t* input, int size, std::vector<uint8_t>& output);
 
-protected:
+private:
 	bool unpackStreamMuxConfig(uint8_t* input, int size);
 	bool unpackAudioSpecificConfig(uint8_t* input, int size);
 
