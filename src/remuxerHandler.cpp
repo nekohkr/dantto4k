@@ -141,6 +141,41 @@ uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoAspectRa
     return videoComponentType;
 }
 
+uint8_t convertAudioComponentType(uint8_t componentType) {
+    uint8_t audioMode = componentType & 0b00011111;
+
+    switch (audioMode) {
+    case 0b00001: // 1/0 mode (single mono) 
+        return 0x01;
+    case 0b00010: // 1/0＋1/0 mode (dual mono) 
+        return 0x02;
+    case 0b00011: // 2/0 mode (stereo) 
+        return 0x03;
+    case 0b00111: // 3/1 mode 
+        return 0x07;
+    case 0b01000: // 3/2 mode
+        return 0x08;
+    case 0b01001: // 3/2＋LFE mode (3/2.1 mode)
+        return 0x09;
+    }
+
+    return 0;
+}
+
+uint8_t convertAudioSamplingRate(uint8_t samplingRate) {
+
+    switch (samplingRate) {
+    case 0b010: // 24 kHz
+        return 0b010;
+    case 0b101: // 32 kHz
+        return 0b101;
+    case 0b111: // 48 kHz 
+        return 0b111;
+    }
+
+    return 0;
+}
+
 } // anonymous namespace
 
 void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
@@ -218,22 +253,6 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
         tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
         tsEvent.event_id = mhEvent->eventId;
 
-        std::vector<uint16_t> order = {
-            MmtTlv::MhShortEventDescriptor::kDescriptorTag,
-            MmtTlv::MhExtendedEventDescriptor::kDescriptorTag,
-            MmtTlv::VideoComponentDescriptor::kDescriptorTag,
-            MmtTlv::MhContentDescriptor::kDescriptorTag,
-            MmtTlv::ContentCopyControlDescriptor::kDescriptorTag,
-            MmtTlv::MhAudioComponentDescriptor::kDescriptorTag,
-            MmtTlv::MultimediaServiceInformationDescriptor::kDescriptorTag,
-            MmtTlv::MhEventGroupDescriptor::kDescriptorTag,
-        };
-
-        mhEvent->descriptors.list.sort([&order](const std::shared_ptr<MmtTlv::MmtDescriptorBase>& a, const std::shared_ptr<MmtTlv::MmtDescriptorBase>& b) {
-            auto itA = std::find(order.begin(), order.end(), a->getDescriptorTag());
-            auto itB = std::find(order.begin(), order.end(), b->getDescriptorTag());
-            return itA < itB;
-        });
 
         for (const auto& descriptor : mhEvent->descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
@@ -288,10 +307,10 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhAudioComponentDescriptor>(descriptor);
                 ts::AudioComponentDescriptor tsDescriptor;
-                tsDescriptor.stream_content = mmtDescriptor->streamContent;
-                tsDescriptor.component_type = mmtDescriptor->componentType;
+                tsDescriptor.stream_content = 2; // audio
+                tsDescriptor.component_type = convertAudioComponentType(mmtDescriptor->componentType);
                 tsDescriptor.component_tag = mmtDescriptor->componentTag;
-                tsDescriptor.stream_type = mmtDescriptor->streamType;
+                tsDescriptor.stream_type = 0x0F; // ISO/IEC13818-7 audio
                 tsDescriptor.simulcast_group_tag = mmtDescriptor->simulcastGroupTag;
                 if (mmtDescriptor->esMultiLingualFlag) {
                     tsDescriptor.ISO_639_language_code_2 = ts::UString::FromUTF8(mmtDescriptor->language2);
@@ -299,7 +318,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 
                 tsDescriptor.main_component = mmtDescriptor->mainComponentFlag;
                 tsDescriptor.quality_indicator = mmtDescriptor->qualityIndicator;
-                tsDescriptor.sampling_rate = mmtDescriptor->samplingRate;
+                tsDescriptor.sampling_rate = convertAudioSamplingRate(mmtDescriptor->samplingRate);
                 tsDescriptor.ISO_639_language_code = ts::UString::FromUTF8(mmtDescriptor->language1);
                 tsDescriptor.text = ts::UString::FromUTF8(mmtDescriptor->text);
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -309,7 +328,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::VideoComponentDescriptor>(descriptor);
                 ts::ComponentDescriptor tsDescriptor;
-                tsDescriptor.stream_content = 2; //type = hevc
+                tsDescriptor.stream_content = 1; // video
                 tsDescriptor.component_type = convertVideoComponentType(mmtDescriptor->videoResolution, mmtDescriptor->videoAspectRatio);
                 tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
                 tsDescriptor.text = ts::UString::FromUTF8(mmtDescriptor->text);
