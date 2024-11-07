@@ -193,7 +193,6 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
         std::cerr << "Error muxing packet." << std::endl;
         return;
     }
-    avio_flush((*outputFormatContext)->pb);
 
     av_packet_unref(packet);
 }
@@ -478,7 +477,6 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }
@@ -560,7 +558,6 @@ void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }
@@ -609,7 +606,6 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }
@@ -741,7 +737,6 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }
@@ -771,7 +766,6 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }
@@ -804,7 +798,6 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }
@@ -869,7 +862,6 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
 
             if (*outputFormatContext && (*outputFormatContext)->pb) {
                 avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-                avio_flush((*outputFormatContext)->pb);
             }
         }
     }

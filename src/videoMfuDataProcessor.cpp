@@ -14,7 +14,6 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
 
     uint32_t size = stream.getBe32U();
     if (size != stream.leftBytes()) {
-        size = stream.leftBytes();
         std::cerr << "MFU data appears to be corrupted." << std::endl;
         return std::nullopt;
     }
