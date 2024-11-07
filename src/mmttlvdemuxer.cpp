@@ -22,6 +22,8 @@
 #include "tlvTableFactory.h"
 #include "demuxerHandler.h"
 #include "mhStreamIdentificationDescriptor.h"
+#include "videoMfuDataProcessor.h"
+#include "videoComponentDescriptor.h"
 
 namespace MmtTlv {
 
@@ -306,6 +308,17 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhStreamIdentificationDescriptor>(descriptor);
                 mmtStream->componentTag = mmtDescriptor->componentTag;
+                break;
+            }
+            case VideoComponentDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::VideoComponentDescriptor>(descriptor);
+                if (mmtDescriptor->videoResolution == 7) {
+                    mmtStream->is8KVideo = true;
+                }
+                else {
+                    mmtStream->is8KVideo = false;
+                }
                 break;
             }
             }

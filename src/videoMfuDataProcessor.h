@@ -11,7 +11,8 @@ private:
 	void appendPendingData(Common::Stream& stream, int size);
 
 	std::vector<uint8_t> pendingData;
-	bool findAud = false;
+	int sliceSegmentCount = 0;
+
 };
 
 }

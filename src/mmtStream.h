@@ -21,6 +21,8 @@ public:
 	uint16_t pid = 0;
 	int16_t componentTag = -1;
 
+	bool is8KVideo = false;
+
 	int flags = 0;
 
 	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
