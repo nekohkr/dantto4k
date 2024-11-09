@@ -128,8 +128,8 @@ bool ADTSConverter::unpackAudioSpecificConfig(uint8_t* input, int size)
         return false;
     }
 
-    bool ext_flag = input[3] & 0b00000001;
-    if (ext_flag) {
+    bool extFlag = input[3] & 0b00000001;
+    if (extFlag) {
         return false;
     }
 

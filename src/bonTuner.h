@@ -1,7 +1,7 @@
 #pragma once
-#include <string>
-#include "IBonDriver2.h"
 #include <vector>
+#include <mutex>
+#include "IBonDriver2.h"
 #include "config.h"
 
 class CBonTuner : public IBonDriver2
@@ -46,4 +46,5 @@ protected:
 	IBonDriver2* pBonDriver2;
 	std::vector<uint8_t> inputBuffer;
 	Config config;
+	std::mutex mutex;
 };

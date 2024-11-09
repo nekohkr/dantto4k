@@ -8,6 +8,8 @@ class MhAudioComponentDescriptor
 public:
     bool unpack(Common::Stream& stream) override;
 
+    uint32_t getConvertedSamplingRate() const;
+
     uint8_t streamContent;
     uint8_t componentType;
     uint16_t componentTag;

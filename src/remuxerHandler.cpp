@@ -16,6 +16,9 @@
 #include "contentCopyControlDescriptor.h"
 #include "multimediaServiceInformationDescriptor.h"
 #include "accessControlDescriptor.h"
+#include "mhSiParameterDescriptor.h"
+#include "relatedBroadcasterDescriptor.h"
+#include "mmtTableBase.h"
 
 #include "mhSdt.h"
 #include "mhServiceDescriptor.h"
@@ -24,9 +27,9 @@
 #include "mpt.h"
 #include "mhTot.h"
 #include "mhCdt.h"
+#include "mhBit.h"
 
 #include "adtsConverter.h"
-
 #include "mmtTlvDemuxer.h"
 
 extern "C" {
@@ -86,7 +89,7 @@ void EITDecodeMjd(int i_mjd, int* p_y, int* p_m, int* p_d)
 #define CVT_FROM_BCD(v) ((((v) >> 4)&0xf)*10 + ((v)&0xf))
 struct tm EITConvertStartTime(uint64_t i_date)
 {
-    const int i_mjd = i_date >> 24;
+    const int i_mjd = static_cast<int>(i_date >> 24);
     struct tm tm;
 
     tm.tm_hour = CVT_FROM_BCD(i_date >> 16);
@@ -120,7 +123,7 @@ int assetType2streamType(uint32_t assetType)
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
     case MmtTlv::makeAssetType('m', 'p', '4', 'a'):
-        stream_type = STREAM_TYPE_AUDIO_AAC; // STREAM_TYPE_AUDIO_AAC_LATM
+        stream_type = STREAM_TYPE_AUDIO_AAC_LATM;//STREAM_TYPE_AUDIO_AAC; // STREAM_TYPE_AUDIO_AAC_LATM
         break;
     case MmtTlv::makeAssetType('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;
@@ -163,7 +166,6 @@ uint8_t convertAudioComponentType(uint8_t componentType) {
 }
 
 uint8_t convertAudioSamplingRate(uint8_t samplingRate) {
-
     switch (samplingRate) {
     case 0b010: // 24 kHz
         return 0b010;
@@ -174,6 +176,45 @@ uint8_t convertAudioSamplingRate(uint8_t samplingRate) {
     }
 
     return 0;
+}
+
+uint8_t convertTableId(uint8_t mmtTableId) {
+    switch (mmtTableId) {
+    case MmtTlv::MmtTableId::Mpt:
+        return 0x02;
+    case MmtTlv::MmtTableId::Plt:
+        return 0x00;
+    case MmtTlv::MmtTableId::MhEit:
+        return 0x4E;
+    case MmtTlv::MmtTableId::MhEit_1:
+    case MmtTlv::MmtTableId::MhEit_2:
+    case MmtTlv::MmtTableId::MhEit_3:
+    case MmtTlv::MmtTableId::MhEit_4:
+    case MmtTlv::MmtTableId::MhEit_5:
+    case MmtTlv::MmtTableId::MhEit_6:
+    case MmtTlv::MmtTableId::MhEit_7:
+    case MmtTlv::MmtTableId::MhEit_8:
+    case MmtTlv::MmtTableId::MhEit_9:
+    case MmtTlv::MmtTableId::MhEit_10:
+    case MmtTlv::MmtTableId::MhEit_11:
+    case MmtTlv::MmtTableId::MhEit_12:
+    case MmtTlv::MmtTableId::MhEit_13:
+    case MmtTlv::MmtTableId::MhEit_14:
+    case MmtTlv::MmtTableId::MhEit_15:
+    case MmtTlv::MmtTableId::MhEit_16:
+        return 0x50;
+    case MmtTlv::MmtTableId::MhTot:
+        return 0x73;
+    case MmtTlv::MmtTableId::MhBit:
+        return 0xC4;
+    case MmtTlv::MmtTableId::MhSdt:
+        return 0x42;
+    case MmtTlv::MmtTableId::MhCdt:
+        return 0xC8;
+
+    }
+
+    return 0xFF;
 }
 
 } // anonymous namespace
@@ -232,11 +273,133 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     av_packet_unref(packet);
 }
 
+void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
+{
+    ts::BIT tsBit(mhBit->versionNumber, mhBit->currentNextIndicator);
+    tsBit.original_network_id = mhBit->originalNetworkId;
+    
+    for (const auto& descriptor : mhBit->descriptors.list) {
+        switch (descriptor->getDescriptorTag()) {
+        case MmtTlv::MhSiParameterDescriptor::kDescriptorTag:
+        {
+            auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhSiParameterDescriptor>(descriptor);
+            ts::SIParameterDescriptor tsDescriptor;
+            tsDescriptor.parameter_version = mmtDescriptor->parameterVersion;
+            
+            struct tm tm;
+            EITDecodeMjd(mmtDescriptor->updateTime, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+
+            try {
+                tsDescriptor.update_time = ts::Time(tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0);
+            }
+            catch (ts::Time::TimeError) {
+                return;
+            }
+
+            for (const auto& entry : mmtDescriptor->entries) {
+                ts::SIParameterDescriptor::Entry tsEntry;
+                tsEntry.table_id = convertTableId(entry.tableId);
+                if (tsEntry.table_id == 0xFF) {
+                    continue;
+                }
+                tsEntry.table_description.resize(entry.tableDescriptionByte.size());
+                memcpy(tsEntry.table_description.data(), entry.tableDescriptionByte.data(), entry.tableDescriptionByte.size());
+                tsDescriptor.entries.push_back(tsEntry);
+            }
+            
+            tsBit.descs.add(duck, tsDescriptor);
+            break;
+        }
+        }
+    }
+
+    for (const auto& broadcaster : mhBit->broadcasters) {
+        auto& tsBroadcaster = tsBit.broadcasters[broadcaster.broadcasterId];
+
+        for (const auto& descriptor : broadcaster.descriptors.list) {
+            switch (descriptor->getDescriptorTag()) {
+            case MmtTlv::RelatedBroadcasterDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::RelatedBroadcasterDescriptor>(descriptor);
+                ts::ExtendedBroadcasterDescriptor tsDescriptor;
+                tsDescriptor.broadcaster_type = 1;
+                tsDescriptor.terrestrial_broadcaster_id = mhBit->originalNetworkId;
+
+                for (auto affiliationId : mmtDescriptor->affiliationIds) {
+                    tsDescriptor.affiliation_ids.emplace_back(affiliationId);
+                }
+                
+                for (const auto& broadcasterId : mmtDescriptor->broadcasterIds) {
+                    tsDescriptor.broadcasters.emplace_back(broadcasterId.networkId, broadcasterId.broadcasterId);
+                }
+            
+                tsBit.descs.add(duck, tsDescriptor);
+                break;
+            }
+            case MmtTlv::MhSiParameterDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhSiParameterDescriptor>(descriptor);
+                ts::SIParameterDescriptor tsDescriptor;
+                tsDescriptor.parameter_version = mmtDescriptor->parameterVersion;
+            
+                struct tm tm;
+                EITDecodeMjd(mmtDescriptor->updateTime, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+
+                try {
+                    tsDescriptor.update_time = ts::Time(tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0);
+                }
+                catch (ts::Time::TimeError) {
+                    return;
+                }
+
+                for (const auto& entry : mmtDescriptor->entries) {
+                    ts::SIParameterDescriptor::Entry tsEntry;
+                    tsEntry.table_id = convertTableId(entry.tableId);
+                    if (tsEntry.table_id == 0xFF) {
+                        continue;
+                    }
+
+                    tsEntry.table_description.resize(entry.tableDescriptionByte.size());
+                    memcpy(tsEntry.table_description.data(), entry.tableDescriptionByte.data(), entry.tableDescriptionByte.size());
+                    tsDescriptor.entries.push_back(tsEntry);
+                }
+            
+                tsBit.descs.add(duck, tsDescriptor);
+                break;
+            }
+            }
+        }
+
+    }
+
+    ts::BinaryTable table;
+    tsBit.serialize(duck, table);
+
+    ts::OneShotPacketizer packetizer(duck, ISDB_BIT_PID);
+    for (int i = 0; i < table.sectionCount(); i++) {
+        const ts::SectionPtr& section = table.sectionAt(i);
+        section->setSectionNumber(mhBit->sectionNumber);
+        section->setLastSectionNumber(mhBit->lastSectionNumber);
+
+        packetizer.addSection(section);
+        ts::TSPacketVector packets;
+        packetizer.getPackets(packets);
+        for (auto& packet : packets) {
+            packet.setCC(mapCC[ISDB_BIT_PID] & 0xF);
+            mapCC[ISDB_BIT_PID]++;
+
+            if (*outputFormatContext && (*outputFormatContext)->pb) {
+                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
+        }
+    }
+}
+
 void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 {
     tsid = mhEit->tlvStreamId;
 
-    ts::EIT tsEit(true, mhEit->isPF(), 0, 0, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
+    ts::EIT tsEit(true, mhEit->isPF(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
 	for (auto& mhEvent : mhEit->events) {
 		ts::EIT::Event tsEvent(&tsEit);
 
@@ -411,9 +574,6 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
                 if (mmtDescriptor->expireDateValidFlag) {
                     struct tm tm;
                     EITDecodeMjd(mmtDescriptor->expireDate, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-                    tm.tm_year -= 1900;
-                    tm.tm_mon--;
-                    tm.tm_isdst = 0;
 
                     try {
                         tsDescriptor.expire_date = ts::Time(tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0);
@@ -509,7 +669,7 @@ void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
 
     tsid = mhSdt->tlvStreamId;
 
-    ts::SDT tsSdt(true, 0, true, mhSdt->tlvStreamId, mhSdt->originalNetworkId);
+    ts::SDT tsSdt(true, mhSdt->versionNumber, mhSdt->currentNextIndicator, mhSdt->tlvStreamId, mhSdt->originalNetworkId);
     for (auto& service : mhSdt->services) {
         ts::SDT::ServiceEntry tsService(&tsSdt);
         tsService.EITs_present = service->eitScheduleFlag;
@@ -587,7 +747,7 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt)
     if (tsid == -1)
         return;
 
-    ts::PAT pat(0, true, tsid);
+    ts::PAT pat(plt->version % 32, true, tsid);
     mapService2Pid.clear();
 
     int i = 0;
@@ -648,8 +808,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
 
     pid = it->second;
 
-    ts::PMT tsPmt(0, true, serviceId);
-    tsPmt.pcr_pid = 0x100;
+    ts::PMT tsPmt(mpt->version % 32, true, serviceId, 0x100);
 
     // For VLC to recognize as ARIB standard
     ts::CADescriptor caDescriptor(5, 0x0901);
@@ -685,12 +844,12 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
                 }
 
                 const auto& mmtStream = demuxer.mapStreamByStreamIdx[streamIndex];
-                if (mmtStream->componentTag == -1) {
+                if (mmtStream->getComponentTag() == -1) {
                     streamIndex++;
                     continue;
                 }
 
-                tsPmt.streams[mmtStream->getTsPid()] = stream;
+                tsPmt.streams[mmtStream->getMpeg2Pid()] = stream;
                 streamIndex++;
             }
         }
@@ -792,7 +951,7 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot)
 
 void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt)
 {
-    ts::CDT cdt;
+    ts::CDT cdt(mhCdt->versionNumber, mhCdt->currentNextIndicator);
     cdt.original_network_id = mhCdt->originalNetworkId;
     cdt.download_data_id = mhCdt->downloadDataId;
     cdt.data_type = mhCdt->dataType;
@@ -824,8 +983,7 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt)
 
 void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
 {
-    ts::NIT tsNit(true, 0, true, 0);
-    tsNit.network_id = nit->networkId;
+    ts::NIT tsNit(true, nit->versionNumber, nit->currentNextIndicator, nit->networkId);
 
     for (const auto& descriptor : nit->descriptors.list) {
         switch (descriptor->getDescriptorTag()) {
@@ -870,7 +1028,8 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
 
     for (int i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
-
+        section->setSectionNumber(nit->sectionNumber);
+        section->setLastSectionNumber(nit->lastSectionNumber);
         packetizer.addSection(section);
 
         ts::TSPacketVector packets;
@@ -910,7 +1069,7 @@ void RemuxerHandler::onStreamsChanged()
     for (const auto& mmtStream : demuxer.mapStream) {
         AVStream* outStream = avformat_new_stream(*outputFormatContext, nullptr);
 
-        switch (mmtStream.second->assetType) {
+        switch (mmtStream.second->getAssetType()) {
         case MmtTlv::makeAssetType('h', 'e', 'v', '1'):
             outStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
             outStream->codecpar->codec_id = AV_CODEC_ID_HEVC;
@@ -918,7 +1077,7 @@ void RemuxerHandler::onStreamsChanged()
         case MmtTlv::makeAssetType('m', 'p', '4', 'a'):
             outStream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
             outStream->codecpar->codec_id = AV_CODEC_ID_AAC; // AV_CODEC_ID_AAC_LATM
-            outStream->codecpar->sample_rate = 48000;
+            outStream->codecpar->sample_rate = mmtStream.second->getSamplingRate();
             break;
         case MmtTlv::makeAssetType('s', 't', 'p', 'p'):
             outStream->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;

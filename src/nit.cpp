@@ -15,6 +15,7 @@ bool Nit::unpack(Common::Stream& stream)
     networkId = stream.getBe16U();
 
     uint8_t uint8 = stream.get8U();
+    versionNumber = (uint8 & 0b00111110) >> 1;
     currentNextIndicator = uint8 & 1;
     sectionNumber = stream.get8U();
     lastSectionNumber = stream.get8U();

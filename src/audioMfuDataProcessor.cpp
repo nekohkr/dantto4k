@@ -9,13 +9,11 @@ std::optional<MfuData> AudioMfuDataProcessor::process(const std::shared_ptr<MmtS
 
     std::pair<int64_t, int64_t> ptsDts;
     try {
-        ptsDts = mmtStream->calcPtsDts();
+        ptsDts = mmtStream->getNextPtsDts();
     }
     catch (const std::out_of_range&) {
         return std::nullopt;
     }
-
-    mmtStream->incrementAuIndex();
 
     MfuData mfuData;
     mfuData.data.resize(size + 3);
@@ -26,12 +24,10 @@ std::optional<MfuData> AudioMfuDataProcessor::process(const std::shared_ptr<MmtS
 
     mfuData.pts = ptsDts.first;
     mfuData.dts = ptsDts.second;
-    mfuData.streamIndex = mmtStream->streamIndex;
-    mfuData.flags = mmtStream->flags;
-
-    mmtStream->flags = 0;
+    mfuData.streamIndex = mmtStream->getStreamIndex();
 
 	return mfuData;
 }
+
 
 }

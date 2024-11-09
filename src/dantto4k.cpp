@@ -83,11 +83,11 @@ int outputFilter(void* opaque, const uint8_t* buf, int buf_size) {
         // PES
         if (pid >= 0x100 && pid <= 0x200) {
             const auto& mmtStream = demuxer.mapStreamByStreamIdx[pid - 0x100];
-            if (mmtStream->componentTag == -1) {
+            if (mmtStream->getComponentTag() == -1) {
                 continue;
             }
 
-            packet.setPID(mmtStream->getTsPid());
+            packet.setPID(mmtStream->getMpeg2Pid());
         }
         
         {

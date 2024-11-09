@@ -70,10 +70,9 @@ private:
 
 private:
 	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
-	std::shared_ptr<MmtStream> getStream(uint16_t pid, bool create);
 
 	std::shared_ptr<Acas::SmartCard> smartCard;
-	std::shared_ptr<Acas::AcasCard> acasCard;
+	std::unique_ptr<Acas::AcasCard> acasCard;
 
 	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
 

@@ -1,43 +1,40 @@
 #pragma once
-#include <list>
+#include <vector>
 #include "mmtTableBase.h"
 #include "mmtDescriptors.h"
 
 namespace MmtTlv {
 
-// Mh-Service Description Table 
-class MhSdt : public MmtTableBase {
+// MH-Broadcaster_Information_Table
+class MhBit : public MmtTableBase {
 public:
     bool unpack(Common::Stream& stream);
 
-    class Service {
+    class Broadcaster {
     public:
         bool unpack(Common::Stream& stream);
 
-        uint16_t serviceId;
-        int8_t eitUserDefinedFlags;
-        bool eitScheduleFlag;
-        bool eitPresentFollowingFlag;
-        uint8_t runningStatus;
-        bool freeCaMode;
-        uint16_t descriptorsLoopLength;
-
+        uint8_t broadcasterId;
+        uint16_t broadcasterDescriptorsLength;
         MmtDescriptors descriptors;
     };
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
 
-    uint16_t tlvStreamId;
-
+    uint16_t originalNetworkId;
     uint8_t versionNumber;
     bool currentNextIndicator;
     uint8_t sectionNumber;
     uint8_t lastSectionNumber;
 
-    uint16_t originalNetworkId;
+    bool broadcastViewPropriety;
+    uint16_t firstDescriptorsLength;
 
-    std::list<std::shared_ptr<Service>> services;
+    MmtDescriptors descriptors;
+
+
+    std::vector<Broadcaster> broadcasters;
     uint32_t crc32;
 };
 

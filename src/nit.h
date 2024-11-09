@@ -25,6 +25,7 @@ public:
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
     uint16_t networkId;
+    uint8_t versionNumber;
     bool currentNextIndicator;
     uint8_t sectionNumber;
     uint8_t lastSectionNumber;

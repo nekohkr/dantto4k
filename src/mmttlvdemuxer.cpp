@@ -7,6 +7,7 @@
 #include "mhEit.h"
 #include "mhSdt.h"
 #include "mhTot.h"
+#include "mhBit.h"
 #include "mmtStream.h"
 #include "MmtTlvDemuxer.h"
 #include "mpt.h"
@@ -24,13 +25,14 @@
 #include "mhStreamIdentificationDescriptor.h"
 #include "videoMfuDataProcessor.h"
 #include "videoComponentDescriptor.h"
+#include "mhAudioComponentDescriptor.h"
 
 namespace MmtTlv {
 
 MmtTlvDemuxer::MmtTlvDemuxer()
 {
     smartCard = std::make_shared<Acas::SmartCard>();
-    acasCard = std::make_shared<Acas::AcasCard>(smartCard);
+    acasCard = std::make_unique<Acas::AcasCard>(smartCard);
 }
 
 bool MmtTlvDemuxer::init()
@@ -229,6 +231,11 @@ void MmtTlvDemuxer::processMmtTable(Common::Stream& stream)
             demuxerHandler->onPlt(std::dynamic_pointer_cast<Plt>(table));
         }
         break;
+    case MmtTableId::MhBit:
+        if (demuxerHandler) {
+            demuxerHandler->onMhBit(std::dynamic_pointer_cast<MhBit>(table));
+        }
+        break;
     }
 }
 
@@ -276,7 +283,11 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
                 if (asset.assetType == makeAssetType('h', 'e', 'v', '1') ||
                     asset.assetType == makeAssetType('m', 'p', '4', 'a') ||
                     asset.assetType == makeAssetType('s', 't', 'p', 'p')) {
-                    mmtStream = getStream(locationInfo.packetId, true);
+                    mmtStream = getStream(locationInfo.packetId);
+                    if (!mmtStream) {
+                        mmtStream = std::make_shared<MmtStream>(locationInfo.packetId);
+                        mapStream[locationInfo.packetId] = mmtStream;
+                    }
                     mmtStream->assetType = asset.assetType;
                     mmtStream->streamIndex = streamIndex;
 
@@ -313,12 +324,13 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             case VideoComponentDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::VideoComponentDescriptor>(descriptor);
-                if (mmtDescriptor->videoResolution == 7) {
-                    mmtStream->is8KVideo = true;
-                }
-                else {
-                    mmtStream->is8KVideo = false;
-                }
+                mmtStream->videoComponentDescriptor = mmtDescriptor;
+                break;
+            }
+            case MhAudioComponentDescriptor::kDescriptorTag:
+            {
+                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhAudioComponentDescriptor>(descriptor);
+                mmtStream->mhAudioComponentDescriptor = mmtDescriptor;
                 break;
             }
             }
@@ -474,27 +486,14 @@ std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t pid)
     }
 }
 
-std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid, bool create)
+std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid)
 {
     if (mapStream.find(pid) == mapStream.end()) {
-        if (create) {
-            auto stream = std::make_shared<MmtStream>();
-            stream->pid = pid;
-            mapStream[pid] = stream;
-            return stream;
-        }
-        else {
-            return nullptr;
-        }
+        return nullptr;
     }
     else {
         return mapStream[pid];
     }
-}
-
-std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid)
-{
-    return getStream(pid, false);
 }
 
 void MmtTlvDemuxer::processMpu(Common::Stream& stream)
@@ -537,9 +536,8 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
 
     assembler->checkState(mmt.packetSequenceNumber);
 
-    if (mmt.rapFlag) {
-        mmtStream->flags |= AV_PKT_FLAG_KEY;
-    }
+    mmtStream->rapFlag = mmt.rapFlag;
+    
 
     if (mpu.aggregateFlag == 0) {
         DataUnit dataUnit;

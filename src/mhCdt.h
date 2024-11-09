@@ -5,7 +5,7 @@
 
 namespace MmtTlv {
 
-// Mh-Common Data Table 
+// Mh-Common Data Table
 class MhCdt : public MmtTableBase {
 public:
     bool unpack(Common::Stream& stream);

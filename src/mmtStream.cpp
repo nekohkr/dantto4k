@@ -1,4 +1,6 @@
 #include "mmtStream.h"
+#include "videoComponentDescriptor.h"
+#include "mhAudioComponentDescriptor.h"
 
 namespace MmtTlv {
 
@@ -58,7 +60,7 @@ int64_t av_rescale(int64_t a, int64_t b, int64_t c) {
 
 } // anonymous namespace
 
-std::pair<int64_t, int64_t> MmtStream::calcPtsDts() const
+std::pair<int64_t, int64_t> MmtStream::getNextPtsDts()
 {
     const auto timestamp = getCurrentTimestamp();
 
@@ -76,6 +78,7 @@ std::pair<int64_t, int64_t> MmtStream::calcPtsDts() const
 
     int64_t pts = dts + timestamp.second.dtsPtsOffsets[auIndex];
 
+    ++auIndex;
 
     return std::pair<int64_t, int64_t>(pts, dts);
 }
@@ -108,14 +111,23 @@ std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescrip
     return { mpuTimestamps[mpuTimestampIndex], mpuExtendedTimestamps[extendedTimestampIndex] };
 }
 
-void MmtStream::incrementAuIndex()
+
+bool MmtStream::Is8KVideo() const
 {
-    auIndex++;
+    if (!videoComponentDescriptor) {
+        return false;
+    }
+
+    return videoComponentDescriptor->Is8KVideo();
 }
 
-uint32_t MmtStream::getAuIndex() const
+uint32_t MmtStream::getSamplingRate() const
 {
-    return auIndex;
+    if (!mhAudioComponentDescriptor) {
+        return 0;
+    }
+
+    return mhAudioComponentDescriptor->getConvertedSamplingRate();
 }
 
 }

@@ -31,26 +31,22 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
     appendPendingData(stream, size);
 
     if (nalUnitType < 0x20) {
-        if (sliceSegmentCount >= (mmtStream->is8KVideo ? 3 : 0)) {
+        if (sliceSegmentCount >= (mmtStream->Is8KVideo() ? 3 : 0)) {
             std::pair<int64_t, int64_t> ptsDts;
             try {
-                ptsDts = mmtStream->calcPtsDts();
+                ptsDts = mmtStream->getNextPtsDts();
             }
             catch (const std::out_of_range& e) {
                 std::cerr << e.what() << std::endl;
                 return std::nullopt;
             }
 
-            mmtStream->incrementAuIndex();
-
             MfuData mfuData;
             mfuData.data = std::move(pendingData);
             mfuData.pts = ptsDts.first;
             mfuData.dts = ptsDts.second;
-            mfuData.streamIndex = mmtStream->streamIndex;
-            mfuData.flags = mmtStream->flags;
-
-            mmtStream->flags = 0;
+            mfuData.streamIndex = mmtStream->getStreamIndex();
+            mfuData.flags = mmtStream->GetRapFlag() ? AV_PKT_FLAG_KEY : 0;
 
             return mfuData;
         }
@@ -66,11 +62,11 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
 
 void VideoMfuDataProcessor::appendPendingData(Common::Stream& stream, int size)
 {
-    uint32_t nalHeader = 0x1000000;
-    int oldSize = pendingData.size();
+    uint32_t nalStartCode = 0x1000000;
+    size_t oldSize = pendingData.size();
     pendingData.resize(oldSize + 4 + size);
 
-    memcpy(pendingData.data() + oldSize, &nalHeader, 4);
+    memcpy(pendingData.data() + oldSize, &nalStartCode, 4);
     stream.read(pendingData.data() + oldSize + 4, size);
 }
 

@@ -32,12 +32,13 @@ struct AVFormatContext;
 
 namespace MmtTlv {
 
-class MhEit;
-class MhSdt;
 class Plt;
 class Mpt;
-class MhTot;
+class MhBit;
 class MhCdt;
+class MhEit;
+class MhSdt;
+class MhTot;
 class Nit;
 class MmtStream;
 class MmtTlvDemuxer;
@@ -56,6 +57,7 @@ public:
 	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
 
 	// MMT message
+	void onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhCdt) override;
 	void onEcm(const std::shared_ptr<MmtTlv::Ecm>& ecm) override {}
 	void onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) override;
 	void onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) override;

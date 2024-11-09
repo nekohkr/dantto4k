@@ -34,6 +34,8 @@ public:
     uint16_t sectionLength;
 
     uint16_t serviceId;
+
+    uint8_t versionNumber;
     bool currentNextIndicator;
     uint8_t sectionNumber;
     uint8_t lastSectionNumber;

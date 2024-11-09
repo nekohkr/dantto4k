@@ -47,4 +47,24 @@ bool MhAudioComponentDescriptor::unpack(Common::Stream& stream)
     return true;
 }
 
+uint32_t MhAudioComponentDescriptor::getConvertedSamplingRate() const
+{
+    switch (samplingRate) {
+    case 0b001:
+        return 16000;
+    case 0b010:
+        return 22050;
+    case 0b011:
+        return 24000;
+    case 0b101:
+        return 32000;
+    case 0b110:
+        return 44100;
+    case 0b111:
+        return 48000;
+    }
+
+    return 0;
+}
+
 }

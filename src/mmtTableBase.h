@@ -28,6 +28,7 @@ public:
 	static constexpr uint8_t MhSdt = 0x9F;
 	static constexpr uint8_t MhTot = 0xA1;
 	static constexpr uint8_t MhCdt = 0xA2;
+	static constexpr uint8_t MhBit = 0x9D;
 };
 
 class MmtTableBase {

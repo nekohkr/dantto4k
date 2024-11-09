@@ -6,29 +6,38 @@
 namespace MmtTlv {
 
 class MfuDataProcessorBase;
+class VideoComponentDescriptor;
+class MhAudioComponentDescriptor;
 
-class MmtStream {
+class MmtStream final {
 public:
-	std::pair<int64_t, int64_t> calcPtsDts() const;
-	void incrementAuIndex();
-	uint32_t getAuIndex() const;
-	uint16_t getTsPid() const { return (componentTag == -1) ? 0x200 + streamIndex : 0x100 + componentTag; }
+	MmtStream(uint16_t pid)
+		: pid(pid) {}
 
-	uint32_t assetType;
-	uint32_t lastMpuSequenceNumber = 0;
-	uint32_t auIndex = 0;
-	uint32_t streamIndex = 0;
-	uint16_t pid = 0;
-	int16_t componentTag = -1;
+	MmtStream(const MmtStream&) = delete;
+    MmtStream& operator=(const MmtStream&) = delete;
 
-	bool is8KVideo = false;
+	MmtStream(MmtStream&&) = default;
+    MmtStream& operator=(MmtStream&&) = default;
 
-	int flags = 0;
+	std::pair<int64_t, int64_t> getNextPtsDts();
 
-	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
-	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
+	uint32_t getAuIndex() const { return auIndex; }
+	uint16_t getMpeg2Pid() const { return componentTag == -1 ? 0x200 + streamIndex : 0x100 + componentTag; }
+	uint16_t getPid() const { return pid; }
+	uint32_t getAssetType() const { return assetType; }
+	uint32_t getStreamIndex() const { return streamIndex; }
 
-	std::shared_ptr<MfuDataProcessorBase> mfuDataProcessor;
+	int32_t getComponentTag() const { return componentTag; }
+
+	bool GetRapFlag() const { return rapFlag; }
+
+	bool Is8KVideo() const;
+	uint32_t getSamplingRate() const;
+
+	const std::shared_ptr<VideoComponentDescriptor>& getVideoComponentDescriptor() const { return videoComponentDescriptor; }
+	const std::shared_ptr<MhAudioComponentDescriptor>& getMhAudioComponentDescriptor() const { return mhAudioComponentDescriptor; }
+
 
 	struct TimeBase {
 		int num;
@@ -38,7 +47,27 @@ public:
 	struct TimeBase timeBase;
 
 private:
+	friend class MmtTlvDemuxer;
+
 	std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> getCurrentTimestamp() const;
+	
+	uint16_t pid = 0;
+	
+	uint32_t assetType = 0;
+	uint32_t lastMpuSequenceNumber = 0;
+	uint32_t auIndex = 0;
+	uint32_t streamIndex = 0;
+
+	int16_t componentTag = -1;
+
+	bool rapFlag = false;
+
+	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
+	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
+	std::shared_ptr<MfuDataProcessorBase> mfuDataProcessor;
+	
+	std::shared_ptr<VideoComponentDescriptor> videoComponentDescriptor;
+	std::shared_ptr<MhAudioComponentDescriptor> mhAudioComponentDescriptor;
 };
 
 }

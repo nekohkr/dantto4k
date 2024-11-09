@@ -6,6 +6,7 @@
 #include "mhTot.h"
 #include "mpt.h"
 #include "plt.h"
+#include "mhBit.h"
 #include <unordered_map>
 #include <functional>
 
@@ -35,6 +36,7 @@ static const std::unordered_map<uint8_t, std::function<std::shared_ptr<MmtTableB
 	{ MmtTableId::MhTot,	[] { return std::make_shared<MhTot>(); } },
 	{ MmtTableId::Mpt,		[] { return std::make_shared<Mpt>(); } },
 	{ MmtTableId::Plt,		[] { return std::make_shared<Plt>(); } },
+	{ MmtTableId::MhBit,	[] { return std::make_shared<MhBit>(); } },
 };
 
 std::shared_ptr<MmtTableBase> MmtTableFactory::create(uint8_t id) {

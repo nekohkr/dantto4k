@@ -1,5 +1,6 @@
 #include "bonTuner.h"
 #include <iostream>
+#include <mutex>
 #include "dantto4k.h"
 #include "config.h"
 
@@ -39,44 +40,6 @@ bool CBonTuner::init(Config& config)
 		return false;
 	}
 
-	std::thread thread([&]() {
-		int skipByte = 0;
-		while (1) {
-			Sleep(1);
-
-			{
-				std::lock_guard<std::mutex> lock(inputMutex);
-				if (inputBuffer.size() < 1024*1024) {
-					continue;
-				}
-
-				buffer.insert(buffer.end(), inputBuffer.begin(), inputBuffer.end());
-				inputBuffer.clear();
-			}
-
-			int lastTlvPos = 0;
-			MmtTlv::Common::Stream input(buffer);
-			while (!input.isEof()) {
-				int pos = input.cur;
-				int n = demuxer.processPacket(input);
-
-				// not valid tlv
-				if (n == -2) {
-					continue;
-				}
-
-				// not enough buffer for tlv payload
-				if (n == -1) {
-					input.cur = pos;
-					break;
-				}
-			}
-
-			buffer.erase(buffer.begin(), buffer.begin() + (buffer.size() - input.leftBytes()));
-		}
-	});
-
-	thread.detach();
 	return true;
 }
 
@@ -107,6 +70,7 @@ const uint32_t CBonTuner::WaitTsStream(const uint32_t dwTimeOut)
 
 const uint32_t CBonTuner::GetReadyCount(void)
 {
+	std::lock_guard<std::mutex> lock(mutex);
 	return pBonDriver2->GetReadyCount();
 }
 
@@ -123,29 +87,41 @@ const bool CBonTuner::GetTsStream(uint8_t* pDst, uint32_t* pdwSize, uint32_t* pd
 
 const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* pdwRemain)
 {
+	std::lock_guard<std::mutex> lock(mutex);
+
 	bool ret = pBonDriver2->GetTsStream(ppDst, pdwSize, pdwRemain);
 	if (ret) {
 		if (fp) {
 			fwrite(*ppDst, 1, *pdwSize, fp);
 		}
 		
-		{
-			std::lock_guard<std::mutex> lock(inputMutex);
-			inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
+		inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
+	}
+
+	MmtTlv::Common::Stream input(inputBuffer);
+	while (!input.isEof()) {
+		uint64_t pos = input.cur;
+		int n = demuxer.processPacket(input);
+
+		// not valid tlv
+		if (n == -2) {
+			continue;
+		}
+
+		// not enough buffer for tlv payload
+		if (n == -1) {
+			input.cur = pos;
+			break;
 		}
 	}
 
-	int remain = 0;
-	{
-		std::lock_guard<std::mutex> lock(outputMutex);
+	inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - input.leftBytes()));
 
-		if (!muxedOutput.size()) {
-			return false;
-		}
-
-		outputBuffer = muxedOutput;
-		muxedOutput.clear();
+	if (!muxedOutput.size()) {
+		return false;
 	}
+
+	outputBuffer = std::move(muxedOutput);
 
 	*ppDst = outputBuffer.data();
 	*pdwSize = outputBuffer.size();
@@ -180,14 +156,10 @@ const char* CBonTuner::EnumChannelName(const uint32_t dwSpace, const uint32_t dw
 
 const bool CBonTuner::SetChannel(const uint32_t dwSpace, const uint32_t dwChannel)
 {
-	{
-		std::lock_guard<std::mutex> lock(inputMutex);
-		inputBuffer.clear();
-	}
-	{
-		std::lock_guard<std::mutex> lock(outputMutex);
-		muxedOutput.clear();
-	}
+	std::lock_guard<std::mutex> lock(mutex);
+
+	inputBuffer.clear();
+	muxedOutput.clear();
 
 	if (config.mmtsDumpPath != "") {
 		if (fp) {

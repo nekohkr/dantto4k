@@ -46,10 +46,7 @@ std::optional<MfuData> SubtitleMfuDataProcessor::process(const std::shared_ptr<M
     mfuData.data.resize(dataSize);
     stream.read(mfuData.data.data(), dataSize);
 
-    mfuData.streamIndex = mmtStream->streamIndex;
-    mfuData.flags = mmtStream->flags;
-
-    mmtStream->flags = 0;
+    mfuData.streamIndex = mmtStream->getStreamIndex();
 
     return mfuData;
 }
