@@ -196,6 +196,18 @@
     <ClCompile Include="accessControlDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
+    <ClCompile Include="systemManagementDescriptor.cpp">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhBIt.cpp">
+      <Filter>mmttlv\mmt\tables</Filter>
+    </ClCompile>
+    <ClCompile Include="mhSiParameterDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="relatedBroadcasterDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -424,6 +436,18 @@
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="accessControlDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="systemManagementDescriptor.h">
+      <Filter>mmttlv\tlv\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhBIt.h">
+      <Filter>mmttlv\mmt\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="mhSiParameterDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="relatedBroadcasterDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
   </ItemGroup>
