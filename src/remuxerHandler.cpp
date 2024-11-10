@@ -123,7 +123,7 @@ int assetType2streamType(uint32_t assetType)
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
     case MmtTlv::makeAssetType('m', 'p', '4', 'a'):
-        stream_type = STREAM_TYPE_AUDIO_AAC_LATM;//STREAM_TYPE_AUDIO_AAC; // STREAM_TYPE_AUDIO_AAC_LATM
+        stream_type = STREAM_TYPE_AUDIO_AAC; // STREAM_TYPE_AUDIO_AAC_LATM
         break;
     case MmtTlv::makeAssetType('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;

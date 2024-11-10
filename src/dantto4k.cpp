@@ -28,8 +28,6 @@ MmtTlv::MmtTlvDemuxer demuxer;
 RemuxerHandler handler(demuxer, &outputFormatContext, &avioContext);
 CBonTuner bonTuner;
 std::vector<uint8_t> muxedOutput;
-std::mutex outputMutex;
-std::mutex inputMutex;
 
 class TSInput {
 public:
@@ -90,10 +88,7 @@ int outputFilter(void* opaque, const uint8_t* buf, int buf_size) {
             packet.setPID(mmtStream->getMpeg2Pid());
         }
         
-        {
-            std::lock_guard<std::mutex> lock(outputMutex);
-            muxedOutput.insert(muxedOutput.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
-        }
+        muxedOutput.insert(muxedOutput.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
     }
     
     return buf_size;
@@ -189,20 +184,14 @@ int main(int argc, char* argv[]) {
 
 		inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - stream.leftBytes()));
 
-        {
-            std::lock_guard<std::mutex> lock(outputMutex);
-            fwrite(muxedOutput.data(), 1, muxedOutput.size(), fp);
-            muxedOutput.clear();
-        }
+        fwrite(muxedOutput.data(), 1, muxedOutput.size(), fp);
+        muxedOutput.clear();
     }
 
     av_write_trailer(outputFormatContext);
     
-    {
-        std::lock_guard<std::mutex> lock(outputMutex);
-        fwrite(muxedOutput.data(), 1, muxedOutput.size(), fp);
-        muxedOutput.clear();
-    }
+    fwrite(muxedOutput.data(), 1, muxedOutput.size(), fp);
+    muxedOutput.clear();
 
     fclose(fp);
 
