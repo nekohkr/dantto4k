@@ -483,7 +483,12 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
                 tsDescriptor.quality_indicator = mmtDescriptor->qualityIndicator;
                 tsDescriptor.sampling_rate = convertAudioSamplingRate(mmtDescriptor->samplingRate);
                 tsDescriptor.ISO_639_language_code = ts::UString::FromUTF8(mmtDescriptor->language1);
-                tsDescriptor.text = ts::UString::FromUTF8(mmtDescriptor->text);
+
+                
+                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
+                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
+
+                tsDescriptor.text = ts::UString::FromUTF8(reinterpret_cast<const char*>(textBlock.data()), textBlock.size());
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
@@ -494,7 +499,12 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
                 tsDescriptor.stream_content = 1; // video
                 tsDescriptor.component_type = convertVideoComponentType(mmtDescriptor->videoResolution, mmtDescriptor->videoAspectRatio);
                 tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
-                tsDescriptor.text = ts::UString::FromUTF8(mmtDescriptor->text);
+
+                
+                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
+                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
+
+                tsDescriptor.text = ts::UString::FromUTF8(reinterpret_cast<const char*>(textBlock.data()), textBlock.size());
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
@@ -585,9 +595,11 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 
                 tsDescriptor.episode_number = mmtDescriptor->episodeNumber;
                 tsDescriptor.last_episode_number = mmtDescriptor->lastEpisodeNumber;
-
+                
                 ts::UString seriesName = ts::UString::FromUTF8(mmtDescriptor->seriesNameChar);
-                tsDescriptor.series_name = seriesName;
+                const ts::ByteBlock seriesNameBlock(ts::ARIBCharset::B24.encoded(seriesName));
+
+                tsDescriptor.series_name = ts::UString::FromUTF8(reinterpret_cast<const char*>(seriesNameBlock.data()), seriesNameBlock.size());
 
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
@@ -623,7 +635,11 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 
                 if (mmtDescriptor->dataComponentId == 0x0020) {
                     tsDescriptor.ISO_639_language_code = ts::UString::FromUTF8(mmtDescriptor->language);
-                    tsDescriptor.text = ts::UString::FromUTF8(mmtDescriptor->text);
+
+                    ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
+                    const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
+
+                    tsDescriptor.text = ts::UString::FromUTF8(reinterpret_cast<const char*>(textBlock.data()), textBlock.size());
                 }
 
                 tsDescriptor.selector_bytes.resize(mmtDescriptor->selectorByte.size());
@@ -708,7 +724,9 @@ void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
                 }
                 else if (mmtDescriptor->logoTransmissionType == 0x03) {
                     ts::UString logoChar = ts::UString::FromUTF8(mmtDescriptor->logoChar);
-                    tsDescriptor.logo_char = logoChar;
+                    const ts::ByteBlock logoCharBlock(ts::ARIBCharset::B24.encoded(logoChar));
+
+                    tsDescriptor.logo_char = ts::UString::FromUTF8(reinterpret_cast<const char*>(logoCharBlock.data()), logoCharBlock.size());
                 }
                 tsService.descs.add(duck, tsDescriptor);
                 break;
