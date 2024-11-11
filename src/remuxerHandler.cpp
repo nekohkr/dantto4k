@@ -34,7 +34,6 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
 }
 #include "mfuDataProcessorBase.h"
 
@@ -422,48 +421,77 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MhShortEventDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhShortEventDescriptor>(descriptor);
-                ts::ShortEventDescriptor tsDescriptor;
 
                 ts::UString eventName = ts::UString::FromUTF8(mmtDescriptor->eventName);
                 ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
 
                 const ts::ByteBlock eventNameBlock(ts::ARIBCharset::B24.encoded(eventName));
                 const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
+                
+                std::vector<uint8_t> tsDescriptor(1 + 1 + 3 + 1 + eventNameBlock.size() + 1 + textBlock.size());
+                tsDescriptor[0] = 0x4D; // descriptor_tag
+                tsDescriptor[1] = 3 + 1 + eventNameBlock.size() + 1 + textBlock.size(); // descriptor_length
 
-                tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
-                tsDescriptor.event_name = ts::UString::FromUTF8((char*)eventNameBlock.data());
-                tsDescriptor.text = ts::UString::FromUTF8((char*)textBlock.data());
+                memcpy(&tsDescriptor[2], mmtDescriptor->language, 3); // language
 
-                tsEvent.descs.add(duck, tsDescriptor);
+                tsDescriptor[5] = eventNameBlock.size(); // event_name_length
+                memcpy(&tsDescriptor[6], eventNameBlock.data(), eventNameBlock.size()); // event_name
+
+                tsDescriptor[6 + eventNameBlock.size()] = textBlock.size(); // text_length
+                memcpy(&tsDescriptor[6 + eventNameBlock.size() + 1], textBlock.data(), textBlock.size()); // text
+
+                tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
                 break;
             }
             case MmtTlv::MhExtendedEventDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhExtendedEventDescriptor>(descriptor);
-                ts::ExtendedEventDescriptor tsDescriptor;
-                tsDescriptor.descriptor_number = mmtDescriptor->descriptorNumber;
-                tsDescriptor.last_descriptor_number = mmtDescriptor->lastDescriptorNumber;
-                tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
 
                 ts::UString text = ts::UString::FromUTF8(mmtDescriptor->textChar);
                 const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
-                tsDescriptor.text = ts::UString::FromUTF8((char*)textBlock.data());
 
+                int descriptorLength = 1 + 1 + 1 + 3 + 1;
+                int itemLength = 0;
                 for (auto& item : mmtDescriptor->entries) {
-                    ts::ExtendedEventDescriptor::Entry entry;
-
-                    ts::UString itemChar = ts::UString::FromUTF8(item.itemChar);
-                    ts::UString itemDescriptionChar = ts::UString::FromUTF8(item.itemDescriptionChar);
-
-                    const ts::ByteBlock itemCharBlock(ts::ARIBCharset::B24.encoded(itemChar));
-                    const ts::ByteBlock itemDescriptionCharBlock(ts::ARIBCharset::B24.encoded(itemDescriptionChar));
-
-                    entry.item = ts::UString::FromUTF8((char*)itemCharBlock.data());
-                    entry.item_description = ts::UString::FromUTF8((char*)itemDescriptionCharBlock.data());
-
-                    tsDescriptor.entries.push_back(entry);
+                    itemLength += 1 + item.itemLength + 1 + item.itemDescriptionLength;
                 }
-                tsEvent.descs.add(duck, tsDescriptor);
+                descriptorLength += itemLength + 1 + textBlock.size();
+                
+                std::vector<uint8_t> tsDescriptor(descriptorLength);
+                tsDescriptor[0] = 0x4E;
+                tsDescriptor[1] = descriptorLength - 2;
+                tsDescriptor[2] = (mmtDescriptor->descriptorNumber & 0b1111) << 4 | (mmtDescriptor->lastDescriptorNumber & 0b1111);
+                memcpy(&tsDescriptor[3], mmtDescriptor->language, 3); // language
+
+                tsDescriptor[6] = itemLength;
+
+                int pos = 0;
+                for (auto& item : mmtDescriptor->entries) {
+                    ts::UString itemDescriptionChar = ts::UString::FromUTF8(item.itemDescriptionChar);
+                    ts::UString itemChar = ts::UString::FromUTF8(item.itemChar);
+                    
+                    const ts::ByteBlock itemDescriptionCharBlock(ts::ARIBCharset::B24.encoded(itemDescriptionChar));
+                    const ts::ByteBlock itemCharBlock(ts::ARIBCharset::B24.encoded(itemChar));
+
+                    tsDescriptor[7 + pos] = itemDescriptionCharBlock.size();
+                    pos++;
+
+                    memcpy(&tsDescriptor[7 + pos], itemDescriptionCharBlock.data(), itemDescriptionCharBlock.size());
+                    pos += itemDescriptionCharBlock.size();
+
+                    tsDescriptor[7 + pos] = itemCharBlock.size();
+                    pos++;
+
+                    memcpy(&tsDescriptor[7 + pos], itemCharBlock.data(), itemCharBlock.size());
+                    pos += itemCharBlock.size();
+                }
+
+                tsDescriptor[7 + pos] = mmtDescriptor->textLength;
+                pos++;
+
+                memcpy(&tsDescriptor[7 + pos], mmtDescriptor->textChar.data(), mmtDescriptor->textChar.size());
+
+                tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
                 break;
             }
             case MmtTlv::MhAudioComponentDescriptor::kDescriptorTag:

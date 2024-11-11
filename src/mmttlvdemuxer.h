@@ -68,6 +68,12 @@ private:
 
 	void processEcm(std::shared_ptr<Ecm> ecm);
 
+public:
+	std::shared_ptr<MmtStream> getStream(uint16_t pid);
+
+	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
+	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStreamByStreamIdx;
+
 private:
 	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
 
@@ -85,12 +91,5 @@ private:
 
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	DemuxerHandler* demuxerHandler = nullptr;
-
-public:
-	std::shared_ptr<MmtStream> getStream(uint16_t pid);
-
-	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
-	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStreamByStreamIdx;
-
 };
 }

@@ -21,23 +21,18 @@ public:
     MmtStream& operator=(MmtStream&&) = default;
 
 	std::pair<int64_t, int64_t> getNextPtsDts();
-
 	uint32_t getAuIndex() const { return auIndex; }
 	uint16_t getMpeg2Pid() const { return componentTag == -1 ? 0x200 + streamIndex : 0x100 + componentTag; }
 	uint16_t getPid() const { return pid; }
 	uint32_t getAssetType() const { return assetType; }
 	uint32_t getStreamIndex() const { return streamIndex; }
-
 	int32_t getComponentTag() const { return componentTag; }
-
 	bool GetRapFlag() const { return rapFlag; }
-
 	bool Is8KVideo() const;
 	uint32_t getSamplingRate() const;
 
 	const std::shared_ptr<VideoComponentDescriptor>& getVideoComponentDescriptor() const { return videoComponentDescriptor; }
 	const std::shared_ptr<MhAudioComponentDescriptor>& getMhAudioComponentDescriptor() const { return mhAudioComponentDescriptor; }
-
 
 	struct TimeBase {
 		int num;
