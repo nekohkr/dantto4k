@@ -208,6 +208,15 @@
     <ClCompile Include="relatedBroadcasterDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
+    <ClCompile Include="applicationMfuDataProcessor.cpp">
+      <Filter>mmttlv\mmt\mfu</Filter>
+    </ClCompile>
+    <ClCompile Include="aribUtil.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="timeUtil.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -449,6 +458,18 @@
     </ClInclude>
     <ClInclude Include="relatedBroadcasterDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="applicationMfuDataProcessor.h">
+      <Filter>mmttlv\mmt\mfu</Filter>
+    </ClInclude>
+    <ClInclude Include="aribUtil.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="descriptorConverter.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="timeUtil.h">
+      <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

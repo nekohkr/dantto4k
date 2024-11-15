@@ -1,4 +1,5 @@
 #include "mfuDataProcessorFactory.h"
+#include "applicationMfuDataProcessor.h"
 #include "videoMfuDataProcessor.h"
 #include "audioMfuDataProcessor.h"
 #include "subtitleMfuDataProcessor.h"
@@ -14,6 +15,8 @@ std::shared_ptr<MfuDataProcessorBase> MfuDataProcessorFactory::create(uint32_t t
 		return std::make_shared<AudioMfuDataProcessor>();
 	case SubtitleMfuDataProcessor::kAssetType:
 		return std::make_shared<SubtitleMfuDataProcessor>();
+	case ApplicationMfuDataProcessor::kAssetType:
+		return std::make_shared<ApplicationMfuDataProcessor>();
 	}
 
 	return {};

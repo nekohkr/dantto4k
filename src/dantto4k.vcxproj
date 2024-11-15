@@ -147,6 +147,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="accessControlDescriptor.cpp" />
+    <ClCompile Include="applicationMfuDataProcessor.cpp" />
+    <ClCompile Include="aribUtil.cpp" />
     <ClCompile Include="audioMfuDataProcessor.cpp" />
     <ClCompile Include="acascard.cpp" />
     <ClCompile Include="adtsConverter.cpp" />
@@ -165,6 +167,7 @@
     <ClCompile Include="multimediaServiceInformationDescriptor.cpp" />
     <ClCompile Include="relatedBroadcasterDescriptor.cpp" />
     <ClCompile Include="systemManagementDescriptor.cpp" />
+    <ClCompile Include="timeUtil.cpp" />
     <ClCompile Include="tlvDescriptorFactory.cpp" />
     <ClCompile Include="tlvTableFactory.cpp" />
     <ClCompile Include="videoMfuDataProcessor.cpp" />
@@ -218,6 +221,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="accessControlDescriptor.h" />
+    <ClInclude Include="applicationMfuDataProcessor.h" />
+    <ClInclude Include="aribUtil.h" />
     <ClInclude Include="audioMfuDataProcessor.h" />
     <ClInclude Include="acascard.h" />
     <ClInclude Include="adtsConverter.h" />
@@ -227,6 +232,7 @@
     <ClInclude Include="contentCopyControlDescriptor.h" />
     <ClInclude Include="dantto4k.h" />
     <ClInclude Include="dataUnit.h" />
+    <ClInclude Include="descriptorConverter.h" />
     <ClInclude Include="ecm.h" />
     <ClInclude Include="eventPackageDescriptor.h" />
     <ClInclude Include="extensionHeaderScrambling.h" />
@@ -239,6 +245,7 @@
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
     <ClInclude Include="relatedBroadcasterDescriptor.h" />
     <ClInclude Include="systemManagementDescriptor.h" />
+    <ClInclude Include="timeUtil.h" />
     <ClInclude Include="tlvDescriptorFactory.h" />
     <ClInclude Include="tlvTableFactory.h" />
     <ClInclude Include="videoMfuDataProcessor.h" />

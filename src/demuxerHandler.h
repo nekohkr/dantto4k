@@ -22,6 +22,7 @@ public:
 	virtual void onVideoData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
 	virtual void onAudioData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
 	virtual void onSubtitleData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
+	virtual void onApplicationData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
 
 	// MMT message
 	virtual void onEcm(const std::shared_ptr<Ecm>& ecm) {}
