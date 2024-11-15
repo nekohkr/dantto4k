@@ -282,7 +282,8 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             if (locationInfo.locationType == 0) {
                 if (asset.assetType == makeAssetType('h', 'e', 'v', '1') ||
                     asset.assetType == makeAssetType('m', 'p', '4', 'a') ||
-                    asset.assetType == makeAssetType('s', 't', 'p', 'p')) {
+                    asset.assetType == makeAssetType('s', 't', 'p', 'p') ||
+                    asset.assetType == makeAssetType('a', 'a', 'p', 'p')) {
                     mmtStream = getStream(locationInfo.packetId);
                     if (!mmtStream) {
                         mmtStream = std::make_shared<MmtStream>(locationInfo.packetId);
@@ -604,6 +605,11 @@ void MmtTlvDemuxer::processMfuData(Common::Stream& stream)
         case makeAssetType('s', 't', 'p', 'p'):
             if(demuxerHandler) {
                 demuxerHandler->onSubtitleData(it->second, std::make_shared<MfuData>(mfuData));
+            }
+            break;
+        case makeAssetType('a', 'a', 'p', 'p'):
+            if(demuxerHandler) {
+                demuxerHandler->onApplicationData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
         }

@@ -29,5 +29,4 @@ std::optional<MfuData> AudioMfuDataProcessor::process(const std::shared_ptr<MmtS
 	return mfuData;
 }
 
-
 }

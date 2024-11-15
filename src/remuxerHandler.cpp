@@ -1,35 +1,36 @@
 ﻿#include "remuxerHandler.h"
-#include "mhEit.h"
-#include "mhExtendedEventDescriptor.h"
-#include "mhShortEventDescriptor.h"
-#include "mhContentDescriptor.h"
+#include "accessControlDescriptor.h"
+#include "contentCopyControlDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
-#include "videoComponentDescriptor.h"
-#include "mhLinkageDescriptor.h"
+#include "mhContentDescriptor.h"
+#include "mhEit.h"
 #include "mhEventGroupDescriptor.h"
+#include "mhExtendedEventDescriptor.h"
+#include "mhLinkageDescriptor.h"
+#include "mhLogoTransmissionDescriptor.h"
 #include "mhParentalRatingDescriptor.h"
 #include "mhSeriesDescriptor.h"
-#include "mhLogoTransmissionDescriptor.h"
-#include "mhStreamIdentificationDescriptor.h"
-#include "networkNameDescriptor.h"
-#include "serviceListDescriptor.h"
-#include "contentCopyControlDescriptor.h"
-#include "multimediaServiceInformationDescriptor.h"
-#include "accessControlDescriptor.h"
+#include "mhShortEventDescriptor.h"
 #include "mhSiParameterDescriptor.h"
-#include "relatedBroadcasterDescriptor.h"
+#include "mhStreamIdentificationDescriptor.h"
 #include "mmtTableBase.h"
-
-#include "mhSdt.h"
+#include "multimediaServiceInformationDescriptor.h"
+#include "networkNameDescriptor.h"
+#include "relatedBroadcasterDescriptor.h"
+#include "serviceListDescriptor.h"
+#include "videoComponentDescriptor.h"
 #include "mhServiceDescriptor.h"
-#include "plt.h"
-#include "nit.h"
-#include "mpt.h"
-#include "mhTot.h"
-#include "mhCdt.h"
+#include "descriptorConverter.h"
 #include "mhBit.h"
+#include "mhCdt.h"
+#include "mhSdt.h"
+#include "mhTot.h"
+#include "mpt.h"
+#include "nit.h"
+#include "plt.h"
 
 #include "adtsConverter.h"
+#include "aribUtil.h"
 #include "mmtTlvDemuxer.h"
 
 extern "C" {
@@ -74,46 +75,6 @@ int convertRunningStatus(int runningStatus) {
     }
 }
 
-void EITDecodeMjd(int i_mjd, int* p_y, int* p_m, int* p_d)
-{
-    const int yp = (int)(((double)i_mjd - 15078.2) / 365.25);
-    const int mp = (int)(((double)i_mjd - 14956.1 - (int)(yp * 365.25)) / 30.6001);
-    const int c = (mp == 14 || mp == 15) ? 1 : 0;
-
-    *p_y = 1900 + yp + c * 1;
-    *p_m = mp - 1 - c * 12;
-    *p_d = i_mjd - 14956 - (int)(yp * 365.25) - (int)(mp * 30.6001);
-}
-
-#define CVT_FROM_BCD(v) ((((v) >> 4)&0xf)*10 + ((v)&0xf))
-struct tm EITConvertStartTime(uint64_t i_date)
-{
-    const int i_mjd = static_cast<int>(i_date >> 24);
-    struct tm tm;
-
-    tm.tm_hour = CVT_FROM_BCD(i_date >> 16);
-    tm.tm_min = CVT_FROM_BCD(i_date >> 8);
-    tm.tm_sec = CVT_FROM_BCD(i_date);
-
-    /* if all 40 bits are 1, the start is unknown */
-    if (i_date == UINT64_C(0xffffffffff))
-        return {};
-
-    EITDecodeMjd(i_mjd, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-    tm.tm_year -= 1900;
-    tm.tm_mon--;
-    tm.tm_isdst = 0;
-
-    return tm;
-}
-
-int EITConvertDuration(uint32_t i_duration)
-{
-    return CVT_FROM_BCD(i_duration >> 16) * 3600 +
-        CVT_FROM_BCD(i_duration >> 8) * 60 +
-        CVT_FROM_BCD(i_duration);
-}
-
 int assetType2streamType(uint32_t assetType)
 {
     int stream_type = 0;
@@ -132,50 +93,6 @@ int assetType2streamType(uint32_t assetType)
     return stream_type;
 }
 
-uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoAspectRatio) {
-    if (videoResolution > 7) {
-        return 0;
-    }
-
-    uint8_t tsVideoResolutions[] = { 0x00, 0xF0, 0xD0, 0xA0, 0xC0, 0xE0, 0x90, 0x80 };
-    uint8_t videoComponentType = tsVideoResolutions[videoResolution] + videoAspectRatio;
-
-    return videoComponentType;
-}
-
-uint8_t convertAudioComponentType(uint8_t componentType) {
-    uint8_t audioMode = componentType & 0b00011111;
-
-    switch (audioMode) {
-    case 0b00001: // 1/0 mode (single mono) 
-        return 0x01;
-    case 0b00010: // 1/0＋1/0 mode (dual mono) 
-        return 0x02;
-    case 0b00011: // 2/0 mode (stereo) 
-        return 0x03;
-    case 0b00111: // 3/1 mode 
-        return 0x07;
-    case 0b01000: // 3/2 mode
-        return 0x08;
-    case 0b01001: // 3/2＋LFE mode (3/2.1 mode)
-        return 0x09;
-    }
-
-    return 0;
-}
-
-uint8_t convertAudioSamplingRate(uint8_t samplingRate) {
-    switch (samplingRate) {
-    case 0b010: // 24 kHz
-        return 0b010;
-    case 0b101: // 32 kHz
-        return 0b101;
-    case 0b111: // 48 kHz 
-        return 0b111;
-    }
-
-    return 0;
-}
 
 uint8_t convertTableId(uint8_t mmtTableId) {
     switch (mmtTableId) {
@@ -235,6 +152,11 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
 }
 
 void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
+{
+    writeStream(mmtStream, mfuData, mfuData->data);
+}
+
+void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
     writeStream(mmtStream, mfuData, mfuData->data);
 }
@@ -421,24 +343,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MhShortEventDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhShortEventDescriptor>(descriptor);
-
-                ts::UString eventName = ts::UString::FromUTF8(mmtDescriptor->eventName);
-                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
-
-                const ts::ByteBlock eventNameBlock(ts::ARIBCharset::B24.encoded(eventName));
-                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
-                
-                std::vector<uint8_t> tsDescriptor(1 + 1 + 3 + 1 + eventNameBlock.size() + 1 + textBlock.size());
-                tsDescriptor[0] = 0x4D; // descriptor_tag
-                tsDescriptor[1] = 3 + 1 + eventNameBlock.size() + 1 + textBlock.size(); // descriptor_length
-
-                memcpy(&tsDescriptor[2], mmtDescriptor->language, 3); // language
-
-                tsDescriptor[5] = eventNameBlock.size(); // event_name_length
-                memcpy(&tsDescriptor[6], eventNameBlock.data(), eventNameBlock.size()); // event_name
-
-                tsDescriptor[6 + eventNameBlock.size()] = textBlock.size(); // text_length
-                memcpy(&tsDescriptor[6 + eventNameBlock.size() + 1], textBlock.data(), textBlock.size()); // text
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhShortEventDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
                 break;
@@ -446,50 +351,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MhExtendedEventDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhExtendedEventDescriptor>(descriptor);
-
-                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->textChar);
-                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
-
-                int descriptorLength = 1 + 1 + 1 + 3 + 1;
-                int itemLength = 0;
-                for (auto& item : mmtDescriptor->entries) {
-                    itemLength += 1 + item.itemLength + 1 + item.itemDescriptionLength;
-                }
-                descriptorLength += itemLength + 1 + textBlock.size();
-                
-                std::vector<uint8_t> tsDescriptor(descriptorLength);
-                tsDescriptor[0] = 0x4E;
-                tsDescriptor[1] = descriptorLength - 2;
-                tsDescriptor[2] = (mmtDescriptor->descriptorNumber & 0b1111) << 4 | (mmtDescriptor->lastDescriptorNumber & 0b1111);
-                memcpy(&tsDescriptor[3], mmtDescriptor->language, 3); // language
-
-                tsDescriptor[6] = itemLength;
-
-                int pos = 0;
-                for (auto& item : mmtDescriptor->entries) {
-                    ts::UString itemDescriptionChar = ts::UString::FromUTF8(item.itemDescriptionChar);
-                    ts::UString itemChar = ts::UString::FromUTF8(item.itemChar);
-                    
-                    const ts::ByteBlock itemDescriptionCharBlock(ts::ARIBCharset::B24.encoded(itemDescriptionChar));
-                    const ts::ByteBlock itemCharBlock(ts::ARIBCharset::B24.encoded(itemChar));
-
-                    tsDescriptor[7 + pos] = itemDescriptionCharBlock.size();
-                    pos++;
-
-                    memcpy(&tsDescriptor[7 + pos], itemDescriptionCharBlock.data(), itemDescriptionCharBlock.size());
-                    pos += itemDescriptionCharBlock.size();
-
-                    tsDescriptor[7 + pos] = itemCharBlock.size();
-                    pos++;
-
-                    memcpy(&tsDescriptor[7 + pos], itemCharBlock.data(), itemCharBlock.size());
-                    pos += itemCharBlock.size();
-                }
-
-                tsDescriptor[7 + pos] = mmtDescriptor->textLength;
-                pos++;
-
-                memcpy(&tsDescriptor[7 + pos], mmtDescriptor->textChar.data(), mmtDescriptor->textChar.size());
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhExtendedEventDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
                 break;
@@ -497,92 +359,39 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MhAudioComponentDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhAudioComponentDescriptor>(descriptor);
-                ts::AudioComponentDescriptor tsDescriptor;
-                tsDescriptor.stream_content = 2; // audio
-                tsDescriptor.component_type = convertAudioComponentType(mmtDescriptor->componentType);
-                tsDescriptor.component_tag = mmtDescriptor->componentTag;
-                tsDescriptor.stream_type = 0x0F; // ISO/IEC13818-7 audio
-                tsDescriptor.simulcast_group_tag = mmtDescriptor->simulcastGroupTag;
-                if (mmtDescriptor->esMultiLingualFlag) {
-                    tsDescriptor.ISO_639_language_code_2 = ts::UString::FromUTF8(mmtDescriptor->language2);
-                }
-
-                tsDescriptor.main_component = mmtDescriptor->mainComponentFlag;
-                tsDescriptor.quality_indicator = mmtDescriptor->qualityIndicator;
-                tsDescriptor.sampling_rate = convertAudioSamplingRate(mmtDescriptor->samplingRate);
-                tsDescriptor.ISO_639_language_code = ts::UString::FromUTF8(mmtDescriptor->language1);
-
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhAudioComponentDescriptor>::convert(*mmtDescriptor);
                 
-                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
-                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
-
-                tsDescriptor.text = ts::UString::FromUTF8(reinterpret_cast<const char*>(textBlock.data()), textBlock.size());
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MmtTlv::VideoComponentDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::VideoComponentDescriptor>(descriptor);
-                ts::ComponentDescriptor tsDescriptor;
-                tsDescriptor.stream_content = 1; // video
-                tsDescriptor.component_type = convertVideoComponentType(mmtDescriptor->videoResolution, mmtDescriptor->videoAspectRatio);
-                tsDescriptor.language_code = ts::UString::FromUTF8(mmtDescriptor->language);
-
+                auto tsDescriptor = DescriptorConverter<MmtTlv::VideoComponentDescriptor>::convert(*mmtDescriptor);
                 
-                ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
-                const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
-
-                tsDescriptor.text = ts::UString::FromUTF8(reinterpret_cast<const char*>(textBlock.data()), textBlock.size());
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MmtTlv::MhContentDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhContentDescriptor>(descriptor);
-                ts::ContentDescriptor tsDescriptor;
-
-                for (auto& item : mmtDescriptor->entries) {
-                    ts::ContentDescriptor::Entry entry;
-                    entry.content_nibble_level_1 = item.contentNibbleLevel1;
-                    entry.content_nibble_level_2 = item.contentNibbleLevel2;
-                    entry.user_nibble_1 = item.userNibble1;
-                    entry.user_nibble_2 = item.userNibble2;
-                    tsDescriptor.entries.push_back(entry);
-                }
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhContentDescriptor>::convert(*mmtDescriptor);
+               
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MmtTlv::MhLinkageDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhLinkageDescriptor>(descriptor);
-                ts::LinkageDescriptor tsDescriptor(mmtDescriptor->tlvStreamId, mmtDescriptor->originalNetworkId, mmtDescriptor->serviceId, mmtDescriptor->linkageType);
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhLinkageDescriptor>::convert(*mmtDescriptor);
+
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MmtTlv::MhEventGroupDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhEventGroupDescriptor>(descriptor);
-                ts::EventGroupDescriptor tsDescriptor;
-                tsDescriptor.group_type = mmtDescriptor->groupType;
-
-                for (const auto& event : mmtDescriptor->events) {
-                    ts::EventGroupDescriptor::ActualEvent actualEvent;
-                    actualEvent.service_id = event.serviceId;
-                    actualEvent.event_id = event.eventId;
-                    tsDescriptor.actual_events.push_back(actualEvent);
-                }
-
-                for (const auto& otherNetworkEvent : mmtDescriptor->otherNetworkEvents) {
-                    ts::EventGroupDescriptor::OtherEvent otherEvent;
-                    otherEvent.original_network_id = otherNetworkEvent.originalNetworkId;
-                    otherEvent.transport_stream_id = otherNetworkEvent.tlvStreamId;
-                    otherEvent.service_id = otherNetworkEvent.serviceId;
-                    otherEvent.event_id = otherNetworkEvent.eventId;
-                    tsDescriptor.other_events.push_back(otherEvent);
-                }
-
-                tsDescriptor.private_data.resize(mmtDescriptor->privateDataByte.size());
-                memcpy(tsDescriptor.private_data.data(), mmtDescriptor->privateDataByte.data(), mmtDescriptor->privateDataByte.size());
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhEventGroupDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
@@ -590,13 +399,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MhParentalRatingDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhParentalRatingDescriptor>(descriptor);
-                ts::ParentalRatingDescriptor tsDescriptor;
-
-                for (const auto& entry : mmtDescriptor->entries) {
-                    ts::UString countryCode = ts::UString::FromUTF8(entry.countryCode);
-                    ts::ParentalRatingDescriptor::Entry tsEntry(countryCode, entry.rating);
-                    tsDescriptor.entries.push_back(tsEntry);
-                }
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhParentalRatingDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
@@ -604,53 +407,15 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MhSeriesDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhSeriesDescriptor>(descriptor);
-                ts::SeriesDescriptor tsDescriptor;
-                tsDescriptor.series_id = mmtDescriptor->seriesId;
-                tsDescriptor.repeat_label = mmtDescriptor->repeatLabel;
-                tsDescriptor.program_pattern = mmtDescriptor->programPattern;
-
-                if (mmtDescriptor->expireDateValidFlag) {
-                    struct tm tm;
-                    EITDecodeMjd(mmtDescriptor->expireDate, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-                    try {
-                        tsDescriptor.expire_date = ts::Time(tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0);
-                    }
-                    catch (ts::Time::TimeError) {
-                        return;
-                    }
-                }
-
-                tsDescriptor.episode_number = mmtDescriptor->episodeNumber;
-                tsDescriptor.last_episode_number = mmtDescriptor->lastEpisodeNumber;
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhSeriesDescriptor>::convert(*mmtDescriptor);
                 
-                ts::UString seriesName = ts::UString::FromUTF8(mmtDescriptor->seriesNameChar);
-                const ts::ByteBlock seriesNameBlock(ts::ARIBCharset::B24.encoded(seriesName));
-
-                tsDescriptor.series_name = ts::UString::FromUTF8(reinterpret_cast<const char*>(seriesNameBlock.data()), seriesNameBlock.size());
-
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
             case MmtTlv::ContentCopyControlDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::ContentCopyControlDescriptor>(descriptor);
-                ts::DigitalCopyControlDescriptor tsDescriptor;
-                tsDescriptor.digital_recording_control_data = mmtDescriptor->digitalRecordingControlData;
-
-                if (mmtDescriptor->maximumBitrateFlag) {
-                    tsDescriptor.maximum_bitrate = mmtDescriptor->maximumBitrate;
-                }
-
-                for (const auto& component : mmtDescriptor->components) {
-                    ts::DigitalCopyControlDescriptor::Component tsComponent;
-                    tsComponent.component_tag = component.componentTag;
-                    tsComponent.digital_recording_control_data = component.digitalRecordingControlData;
-                    if (component.maximumBitrateFlag) {
-                        tsComponent.maximum_bitrate = component.maximumBitrate;
-                    }
-                    tsDescriptor.components.push_back(tsComponent);
-                }
+                auto tsDescriptor = DescriptorConverter<MmtTlv::ContentCopyControlDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
@@ -658,21 +423,8 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             case MmtTlv::MultimediaServiceInformationDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MultimediaServiceInformationDescriptor>(descriptor);
-                ts::DataContentDescriptor tsDescriptor;
-                tsDescriptor.data_component_id = mmtDescriptor->dataComponentId;
-
-                if (mmtDescriptor->dataComponentId == 0x0020) {
-                    tsDescriptor.ISO_639_language_code = ts::UString::FromUTF8(mmtDescriptor->language);
-
-                    ts::UString text = ts::UString::FromUTF8(mmtDescriptor->text);
-                    const ts::ByteBlock textBlock(ts::ARIBCharset::B24.encoded(text));
-
-                    tsDescriptor.text = ts::UString::FromUTF8(reinterpret_cast<const char*>(textBlock.data()), textBlock.size());
-                }
-
-                tsDescriptor.selector_bytes.resize(mmtDescriptor->selectorByte.size());
-                memcpy(tsDescriptor.selector_bytes.data(), mmtDescriptor->selectorByte.data(), mmtDescriptor->selectorByte.size());
-
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MultimediaServiceInformationDescriptor>::convert(*mmtDescriptor);
+                
                 tsEvent.descs.add(duck, tsDescriptor);
                 break;
             }
@@ -726,36 +478,16 @@ void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
             case MmtTlv::MhServiceDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhServiceDescriptor>(descriptor);
-
-                const ts::ByteBlock serviceProviderName(ts::ARIBCharset::B24.encoded(
-                    ts::UString::FromUTF8(mmtDescriptor->serviceProviderName)));
-                const ts::ByteBlock serviceName(ts::ARIBCharset::B24.encoded(
-                    ts::UString::FromUTF8(mmtDescriptor->serviceName)));
-
-                ts::ServiceDescriptor serviceDescriptor(1,
-                    ts::UString::FromUTF8((char*)serviceProviderName.data(), serviceProviderName.size()),
-                    ts::UString::FromUTF8((char*)serviceName.data(), serviceName.size()));
-                tsService.descs.add(duck, serviceDescriptor);
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhServiceDescriptor>::convert(*mmtDescriptor);
+               
+                tsService.descs.add(duck, tsDescriptor);
                 break;
             }
             case MmtTlv::MhLogoTransmissionDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhLogoTransmissionDescriptor>(descriptor);
-                ts::LogoTransmissionDescriptor tsDescriptor;
-                tsDescriptor.logo_transmission_type = mmtDescriptor->logoTransmissionType;
-                if (mmtDescriptor->logoTransmissionType == 0x01) {
-                    tsDescriptor.logo_id = mmtDescriptor->logoId;
-                    tsDescriptor.logo_version = mmtDescriptor->logoVersion;
-                    tsDescriptor.download_data_id = mmtDescriptor->downloadDataId;
-                } else if (mmtDescriptor->logoTransmissionType == 0x02) {
-                    tsDescriptor.logo_id = mmtDescriptor->logoId;
-                }
-                else if (mmtDescriptor->logoTransmissionType == 0x03) {
-                    ts::UString logoChar = ts::UString::FromUTF8(mmtDescriptor->logoChar);
-                    const ts::ByteBlock logoCharBlock(ts::ARIBCharset::B24.encoded(logoChar));
-
-                    tsDescriptor.logo_char = ts::UString::FromUTF8(reinterpret_cast<const char*>(logoCharBlock.data()), logoCharBlock.size());
-                }
+                auto tsDescriptor = DescriptorConverter<MmtTlv::MhLogoTransmissionDescriptor>::convert(*mmtDescriptor);
+                
                 tsService.descs.add(duck, tsDescriptor);
                 break;
             }
@@ -882,7 +614,8 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
                     case MmtTlv::MhStreamIdentificationDescriptor::kDescriptorTag:
                     {
                         auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhStreamIdentificationDescriptor>(descriptor);
-                        ts::StreamIdentifierDescriptor tsDescriptor(mmtDescriptor->componentTag);
+                        auto tsDescriptor = DescriptorConverter<MmtTlv::MhStreamIdentificationDescriptor>::convert(*mmtDescriptor);
+                        
                         stream.descs.add(duck, tsDescriptor);
                         break;
                     }
@@ -906,13 +639,8 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
         case MmtTlv::AccessControlDescriptor::kDescriptorTag:
         {
             auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::AccessControlDescriptor>(descriptor);
-            ts::ISDBAccessControlDescriptor tsDescriptor;
-            tsDescriptor.CA_system_id = mmtDescriptor->caSystemId;
-            tsDescriptor.pid = 0x200; // Not implemented
-            tsDescriptor.private_data.resize(mmtDescriptor->privateData.size());
-
-            memcpy(tsDescriptor.private_data.data(), mmtDescriptor->privateData.data(), mmtDescriptor->privateData.size());
-
+            auto tsDescriptor = DescriptorConverter<MmtTlv::AccessControlDescriptor>::convert(*mmtDescriptor);
+            
             tsPmt.descs.add(duck, tsDescriptor);
             break;
         }
@@ -920,23 +648,8 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
         case MmtTlv::ContentCopyControlDescriptor::kDescriptorTag:
         {
             auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::ContentCopyControlDescriptor>(descriptor);
-            ts::DigitalCopyControlDescriptor tsDescriptor;
-            tsDescriptor.digital_recording_control_data = mmtDescriptor->digitalRecordingControlData;
-
-            if (mmtDescriptor->maximumBitrateFlag) {
-                tsDescriptor.maximum_bitrate = mmtDescriptor->maximumBitrate;
-            }
-
-            for (const auto& component : mmtDescriptor->components) {
-                ts::DigitalCopyControlDescriptor::Component tsComponent;
-                tsComponent.component_tag = component.componentTag;
-                tsComponent.digital_recording_control_data = component.digitalRecordingControlData;
-                if (component.maximumBitrateFlag) {
-                    tsComponent.maximum_bitrate = component.maximumBitrate;
-                }
-                tsDescriptor.components.push_back(tsComponent);
-            }
-
+            auto tsDescriptor = DescriptorConverter<MmtTlv::ContentCopyControlDescriptor>::convert(*mmtDescriptor);
+            
             tsPmt.descs.add(duck, tsDescriptor);
             break;
         }
@@ -1035,12 +748,9 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
         switch (descriptor->getDescriptorTag()) {
         case MmtTlv::NetworkNameDescriptor::kDescriptorTag:
         {
-            auto networkNameDescriptor = std::dynamic_pointer_cast<MmtTlv::NetworkNameDescriptor>(descriptor);
-
-            const ts::ByteBlock networkNameBlock(ts::ARIBCharset::B24.encoded(
-                ts::UString::FromUTF8(networkNameDescriptor->networkName)));
-            ts::UString networkNameARIB = ts::UString::FromUTF8((char*)networkNameBlock.data(), networkNameBlock.size());
-            ts::NetworkNameDescriptor tsDescriptor(networkNameARIB);
+            auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::NetworkNameDescriptor>(descriptor);
+            auto tsDescriptor = DescriptorConverter<MmtTlv::NetworkNameDescriptor>::convert(*mmtDescriptor);
+            
             tsNit.descs.add(duck, tsDescriptor);
             break;
         }
@@ -1055,12 +765,9 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
             switch (descriptor->getDescriptorTag()) {
             case MmtTlv::ServiceListDescriptor::kDescriptorTag:
             {
-                auto serviceListDescriptor = std::dynamic_pointer_cast<MmtTlv::ServiceListDescriptor>(descriptor);
-                ts::ServiceListDescriptor tsDescriptor;
-                for (auto service : serviceListDescriptor->services) {
-                    tsDescriptor.addService(service.serviceId, service.serviceType);
-                }
-
+                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::ServiceListDescriptor>(descriptor);
+                auto tsDescriptor = DescriptorConverter<MmtTlv::ServiceListDescriptor>::convert(*mmtDescriptor);
+                
                 tsNit.transports[tsid].descs.add(duck, tsDescriptor);
                 break;
             }

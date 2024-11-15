@@ -5,7 +5,6 @@ namespace MmtTlv {
 std::optional<MfuData> SubtitleMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
 {
     Common::Stream stream(data);
-    uint32_t size = stream.leftBytes();
 
     uint16_t subsampleNumber = stream.getBe16U();
     uint16_t lastSubsampleNumber = stream.getBe16U();
