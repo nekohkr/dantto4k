@@ -223,6 +223,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
                 if (tsEntry.table_id == 0xFF) {
                     continue;
                 }
+
                 tsEntry.table_description.resize(entry.tableDescriptionByte.size());
                 memcpy(tsEntry.table_description.data(), entry.tableDescriptionByte.data(), entry.tableDescriptionByte.size());
                 tsDescriptor.entries.push_back(tsEntry);
@@ -344,16 +345,18 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhShortEventDescriptor>(descriptor);
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhShortEventDescriptor>::convert(*mmtDescriptor);
-
-                tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
+                if (tsDescriptor) {
+                    tsEvent.descs.add(tsDescriptor->data(), tsDescriptor->size());
+                }
                 break;
             }
             case MmtTlv::MhExtendedEventDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhExtendedEventDescriptor>(descriptor);
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhExtendedEventDescriptor>::convert(*mmtDescriptor);
-
-                tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
+                if(tsDescriptor) {
+                    tsEvent.descs.add(tsDescriptor->data(), tsDescriptor->size());
+                }
                 break;
             }
             case MmtTlv::MhAudioComponentDescriptor::kDescriptorTag:
