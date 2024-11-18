@@ -73,10 +73,18 @@ struct DescriptorConverter;
 
 template <>
 struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
-    static std::vector<uint8_t> convert(const MmtTlv::MhShortEventDescriptor& mmtDescriptor) {
+    static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhShortEventDescriptor& mmtDescriptor) {
         const ts::ByteBlock eventNameBlock = aribEncode(mmtDescriptor.eventName);
         const ts::ByteBlock textBlock = aribEncode(mmtDescriptor.text);
-                
+        
+        if (eventNameBlock.size() > 255) {
+            return std::nullopt;
+        }
+
+        if (textBlock.size() > 255) {
+            return std::nullopt;
+        }
+
         int descriptorLength = 1 // descriptor_tag
             + 1 // descriptor_length
             + 3 // language
@@ -84,6 +92,10 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
             + eventNameBlock.size() // event_name
             + 1 // text_length
             + textBlock.size(); // text
+
+        if (descriptorLength > 255) {
+            return std::nullopt;
+        }
 
         std::vector<uint8_t> tsDescriptor(descriptorLength);
         tsDescriptor[0] = 0x4D; // descriptor_tag
@@ -107,11 +119,15 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
 
 template <>
 struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
-    static std::vector<uint8_t> convert(const MmtTlv::MhExtendedEventDescriptor& mmtDescriptor) {
+    static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhExtendedEventDescriptor& mmtDescriptor) {
         const ts::ByteBlock textBlock = aribEncode(mmtDescriptor.textChar);
+        
+        if (textBlock.size() > 255) {
+            return std::nullopt;
+        }
 
-        std::vector<ts::ByteBlock> encodedItemDescriptionChar;
-        std::vector<ts::ByteBlock> encodedItemChar;
+        std::vector<ts::ByteBlock> aribItemDescriptionChars;
+        std::vector<ts::ByteBlock> aribItemChars;
 
         int descriptorLength = 1 // descriptor_tag
             + 1 // descriptor_length
@@ -123,50 +139,70 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
         for (auto& item : mmtDescriptor.entries) {
             const ts::ByteBlock itemDescriptionCharBlock = aribEncode(item.itemDescriptionChar);
             const ts::ByteBlock itemCharBlock = aribEncode(item.itemChar);
+            
+            if (itemDescriptionCharBlock.size() > 255) {
+                return std::nullopt;
+            }
 
-            encodedItemDescriptionChar.push_back(itemDescriptionCharBlock);
-            encodedItemChar.push_back(itemCharBlock);
+            if (itemCharBlock.size() > 255) {
+                return std::nullopt;
+            }
+
+            aribItemDescriptionChars.push_back(itemDescriptionCharBlock);
+            aribItemChars.push_back(itemCharBlock);
 
             itemsLength += 1 + itemDescriptionCharBlock.size() + 1 + itemCharBlock.size();
         }
-        descriptorLength += itemsLength + 1 + textBlock.size();
+
+        if (itemsLength > 255) {
+            return std::nullopt;
+        }
+
+        descriptorLength += itemsLength
+            + 1 // text_length
+            + textBlock.size(); // text
+
+        if (descriptorLength > 255) {
+            return std::nullopt;
+        }
                 
         std::vector<uint8_t> tsDescriptor(descriptorLength);
         tsDescriptor[0] = 0x4E;
         tsDescriptor[1] = descriptorLength - 2;
         tsDescriptor[2] = (mmtDescriptor.descriptorNumber & 0b1111) << 4 | (mmtDescriptor.lastDescriptorNumber & 0b1111);
-        memcpy(&tsDescriptor[3], mmtDescriptor.language, 3); // language
+        memcpy(&tsDescriptor[3], mmtDescriptor.language, 3);
 
         tsDescriptor[6] = itemsLength;
 
         int i = 0;
         int pos = 0;
         for (auto& item : mmtDescriptor.entries) {
-            tsDescriptor[7 + pos] = encodedItemDescriptionChar[i].size();
+            tsDescriptor[7 + pos] = aribItemDescriptionChars[i].size();
             pos++;
 
-            if(encodedItemDescriptionChar[i].size()) {
-                memcpy(&tsDescriptor[7 + pos], encodedItemDescriptionChar[i].data(), encodedItemDescriptionChar[i].size());
-                pos += encodedItemDescriptionChar[i].size();
+            if(aribItemDescriptionChars[i].size()) {
+                memcpy(&tsDescriptor[7 + pos], aribItemDescriptionChars[i].data(), aribItemDescriptionChars[i].size());
+                pos += aribItemDescriptionChars[i].size();
             }
 
-            tsDescriptor[7 + pos] = encodedItemChar[i].size();
+            tsDescriptor[7 + pos] = aribItemChars[i].size();
             pos++;
 
-            if(encodedItemChar[i].size()) {
-                memcpy(&tsDescriptor[7 + pos], encodedItemChar[i].data(), encodedItemChar[i].size());
-                pos += encodedItemChar[i].size();
+            if(aribItemChars[i].size()) {
+                memcpy(&tsDescriptor[7 + pos], aribItemChars[i].data(), aribItemChars[i].size());
+                pos += aribItemChars[i].size();
             }
 
             i++;
         }
-                
+
         tsDescriptor[7 + pos] = textBlock.size();
         pos++;
 
         if (textBlock.size()) {
             memcpy(&tsDescriptor[7 + pos], textBlock.data(), textBlock.size());
         }
+
 
         return tsDescriptor;
     }

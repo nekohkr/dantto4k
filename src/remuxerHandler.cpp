@@ -100,24 +100,24 @@ uint8_t convertTableId(uint8_t mmtTableId) {
         return 0x02;
     case MmtTlv::MmtTableId::Plt:
         return 0x00;
-    case MmtTlv::MmtTableId::MhEit:
+    case MmtTlv::MmtTableId::MhEitPf:
         return 0x4E;
-    case MmtTlv::MmtTableId::MhEit_1:
-    case MmtTlv::MmtTableId::MhEit_2:
-    case MmtTlv::MmtTableId::MhEit_3:
-    case MmtTlv::MmtTableId::MhEit_4:
-    case MmtTlv::MmtTableId::MhEit_5:
-    case MmtTlv::MmtTableId::MhEit_6:
-    case MmtTlv::MmtTableId::MhEit_7:
-    case MmtTlv::MmtTableId::MhEit_8:
-    case MmtTlv::MmtTableId::MhEit_9:
-    case MmtTlv::MmtTableId::MhEit_10:
-    case MmtTlv::MmtTableId::MhEit_11:
-    case MmtTlv::MmtTableId::MhEit_12:
-    case MmtTlv::MmtTableId::MhEit_13:
-    case MmtTlv::MmtTableId::MhEit_14:
-    case MmtTlv::MmtTableId::MhEit_15:
-    case MmtTlv::MmtTableId::MhEit_16:
+    case MmtTlv::MmtTableId::MhEitS_1:
+    case MmtTlv::MmtTableId::MhEitS_2:
+    case MmtTlv::MmtTableId::MhEitS_3:
+    case MmtTlv::MmtTableId::MhEitS_4:
+    case MmtTlv::MmtTableId::MhEitS_5:
+    case MmtTlv::MmtTableId::MhEitS_6:
+    case MmtTlv::MmtTableId::MhEitS_7:
+    case MmtTlv::MmtTableId::MhEitS_8:
+    case MmtTlv::MmtTableId::MhEitS_9:
+    case MmtTlv::MmtTableId::MhEitS_10:
+    case MmtTlv::MmtTableId::MhEitS_11:
+    case MmtTlv::MmtTableId::MhEitS_12:
+    case MmtTlv::MmtTableId::MhEitS_13:
+    case MmtTlv::MmtTableId::MhEitS_14:
+    case MmtTlv::MmtTableId::MhEitS_15:
+    case MmtTlv::MmtTableId::MhEitS_16:
         return 0x50;
     case MmtTlv::MmtTableId::MhTot:
         return 0x73;
@@ -223,6 +223,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
                 if (tsEntry.table_id == 0xFF) {
                     continue;
                 }
+
                 tsEntry.table_description.resize(entry.tableDescriptionByte.size());
                 memcpy(tsEntry.table_description.data(), entry.tableDescriptionByte.data(), entry.tableDescriptionByte.size());
                 tsDescriptor.entries.push_back(tsEntry);
@@ -320,7 +321,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 {
     tsid = mhEit->tlvStreamId;
 
-    ts::EIT tsEit(true, mhEit->isPF(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
+    ts::EIT tsEit(true, mhEit->isPf(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
 	for (auto& mhEvent : mhEit->events) {
 		ts::EIT::Event tsEvent(&tsEit);
 
@@ -344,16 +345,18 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhShortEventDescriptor>(descriptor);
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhShortEventDescriptor>::convert(*mmtDescriptor);
-
-                tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
+                if (tsDescriptor) {
+                    tsEvent.descs.add(tsDescriptor->data(), tsDescriptor->size());
+                }
                 break;
             }
             case MmtTlv::MhExtendedEventDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhExtendedEventDescriptor>(descriptor);
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhExtendedEventDescriptor>::convert(*mmtDescriptor);
-
-                tsEvent.descs.add(tsDescriptor.data(), tsDescriptor.size());
+                if(tsDescriptor) {
+                    tsEvent.descs.add(tsDescriptor->data(), tsDescriptor->size());
+                }
                 break;
             }
             case MmtTlv::MhAudioComponentDescriptor::kDescriptorTag:

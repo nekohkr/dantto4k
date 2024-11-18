@@ -26,8 +26,8 @@ public:
         MmtDescriptors descriptors;
     };
 
-    bool isPF() const {
-        return tableId == MmtTableId::MhEit ? true : false;
+    bool isPf() const {
+        return tableId == MmtTableId::MhEitPf ? true : false;
     }
 
     uint16_t sectionSyntaxIndicator;

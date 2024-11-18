@@ -190,23 +190,23 @@ void MmtTlvDemuxer::processMmtTable(Common::Stream& stream)
             demuxerHandler->onMhCdt(std::dynamic_pointer_cast<MhCdt>(table));
         }
         break;
-    case MmtTableId::MhEit:
-    case MmtTableId::MhEit_1:
-    case MmtTableId::MhEit_2:
-    case MmtTableId::MhEit_3:
-    case MmtTableId::MhEit_4:
-    case MmtTableId::MhEit_5:
-    case MmtTableId::MhEit_6:
-    case MmtTableId::MhEit_7:
-    case MmtTableId::MhEit_8:
-    case MmtTableId::MhEit_9:
-    case MmtTableId::MhEit_10:
-    case MmtTableId::MhEit_11:
-    case MmtTableId::MhEit_12:
-    case MmtTableId::MhEit_13:
-    case MmtTableId::MhEit_14:
-    case MmtTableId::MhEit_15:
-    case MmtTableId::MhEit_16:
+    case MmtTableId::MhEitPf:
+    case MmtTableId::MhEitS_1:
+    case MmtTableId::MhEitS_2:
+    case MmtTableId::MhEitS_3:
+    case MmtTableId::MhEitS_4:
+    case MmtTableId::MhEitS_5:
+    case MmtTableId::MhEitS_6:
+    case MmtTableId::MhEitS_7:
+    case MmtTableId::MhEitS_8:
+    case MmtTableId::MhEitS_9:
+    case MmtTableId::MhEitS_10:
+    case MmtTableId::MhEitS_11:
+    case MmtTableId::MhEitS_12:
+    case MmtTableId::MhEitS_13:
+    case MmtTableId::MhEitS_14:
+    case MmtTableId::MhEitS_15:
+    case MmtTableId::MhEitS_16:
         if (demuxerHandler) {
             demuxerHandler->onMhEit(std::dynamic_pointer_cast<MhEit>(table));
         }
