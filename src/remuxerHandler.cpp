@@ -206,7 +206,9 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
 void RemuxerHandler::writePCR(uint64_t pcr)
 {
     ts::TSPacket packet;
-    packet.init(PCR_PID, 0, 0);
+    packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
+    mapCC[PCR_PID]++;
+
     packet.setPCR(pcr, true);
 
     output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
