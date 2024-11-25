@@ -6,7 +6,7 @@ namespace MmtTlv {
 class MhSeriesDescriptor
     : public MmtDescriptorTemplate<0x8016> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     uint16_t seriesId;
 

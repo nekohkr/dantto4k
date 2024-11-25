@@ -8,7 +8,7 @@ namespace MmtTlv {
 class AccessControlDescriptor
     : public MmtDescriptorTemplate<0x8004> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
     
     uint8_t caSystemId;
     MmtGeneralLocationInfo locationInfo;

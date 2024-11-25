@@ -29,14 +29,18 @@
 #include "nit.h"
 #include "plt.h"
 
+#include "pesPacket.h"
 #include "adtsConverter.h"
 #include "aribUtil.h"
 #include "mmtTlvDemuxer.h"
+#include "timebase.h"
+#include "mfuDataProcessorBase.h"
+
+#include "dantto4k.h"
 
 extern "C" {
-#include <libavformat/avformat.h>
+//#include <libavformat/avformat.h>
 }
-#include "mfuDataProcessorBase.h"
 
 namespace {
 int convertRunningStatus(int runningStatus) {
@@ -127,7 +131,6 @@ uint8_t convertTableId(uint8_t mmtTableId) {
         return 0x42;
     case MmtTlv::MmtTableId::MhCdt:
         return 0xC8;
-
     }
 
     return 0xFF;
@@ -158,40 +161,55 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmt
 
 void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
-    writeStream(mmtStream, mfuData, mfuData->data);
 }
 
 void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, std::vector<uint8_t> streamData)
 {
-    AVStream* outStream = (*outputFormatContext)->streams[mfuData->streamIndex];
+    const AVRational tsTimeBase = { 1, 90000 };
     AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
 
-    uint8_t* data = (uint8_t*)malloc(streamData.size() + AV_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(data, streamData.data(), streamData.size());
-    memset(data + streamData.size(), 0, AV_INPUT_BUFFER_PADDING_SIZE);
+    uint64_t tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
+    uint64_t tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
 
-    AVBufferRef* buf = av_buffer_create(data, streamData.size() + AV_INPUT_BUFFER_PADDING_SIZE, [](void* opaque, uint8_t* data) {
-        free(data);
-        }, NULL, 0);
+    PESPacket pes;
+    pes.setPts(tsPts);
+    pes.setDts(tsDts);
+    pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
+    if (mmtStream->getAssetType() == MmtTlv::makeAssetType('h', 'e', 'v', '1') ||
+        mmtStream->getAssetType() == MmtTlv::makeAssetType('m', 'p', '4', 'a')) {
+        pes.setDataAlignmentIndicator(1);
+    }
+    pes.payload = streamData;
 
-    AVPacket* packet = av_packet_alloc();
-    packet->buf = buf;
-    packet->data = buf->data;
-    packet->pts = mfuData->pts;
-    packet->dts = mfuData->dts;
-    packet->stream_index = mfuData->streamIndex;
-    packet->flags = mfuData->flags;
-    packet->pos = -1;
-    packet->duration = 0;
-    packet->size = buf->size - AV_INPUT_BUFFER_PADDING_SIZE;
+    std::vector<uint8_t> pesOutput;
+    pes.pack(pesOutput);
 
-    av_packet_rescale_ts(packet, timeBase, outStream->time_base);
-    if (av_interleaved_write_frame((*outputFormatContext), packet) < 0) {
-        std::cerr << "Error muxing packet." << std::endl;
-        return;
+    if (mmtStream->getAssetType() == MmtTlv::makeAssetType('h', 'e', 'v', '1')) {
+        writePCR(tsDts * 300);
     }
 
-    av_packet_unref(packet);
+    ts::PESPacket tsPES(pesOutput.data(), pesOutput.size());
+    
+    ts::PESOneShotPacketizer zer(duck, mmtStream->getMpeg2Pid());
+    zer.addPES(tsPES, ts::ShareMode::SHARE);
+    
+    ts::TSPacketVector packets;
+    zer.getPackets(packets);
+    for (auto& packet : packets) {
+        packet.setCC(mapCC[mmtStream->getMpeg2Pid()] & 0xF);
+        mapCC[mmtStream->getMpeg2Pid()]++;
+
+        output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+    }
+}
+
+void RemuxerHandler::writePCR(uint64_t pcr)
+{
+    ts::TSPacket packet;
+    packet.init(PCR_PID, 0, 0);
+    packet.setPCR(pcr, true);
+
+    output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
 }
 
 void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
@@ -310,9 +328,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
             packet.setCC(mapCC[ISDB_BIT_PID] & 0xF);
             mapCC[ISDB_BIT_PID]++;
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -453,9 +469,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             packet.setCC(mapCC[DVB_EIT_PID] & 0xF);
             mapCC[DVB_EIT_PID]++;
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -516,9 +530,7 @@ void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
             mapCC[DVB_SDT_PID]++;
             packet.setPriority(true);
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -564,9 +576,7 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt)
             mapCC[MPEG_PAT_PID]++;
             packet.setPriority(true);
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -589,7 +599,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
 
     pid = it->second;
 
-    ts::PMT tsPmt(mpt->version % 32, true, serviceId, 0x100);
+    ts::PMT tsPmt(mpt->version % 32, true, serviceId, PCR_PID);
 
     // For VLC to recognize as ARIB standard
     ts::CADescriptor caDescriptor(5, 0x0901);
@@ -675,9 +685,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
             mapCC[pid]++;
             packet.setPriority(true);
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -704,9 +712,7 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot)
             packet.setCC(mapCC[DVB_TOT_PID] & 0xF);
             mapCC[DVB_TOT_PID]++;
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -736,9 +742,7 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt)
             packet.setCC(mapCC[ISDB_CDT_PID] & 0xF);
             mapCC[ISDB_CDT_PID]++;
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
@@ -794,59 +798,12 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
             packet.setCC(mapCC[DVB_NIT_PID] & 0xF);
             mapCC[DVB_NIT_PID]++;
 
-            if (*outputFormatContext && (*outputFormatContext)->pb) {
-                avio_write((*outputFormatContext)->pb, packet.b, packet.getHeaderSize() + packet.getPayloadSize());
-            }
+            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
     }
 }
 
 void RemuxerHandler::onStreamsChanged()
 {
-    if (demuxer.mapStream.size() == 0) {
-        return;
-    }
 
-    if (*outputFormatContext) {
-        av_write_trailer(*outputFormatContext);
-        avformat_free_context(*outputFormatContext);
-    }
-
-    avformat_alloc_output_context2(outputFormatContext, nullptr, "mpegts", nullptr);
-    if (!*outputFormatContext) {
-        std::cerr << "Could not create output context." << std::endl;
-        return;
-    }
-
-    (*outputFormatContext)->pb = *avioContext;
-    (*outputFormatContext)->flags |= AVFMT_FLAG_CUSTOM_IO;
-
-    streamCount = 0;
-    for (const auto& mmtStream : demuxer.mapStream) {
-        AVStream* outStream = avformat_new_stream(*outputFormatContext, nullptr);
-
-        switch (mmtStream.second->getAssetType()) {
-        case MmtTlv::makeAssetType('h', 'e', 'v', '1'):
-            outStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
-            outStream->codecpar->codec_id = AV_CODEC_ID_HEVC;
-            break;
-        case MmtTlv::makeAssetType('m', 'p', '4', 'a'):
-            outStream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
-            outStream->codecpar->codec_id = AV_CODEC_ID_AAC; // AV_CODEC_ID_AAC_LATM
-            outStream->codecpar->sample_rate = mmtStream.second->getSamplingRate();
-            break;
-        case MmtTlv::makeAssetType('s', 't', 'p', 'p'):
-            outStream->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
-            outStream->codecpar->codec_id = AV_CODEC_ID_TTML;
-            break;
-        }
-        outStream->codecpar->codec_tag = 0;
-        streamCount++;
-    }
-
-    if (avformat_write_header(*outputFormatContext, nullptr) < 0) {
-        std::cerr << "Could not open output file." << std::endl;
-        avformat_free_context(*outputFormatContext);
-        return;
-    }
 }

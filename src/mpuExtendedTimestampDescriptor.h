@@ -6,11 +6,11 @@ namespace MmtTlv {
 class MpuExtendedTimestampDescriptor
 	: public MmtDescriptorTemplate<0x8026> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
 	class Entry {
 	public:
-		bool unpack(Common::Stream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset);
+		bool unpack(Common::ReadStream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset);
 
 		uint32_t mpuSequenceNumber;
 		uint8_t mpuPresentationTimeLeapIndicator;

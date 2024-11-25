@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MpuExtendedTimestampDescriptor::unpack(Common::Stream& stream)
+bool MpuExtendedTimestampDescriptor::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {
@@ -36,7 +36,7 @@ bool MpuExtendedTimestampDescriptor::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool MpuExtendedTimestampDescriptor::Entry::unpack(Common::Stream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset)
+bool MpuExtendedTimestampDescriptor::Entry::unpack(Common::ReadStream& stream, uint8_t ptsOffsetType, uint16_t defaultPtsOffset)
 {
 	try {
 		mpuSequenceNumber = stream.getBe32U();

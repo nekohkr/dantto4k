@@ -203,7 +203,6 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
             memcpy(&tsDescriptor[7 + pos], textBlock.data(), textBlock.size());
         }
 
-
         return tsDescriptor;
     }
 };

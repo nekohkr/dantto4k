@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhSiParameterDescriptor::unpack(Common::Stream& stream)
+bool MhSiParameterDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
         
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         parameterVersion = nstream.get8U();
         updateTime = nstream.getBe16U();
@@ -32,7 +32,7 @@ bool MhSiParameterDescriptor::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool MhSiParameterDescriptor::Entry::unpack(Common::Stream& stream)
+bool MhSiParameterDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
     try {
         tableId = stream.get8U();

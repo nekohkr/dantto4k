@@ -6,7 +6,7 @@ namespace MmtTlv {
 
 std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
 {
-    Common::Stream stream(data);
+    Common::ReadStream stream(data);
     if (stream.leftBytes() < 4) {
         std::cerr << "MFU data appears to be corrupted." << std::endl;
         return std::nullopt;
@@ -46,7 +46,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
             mfuData.pts = ptsDts.first;
             mfuData.dts = ptsDts.second;
             mfuData.streamIndex = mmtStream->getStreamIndex();
-            mfuData.flags = mmtStream->GetRapFlag() ? AV_PKT_FLAG_KEY : 0;
+            mfuData.flags = 0; // mmtStream->GetRapFlag() ? AV_PKT_FLAG_KEY : 0;
 
             return mfuData;
         }
@@ -60,7 +60,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
 	return std::nullopt;
 }
 
-void VideoMfuDataProcessor::appendPendingData(Common::Stream& stream, int size)
+void VideoMfuDataProcessor::appendPendingData(Common::ReadStream& stream, int size)
 {
     uint32_t nalStartCode = 0x1000000;
     size_t oldSize = pendingData.size();

@@ -7,21 +7,21 @@ namespace MmtTlv {
 class MhEventGroupDescriptor
     : public MmtDescriptorTemplate<0x800C> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     uint8_t groupType;
     uint8_t eventCount;
 
     class Event {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
         uint16_t serviceId;
         uint16_t eventId;
     };
 
     class OtherNetworkEvent {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
         uint16_t originalNetworkId;
         uint16_t tlvStreamId;
         uint16_t serviceId;

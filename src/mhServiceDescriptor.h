@@ -7,7 +7,7 @@ class MhServiceDescriptor
 	: public MmtDescriptorTemplate<0x8019> {
 public:
 	virtual ~MhServiceDescriptor() {}
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
 	uint8_t serviceType;
 	uint8_t serviceProviderNameLength;

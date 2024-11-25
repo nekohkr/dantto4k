@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool Mpt::unpack(Common::Stream& stream)
+bool Mpt::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtTableBase::unpack(stream)) {
@@ -25,7 +25,7 @@ bool Mpt::unpack(Common::Stream& stream)
 
 		mptDescriptorsLength = stream.getBe16U();
 		
-		Common::Stream nstream(stream, mptDescriptorsLength);
+		Common::ReadStream nstream(stream, mptDescriptorsLength);
 		descriptors.unpack(nstream);
 		stream.skip(mptDescriptorsLength);
 
@@ -43,7 +43,7 @@ bool Mpt::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool Mpt::Asset::unpack(Common::Stream& stream)
+bool Mpt::Asset::unpack(Common::ReadStream& stream)
 {
 	try {
 		identifierType = stream.get8U();
@@ -66,7 +66,7 @@ bool Mpt::Asset::unpack(Common::Stream& stream)
 
 		assetDescriptorsLength = stream.getBe16U();
 
-		Common::Stream nstream(stream, assetDescriptorsLength);
+		Common::ReadStream nstream(stream, assetDescriptorsLength);
 		descriptors.unpack(nstream);
 		stream.skip(assetDescriptorsLength);
 	}

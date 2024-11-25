@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhContentDescriptor::unpack(Common::Stream& stream)
+bool MhContentDescriptor::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-		Common::Stream nstream(stream, descriptorLength);
+		Common::ReadStream nstream(stream, descriptorLength);
 
 		while (!nstream.isEof()) {
 			Entry entry;
@@ -28,7 +28,7 @@ bool MhContentDescriptor::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool MhContentDescriptor::Entry::unpack(Common::Stream& stream)
+bool MhContentDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
 	try {
 		uint8_t uint8 = stream.get8U();

@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhBit::unpack(Common::Stream& stream)
+bool MhBit::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtTableBase::unpack(stream)) {
@@ -25,7 +25,7 @@ bool MhBit::unpack(Common::Stream& stream)
         broadcastViewPropriety = (uint16 & 0b0001000000000000) >> 12;
         firstDescriptorsLength = uint16 & 0b0000111111111111;
         
-        Common::Stream nstream(stream, firstDescriptorsLength);
+        Common::ReadStream nstream(stream, firstDescriptorsLength);
         descriptors.unpack(nstream);
         stream.skip(firstDescriptorsLength);
 
@@ -47,7 +47,7 @@ bool MhBit::unpack(Common::Stream& stream)
     return true;
 }
 
-bool MhBit::Broadcaster::unpack(Common::Stream& stream)
+bool MhBit::Broadcaster::unpack(Common::ReadStream& stream)
 {
     try {
         broadcasterId = stream.get8U();
@@ -55,7 +55,7 @@ bool MhBit::Broadcaster::unpack(Common::Stream& stream)
         uint16_t uint16 = stream.getBe16U();
         broadcasterDescriptorsLength = uint16 & 0b0000111111111111;
         
-        Common::Stream nstream(stream, broadcasterDescriptorsLength);
+        Common::ReadStream nstream(stream, broadcasterDescriptorsLength);
         descriptors.unpack(nstream);
         stream.skip(broadcasterDescriptorsLength);
     }

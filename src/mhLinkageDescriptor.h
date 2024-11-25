@@ -6,7 +6,7 @@ namespace MmtTlv {
 class MhLinkageDescriptor
     : public MmtDescriptorTemplate<0xF000> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     uint16_t tlvStreamId;
     uint16_t originalNetworkId;

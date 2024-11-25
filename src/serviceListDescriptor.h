@@ -6,11 +6,11 @@ namespace MmtTlv {
 
 class ServiceListDescriptor : public TlvDescriptorTemplate<0x41> {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
 
     class Entry {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
         uint16_t serviceId;
         uint8_t serviceType;
     };

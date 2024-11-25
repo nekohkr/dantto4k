@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool RelatedBroadcasterDescriptor::unpack(Common::Stream& stream)
+bool RelatedBroadcasterDescriptor::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
 		uint8_t uint8 = nstream.get8U();
 		numOfBroadcasterId = (uint8 & 0b11110000) >> 4;
@@ -41,7 +41,7 @@ bool RelatedBroadcasterDescriptor::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool RelatedBroadcasterDescriptor::BroadcasterId::unpack(Common::Stream & stream)
+bool RelatedBroadcasterDescriptor::BroadcasterId::unpack(Common::ReadStream & stream)
 {
 	try {
 		networkId = stream.getBe16U();

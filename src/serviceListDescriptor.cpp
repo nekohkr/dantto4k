@@ -2,13 +2,13 @@
 
 namespace MmtTlv {
 
-bool ServiceListDescriptor::unpack(Common::Stream& stream)
+bool ServiceListDescriptor::unpack(Common::ReadStream& stream)
 {
     if (!TlvDescriptorTemplate::unpack(stream)) {
         return false;
     }
 
-    Common::Stream nstream(stream, descriptorLength);
+    Common::ReadStream nstream(stream, descriptorLength);
     while (!nstream.isEof()) {
         Entry item;
         item.unpack(nstream);
@@ -18,7 +18,7 @@ bool ServiceListDescriptor::unpack(Common::Stream& stream)
     return true;
 }
 
-bool ServiceListDescriptor::Entry::unpack(Common::Stream& stream)
+bool ServiceListDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
     serviceId = stream.getBe16U();
     serviceType = stream.get8U();

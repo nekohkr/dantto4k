@@ -7,7 +7,7 @@ namespace MmtTlv {
 
 class Mpu {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	uint16_t payloadLength;
 	FragmentType fragmentType;

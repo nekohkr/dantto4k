@@ -9,11 +9,11 @@ namespace MmtTlv {
 // Network Information Table
 class Nit : public TlvTableBase {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
     
     class Entry {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         uint16_t tlvStreamId;
         uint16_t originalNetworkId;

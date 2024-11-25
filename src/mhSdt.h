@@ -8,11 +8,11 @@ namespace MmtTlv {
 // Mh-Service Description Table 
 class MhSdt : public MmtTableBase {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
 
     class Service {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         uint16_t serviceId;
         int8_t eitUserDefinedFlags;

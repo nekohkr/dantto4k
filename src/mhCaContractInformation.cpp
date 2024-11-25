@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhCaContractInformation::unpack(Common::Stream& stream)
+bool MhCaContractInformation::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         caSystemId = nstream.getBe16U();
 

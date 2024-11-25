@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool VideoComponentDescriptor::unpack(Common::Stream& stream)
+bool VideoComponentDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         uint8_t uint8 = nstream.get8U();
         videoResolution = (uint8 & 0b11110000) >> 4;

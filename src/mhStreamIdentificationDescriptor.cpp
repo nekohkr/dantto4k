@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhStreamIdentificationDescriptor::unpack(Common::Stream& stream)
+bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         componentTag = nstream.getBe16U();
 

@@ -6,7 +6,7 @@ namespace MmtTlv {
 class TransmissionControlSignal
 {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 public:
 	uint8_t tableId;

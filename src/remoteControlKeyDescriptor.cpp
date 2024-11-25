@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool RemoteControlKeyDescriptor::unpack(Common::Stream& stream)
+bool RemoteControlKeyDescriptor::unpack(Common::ReadStream& stream)
 {
     if (!TlvDescriptorTemplate::unpack(stream)) {
         return false;
@@ -18,7 +18,7 @@ bool RemoteControlKeyDescriptor::unpack(Common::Stream& stream)
     return true;
 }
 
-bool RemoteControlKeyDescriptor::Entry::unpack(Common::Stream& stream)
+bool RemoteControlKeyDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
     remoteControlKeyId = stream.get8U();
     serviceId = stream.getBe16U();

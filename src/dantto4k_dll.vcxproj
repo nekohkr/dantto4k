@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)thirdparty\ffmpeg\include;$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\lib\Debug-Win64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MD;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)thirdparty\tsduck\lib\Debug-Win64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MD;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)thirdparty\ffmpeg\include;$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)thirdparty\ffmpeg\lib;$(SolutionDir)thirdparty\tsduck\lib\Release-Win64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MT;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)thirdparty\openssl\include;$(SolutionDir)thirdparty\tsduck\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)thirdparty\tsduck\lib\Release-Win64;$(SolutionDir)thirdparty\openssl\lib\VC\x64\MT;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>BonDriver_dantto4k</TargetName>
@@ -128,7 +128,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_DEBUG;DANTTO4KDLL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -136,7 +136,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>tsduck.lib;libcrypto.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,7 +147,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;NDEBUG;DANTTO4KDLL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -157,7 +157,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>tsduck.lib;libcrypto.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -180,8 +180,10 @@
     <ClCompile Include="mmtDescriptorFactory.cpp" />
     <ClCompile Include="mmtTableFactory.cpp" />
     <ClCompile Include="multimediaServiceInformationDescriptor.cpp" />
+    <ClCompile Include="pesPacket.cpp" />
     <ClCompile Include="relatedBroadcasterDescriptor.cpp" />
     <ClCompile Include="systemManagementDescriptor.cpp" />
+    <ClCompile Include="timebase.cpp" />
     <ClCompile Include="timeUtil.cpp" />
     <ClCompile Include="tlvDescriptorFactory.cpp" />
     <ClCompile Include="tlvTableFactory.cpp" />
@@ -258,8 +260,10 @@
     <ClInclude Include="mmtFragment.h" />
     <ClInclude Include="mmtTableFactory.h" />
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
+    <ClInclude Include="pesPacket.h" />
     <ClInclude Include="relatedBroadcasterDescriptor.h" />
     <ClInclude Include="systemManagementDescriptor.h" />
+    <ClInclude Include="timebase.h" />
     <ClInclude Include="timeUtil.h" />
     <ClInclude Include="tlvDescriptorFactory.h" />
     <ClInclude Include="tlvTableFactory.h" />

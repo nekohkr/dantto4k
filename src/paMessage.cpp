@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool PaMessage::unpack(Common::Stream& stream)
+bool PaMessage::unpack(Common::ReadStream& stream)
 {
 	try {
 		messageId = stream.getBe16U();

@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhEit::unpack(Common::Stream& stream)
+bool MhEit::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtTableBase::unpack(stream)) {
@@ -48,7 +48,7 @@ bool MhEit::unpack(Common::Stream& stream)
     return true;
 }
 
-bool MhEit::Event::unpack(Common::Stream& stream)
+bool MhEit::Event::unpack(Common::ReadStream& stream)
 {
     try {
         eventId = stream.getBe16U();
@@ -66,7 +66,7 @@ bool MhEit::Event::unpack(Common::Stream& stream)
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorsLoopLength);
+        Common::ReadStream nstream(stream, descriptorsLoopLength);
         descriptors.unpack(nstream);
         stream.skip(descriptorsLoopLength);
     }

@@ -5,7 +5,7 @@ namespace MmtTlv {
 
 class NetworkNameDescriptor : public TlvDescriptorTemplate<0x40> {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
     std::string networkName;
 };
 

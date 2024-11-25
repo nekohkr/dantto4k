@@ -5,7 +5,7 @@
 
 namespace MmtTlv {
 
-void Mmt::unpack(Common::Stream& stream)
+void Mmt::unpack(Common::ReadStream& stream)
 {
 	if (stream.leftBytes() < 1 + 1 + 2 + 4 + 4) {
 		return;
@@ -51,7 +51,7 @@ void Mmt::unpack(Common::Stream& stream)
 		if (extensionHeaderField.size() >= 5) {
 			uint16_t e = Common::swapEndian16(*(uint16_t*)extensionHeaderField.data());
 			if ((e & 0x7FFF) == 0x0001) {
-				Common::Stream nstream(extensionHeaderField);
+				Common::ReadStream nstream(extensionHeaderField);
 				nstream.skip(4);
 
 				ExtensionHeaderScrambling s;

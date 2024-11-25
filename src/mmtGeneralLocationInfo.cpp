@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MmtGeneralLocationInfo::unpack(Common::Stream& stream)
+bool MmtGeneralLocationInfo::unpack(Common::ReadStream& stream)
 {
 	uint16_t uint16;
 

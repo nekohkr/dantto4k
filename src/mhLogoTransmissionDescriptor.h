@@ -7,11 +7,11 @@ namespace MmtTlv {
 class MhLogoTransmissionDescriptor
     : public MmtDescriptorTemplate<0x8025> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     class Entry {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
         uint8_t logoType;
         uint8_t startSectionNumber;
         uint8_t numOfSections;

@@ -6,7 +6,7 @@ namespace MmtTlv {
 
 class DataUnit {
 public:
-	bool unpack(Common::Stream& stream, bool timedFlag, bool aggregateFlag);
+	bool unpack(Common::ReadStream& stream, bool timedFlag, bool aggregateFlag);
 
 	uint16_t dataUnitLength;
 	uint32_t movieFragmentSequenceNumber;

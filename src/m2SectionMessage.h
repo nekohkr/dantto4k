@@ -6,7 +6,7 @@ namespace MmtTlv {
 
 class M2SectionMessage {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	uint16_t messageId;
 	uint8_t version;

@@ -7,11 +7,11 @@ namespace MmtTlv {
 class MhSiParameterDescriptor
 	: public MmtDescriptorTemplate<0x8017> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
 	class Entry {
 	public:
-		bool unpack(Common::Stream& stream);
+		bool unpack(Common::ReadStream& stream);
 
 		uint8_t tableId;
 		uint8_t tableDescriptionLength;

@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool AccessControlDescriptor::unpack(Common::Stream& stream)
+bool AccessControlDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         caSystemId = nstream.getBe16U();
         locationInfo.unpack(nstream);

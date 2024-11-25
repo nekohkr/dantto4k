@@ -4,29 +4,29 @@ namespace MmtTlv {
     
 namespace Common {
 
-Stream::Stream(const std::vector<uint8_t>& data)
-    : data(data)
+ReadStream::ReadStream(const std::vector<uint8_t>& buffer)
+    : buffer(buffer)
 {
     this->hasSize = true;
-    this->size = data.size();
+    this->size = buffer.size();
 }
 
-Stream::Stream(const std::vector<uint8_t>& data, uint32_t size)
-    : data(data)
+ReadStream::ReadStream(const std::vector<uint8_t>& buffer, uint32_t size)
+    : buffer(buffer)
 {
-    if (data.size() < size) {
-        throw std::out_of_range("wrong size");
+    if (buffer.size() < size) {
+        throw std::out_of_range("Access out of bounds");
     }
 
     this->hasSize = true;
     this->size = size;
 }
 
-Stream::Stream(Stream& stream, uint32_t size)
-    : data(stream.data)
+ReadStream::ReadStream(ReadStream& stream, uint32_t size)
+    : buffer(stream.buffer)
 {
-    if (stream.data.size() < stream.cur + size) {
-        throw std::out_of_range("wrong size");
+    if (stream.buffer.size() < stream.cur + size) {
+        throw std::out_of_range("Access out of bounds");
     }
 
     this->cur = stream.cur;
@@ -34,8 +34,8 @@ Stream::Stream(Stream& stream, uint32_t size)
     this->size = stream.cur + size;
 }
 
-Stream::Stream(Stream& stream)
-    : data(stream.data)
+ReadStream::ReadStream(ReadStream& stream)
+    : buffer(stream.buffer)
 {
     this->hasSize = stream.hasSize;
     this->size = stream.size;

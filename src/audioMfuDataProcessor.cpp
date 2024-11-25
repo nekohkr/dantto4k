@@ -4,8 +4,8 @@ namespace MmtTlv {
 
 std::optional<MfuData> AudioMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
 {
-    Common::Stream stream(data);
-    uint32_t size = stream.leftBytes();
+    Common::ReadStream stream(data);
+    size_t size = stream.leftBytes();
 
     std::pair<int64_t, int64_t> ptsDts;
     try {

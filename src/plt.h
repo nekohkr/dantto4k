@@ -8,11 +8,11 @@ namespace MmtTlv {
 // Package List Table
 class Plt : public MmtTableBase {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	class Entry {
 	public:
-		bool unpack(Common::Stream& stream);
+		bool unpack(Common::ReadStream& stream);
 
 		uint8_t mmtPackageIdLength;
 		std::vector<uint8_t> mmtPackageIdByte;

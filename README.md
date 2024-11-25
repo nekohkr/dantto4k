@@ -24,7 +24,6 @@ https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13
 下記のURLからbinaryをダウンロードすることができます。
 
 - https://slproweb.com/products/Win32OpenSSL.html
-- https://github.com/BtbN/FFmpeg-Builds/releases
 - https://github.com/tsduck/tsduck/
 
 ## References

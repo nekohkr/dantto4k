@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool ContentCopyControlDescriptor::unpack(Common::Stream& stream)
+bool ContentCopyControlDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         uint8_t uint8 = nstream.get8U();
         digitalRecordingControlData = (uint8 & 0b11000000) >> 6;
@@ -24,7 +24,7 @@ bool ContentCopyControlDescriptor::unpack(Common::Stream& stream)
         if (componentControlFlag) {
             componentControlLength = nstream.get8U();
             
-            Common::Stream componentStream(nstream, componentControlLength);
+            Common::ReadStream componentStream(nstream, componentControlLength);
             while (componentStream.isEof()) {
                 Component component;
                 if (!component.unpack(componentStream)) {
@@ -43,7 +43,7 @@ bool ContentCopyControlDescriptor::unpack(Common::Stream& stream)
     return true;
 }
 
-bool ContentCopyControlDescriptor::Component::unpack(Common::Stream& stream)
+bool ContentCopyControlDescriptor::Component::unpack(Common::ReadStream& stream)
 {
     try {
         componentTag = stream.getBe16U();

@@ -17,7 +17,7 @@ enum class TlvPacketType {
 
 class Tlv {
 public:
-	bool unpack(Common::StreamBase& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	TlvPacketType getPacketType() const { return static_cast<TlvPacketType>(packetType); }
 	uint16_t getDataLength() const { return dataLength; }

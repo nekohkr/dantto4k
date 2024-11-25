@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool Mpu::unpack(Common::Stream& stream)
+bool Mpu::unpack(Common::ReadStream& stream)
 {
 	try {
 		payloadLength = stream.getBe16U();

@@ -7,7 +7,7 @@ class MmtDescriptorBase {
 public:
 	virtual ~MmtDescriptorBase() = default;
 
-	virtual bool unpack(Common::Stream& stream) {
+	virtual bool unpack(Common::ReadStream& stream) {
 		try {
 			descriptorTag = stream.getBe16U();
 			descriptorLength = stream.get8U();
@@ -39,7 +39,7 @@ public:
 	static constexpr uint16_t kDescriptorTag = descriptorTagValue;
 	static constexpr uint16_t kIs16BitLength = is16BitLength;
 
-	virtual bool unpack(Common::Stream& stream) {
+	virtual bool unpack(Common::ReadStream& stream) {
 		try {
 			descriptorTag = stream.getBe16U();
 			if (kIs16BitLength) {

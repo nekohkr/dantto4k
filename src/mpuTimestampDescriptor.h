@@ -6,7 +6,7 @@ namespace MmtTlv {
 class MpuTimestampDescriptor
 	: public MmtDescriptorTemplate<0x0001> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
 	class Entry {
 	public:

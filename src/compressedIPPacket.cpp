@@ -4,7 +4,7 @@
 
 namespace MmtTlv {
 
-bool CompressedIPPacket::unpack(Common::Stream& stream)
+bool CompressedIPPacket::unpack(Common::ReadStream& stream)
 {
 	uint16_t uint16 = stream.getBe16U();
 	contextId = (uint16 & 0b1111111111110000) >> 4;

@@ -18,7 +18,7 @@ uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
 
 } // anonymous namespace
 
-bool MpuTimestampDescriptor::unpack(Common::Stream& stream)
+bool MpuTimestampDescriptor::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {

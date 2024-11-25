@@ -10,11 +10,11 @@ class MmtDescriptorBase;
 // Mh-Event Information Table
 class MhEit : public MmtTableBase {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
 
     class Event {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         uint16_t eventId;
         int64_t startTime;

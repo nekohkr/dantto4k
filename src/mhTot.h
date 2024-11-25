@@ -6,7 +6,7 @@ namespace MmtTlv {
 // Mh-Time Offset Table
 class MhTot : public MmtTableBase {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;

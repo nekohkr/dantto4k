@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool Plt::unpack(Common::Stream& stream)
+bool Plt::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtTableBase::unpack(stream)) {
@@ -25,7 +25,7 @@ bool Plt::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool Plt::Entry::unpack(Common::Stream& stream)
+bool Plt::Entry::unpack(Common::ReadStream& stream)
 {
 	try {
 		mmtPackageIdLength = stream.get8U();

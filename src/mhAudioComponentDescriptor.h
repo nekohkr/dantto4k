@@ -6,7 +6,7 @@ namespace MmtTlv {
 class MhAudioComponentDescriptor
     : public MmtDescriptorTemplate<0x8014> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     uint32_t getConvertedSamplingRate() const;
 

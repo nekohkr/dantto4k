@@ -6,7 +6,7 @@ namespace MmtTlv {
 
 class IPv6Header {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 private:
 	uint8_t version;

@@ -6,11 +6,11 @@ namespace MmtTlv {
 
 class RemoteControlKeyDescriptor : public TlvDescriptorTemplate<0xCD> {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
     
     class Entry {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
         uint8_t remoteControlKeyId;
         uint16_t serviceId;
 

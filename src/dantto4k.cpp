@@ -1,97 +1,17 @@
 ﻿#include <iostream>
-#include <map>
 #include "stream.h"
 #include "MmtTlvDemuxer.h"
-#include "mhEit.h"
-#include "mhSdt.h"
-#include "plt.h"
-#include "mpt.h"
-#include "mhTot.h"
-#include "mhCdt.h"
-#include "mmtTableBase.h"
 #include "remuxerHandler.h"
-#include "nit.h"
-
-extern "C" {
-#include <libavformat/avformat.h>
-}
-
 #include "bonTuner.h"
 #include "config.h"
 #include "dantto4k.h"
 
-AVFormatContext* outputFormatContext = nullptr;
-AVIOContext* avioContext = nullptr;
 MmtTlv::MmtTlvDemuxer demuxer;
-RemuxerHandler handler(demuxer, &outputFormatContext, &avioContext);
+std::vector<uint8_t> output;
+RemuxerHandler handler(demuxer, output);
 CBonTuner bonTuner;
-std::vector<uint8_t> muxedOutput;
 
-class TSInput {
-public:
-    TSInput() : position(0) {}
-
-    bool read(ts::TSPacket& packet) {
-        if (0 >= data.size()) {
-            return false;
-        }
-
-        if (188 > data.size()) {
-            return false;
-        }
-
-        std::memcpy(packet.b, data.data(), 188);
-        data.erase(data.begin(), data.begin() + 188);
-        return true;
-    }
-
-    std::vector<uint8_t> data;
-
-private:
-    size_t position;
-};
-
-TSInput tsInput;
-
-// filter out SDT, PAT, PMT packets creacted by ffmpeg
-int outputFilter(void* opaque, const uint8_t* buf, int buf_size) {
-    std::vector<uint8_t> buffer(buf_size);
-    memcpy(buffer.data(), buf, buf_size);
-    
-    tsInput.data.insert(tsInput.data.end(), buffer.begin(), buffer.end());
-    
-    ts::TSPacket packet;
-    while (tsInput.read(packet)) {
-        uint16_t pid = packet.getPID();
-        
-        if (pid == DVB_SDT_PID && packet.getPriority() == 0) {
-            continue;
-        }
-        if (pid == MPEG_PAT_PID && packet.getPriority() == 0) {
-            continue;
-        }
-
-        // PMT
-        if (pid == 0x1000 && packet.getPriority() == 0) {
-            continue;
-        }
-
-        // PES
-        if (pid >= 0x100 && pid <= 0x200) {
-            const auto& mmtStream = demuxer.mapStreamByStreamIdx[pid - 0x100];
-            if (mmtStream->getComponentTag() == -1) {
-                continue;
-            }
-
-            packet.setPID(mmtStream->getMpeg2Pid());
-        }
-        
-        muxedOutput.insert(muxedOutput.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
-    }
-    
-    return buf_size;
-}
-
+#ifdef _WIN32
 extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
 {
     return &bonTuner;
@@ -109,9 +29,6 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
             demuxer.init();
             demuxer.setDemuxerHandler(handler);
 
-            unsigned char* avioBuffer = (unsigned char*)av_malloc(4096);
-            avioContext = avio_alloc_context(avioBuffer, 4096, 1, nullptr, nullptr, outputFilter, nullptr);
-
             bonTuner.init(config);
         }
         catch (const std::runtime_error& e) {
@@ -124,6 +41,20 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
     }
 
     return true;
+}
+#endif
+
+namespace {
+    size_t getLeftBytes(std::ifstream& file) {
+        std::streampos currentPos = file.tellg();
+
+        file.seekg(0, std::ios::end);
+        std::streampos fileSize = file.tellg();
+
+        file.seekg(currentPos);
+
+        return static_cast<size_t>(fileSize - currentPos);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -141,31 +72,36 @@ int main(int argc, char* argv[]) {
     inputPath = argv[1];
     outputPath = argv[2];
 
-    MmtTlv::Common::FileStream fs(inputPath.c_str());
-    std::vector<uint8_t> inputBuffer;
+    std::ifstream inputFs(inputPath, std::ios::binary);
+    if (!inputFs) {
+        std::cerr << "Unable to open input file: " << inputPath << std::endl;
+        return 1;
+    }
 
-    FILE* fp = fopen(outputPath.c_str(), "wb");
+    std::ofstream outputFs(outputPath, std::ios::binary);
+    if (!inputFs) {
+        std::cerr << "Unable to output input file: " << inputPath << std::endl;
+        return 1;
+    }
 
-    unsigned char* avioBuffer = (unsigned char*)av_malloc(4096);
-    avioContext = avio_alloc_context(avioBuffer, 4096, 1, fp, nullptr, outputFilter, nullptr);
+    const size_t chunkSize = 1024 * 1024 * 20;
+    std::vector<uint8_t> buffer;
 
-    while (!fs.isEof()) {
-        if (inputBuffer.size() < 1024 * 1024) {
-            size_t readSize = std::min(static_cast<size_t>(1024 * 1024 * 20), fs.leftBytes());
+    while (!inputFs.eof()) {
+        if (buffer.size() < chunkSize) {
+            size_t readSize = std::min(chunkSize, getLeftBytes(inputFs));
             if (readSize == 0) {
                 break;
             }
 
-            std::vector<uint8_t> buffer(readSize);
-            fs.read(buffer.data(), readSize);
-
-            inputBuffer.insert(inputBuffer.end(), buffer.begin(), buffer.end());
+            buffer.resize(buffer.size() + readSize);
+            inputFs.read(reinterpret_cast<char*>(buffer.data() + buffer.size() - readSize), readSize);
         }
 
         
-		MmtTlv::Common::Stream stream(inputBuffer);
+		MmtTlv::Common::ReadStream stream(buffer);
 		while (!stream.isEof()) {
-			int pos = stream.cur;
+			int pos = stream.getCur();
 			int n = demuxer.processPacket(stream);
 
 			// not valid tlv
@@ -175,23 +111,19 @@ int main(int argc, char* argv[]) {
 
 			// not enough buffer for tlv payload
 			if (n == -1) {
-				stream.cur = pos;
+				stream.setCur(pos);
 				break;
 			}
 		}
 
-		inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - stream.leftBytes()));
+		buffer.erase(buffer.begin(), buffer.begin() + (buffer.size() - stream.leftBytes()));
 
-        fwrite(muxedOutput.data(), 1, muxedOutput.size(), fp);
-        muxedOutput.clear();
+        outputFs.write(reinterpret_cast<const char*>(output.data()), output.size());
+        output.clear();
     }
 
-    av_write_trailer(outputFormatContext);
-    
-    fwrite(muxedOutput.data(), 1, muxedOutput.size(), fp);
-    muxedOutput.clear();
-
-    fclose(fp);
+    inputFs.close();
+    outputFs.close();
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;

@@ -4,7 +4,7 @@
 
 namespace MmtTlv {
 	
-bool Tlv::unpack(Common::StreamBase& stream)
+bool Tlv::unpack(Common::ReadStream& stream)
 {
 	if (stream.leftBytes() < 4) {
 		return false;

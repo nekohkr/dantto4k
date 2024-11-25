@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhCdt::unpack(Common::Stream& stream)
+bool MhCdt::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtTableBase::unpack(stream)) {
@@ -32,7 +32,7 @@ bool MhCdt::unpack(Common::Stream& stream)
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorsLoopLength);
+        Common::ReadStream nstream(stream, descriptorsLoopLength);
         descriptors.unpack(nstream);
         stream.skip(descriptorsLoopLength);
 

@@ -6,7 +6,7 @@ namespace MmtTlv {
 class MultimediaServiceInformationDescriptor
 	: public MmtDescriptorTemplate<0x803F> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
 	uint16_t dataComponentId;
 

@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool IPv6Header::unpack(Common::Stream& stream)
+bool IPv6Header::unpack(Common::ReadStream& stream)
 {
 	uint32_t uint32 = stream.getBe16U();
 	version = (uint32 & 0b11110000000000000000000000000000) >> 28;
@@ -11,15 +11,9 @@ bool IPv6Header::unpack(Common::Stream& stream)
 	nexthdr = stream.get8U();
 	hop_limit = stream.get8U();
 
-	saddr.in6_u.u6_addr32[0] = stream.getBe32U();
-	saddr.in6_u.u6_addr32[1] = stream.getBe32U();
-	saddr.in6_u.u6_addr32[2] = stream.getBe32U();
-	saddr.in6_u.u6_addr32[3] = stream.getBe32U();
+	stream.read(saddr.in6_u.u6_addr8, 16);
+	stream.read(daddr.in6_u.u6_addr8, 16);
 
-	daddr.in6_u.u6_addr32[0] = stream.getBe32U();
-	daddr.in6_u.u6_addr32[1] = stream.getBe32U();
-	daddr.in6_u.u6_addr32[2] = stream.getBe32U();
-	daddr.in6_u.u6_addr32[3] = stream.getBe32U();
 	return true;
 }
 

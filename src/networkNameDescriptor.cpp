@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool NetworkNameDescriptor::unpack(Common::Stream& stream)
+bool NetworkNameDescriptor::unpack(Common::ReadStream& stream)
 {
     if (!TlvDescriptorTemplate::unpack(stream)) {
         return false;

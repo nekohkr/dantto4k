@@ -26,6 +26,7 @@
 #include "videoMfuDataProcessor.h"
 #include "videoComponentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
+#include "ipv6Header.h"
 
 namespace MmtTlv {
 
@@ -53,7 +54,7 @@ void MmtTlvDemuxer::setDemuxerHandler(DemuxerHandler& demuxerHandler)
     this->demuxerHandler = &demuxerHandler;
 }
 
-int MmtTlvDemuxer::processPacket(Common::StreamBase& stream)
+int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
 {
     if (stream.leftBytes() < 4) {
         return -1;
@@ -72,71 +73,77 @@ int MmtTlvDemuxer::processPacket(Common::StreamBase& stream)
         return -1;
     }
 
-    Common::Stream tlvDataStream(tlv.getData());
+    Common::ReadStream tlvDataStream(tlv.getData());
 
-    if (tlv.getPacketType() == TlvPacketType::TransmissionControlSignalPacket) {
+    switch (tlv.getPacketType()) {
+    case TlvPacketType::TransmissionControlSignalPacket:
+    {
         processTlvTable(tlvDataStream);
-        return 1;
+        break;
     }
-
-    if (tlv.getPacketType() != TlvPacketType::HeaderCompressedIpPacket) {
-        return 1;
+    case TlvPacketType::Ipv6Packet:
+    {
+        break;
     }
+    case TlvPacketType::HeaderCompressedIpPacket:
+    {
+        compressedIPPacket.unpack(tlvDataStream);
+        mmt.unpack(tlvDataStream);
 
-    compressedIPPacket.unpack(tlvDataStream);
-    mmt.unpack(tlvDataStream);
-
-    if (mmt.extensionHeaderScrambling.has_value()) {
-        if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
-            mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-            if (!acasCard->ready) {
-                return 1;
-            }
-            else {
-                mmt.decryptPayload(&acasCard->lastDecryptedEcm);
+        if (mmt.extensionHeaderScrambling.has_value()) {
+            if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
+                mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
+                if (!acasCard->ready) {
+                    return 1;
+                }
+                else {
+                    mmt.decryptPayload(&acasCard->lastDecryptedEcm);
+                }
             }
         }
-    }
 
-    Common::Stream mmtpPayloadStream(mmt.payload);
-    switch (mmt.payloadType) {
-    case PayloadType::Mpu:
-        processMpu(mmtpPayloadStream);
+        Common::ReadStream mmtpPayloadStream(mmt.payload);
+        switch (mmt.payloadType) {
+        case PayloadType::Mpu:
+            processMpu(mmtpPayloadStream);
+            break;
+        case PayloadType::ContainsOneOrMoreControlMessage:
+            processSignalingMessages(mmtpPayloadStream);
+            break;
+        }
         break;
-    case PayloadType::ContainsOneOrMoreControlMessage:
-        processSignalingMessages(mmtpPayloadStream);
-        break;
+    }
     }
 
     return 1;
 }
 
-void MmtTlvDemuxer::processPaMessage(Common::Stream& stream)
+void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream)
 {
     PaMessage message;
     message.unpack(stream);
 
-    Common::Stream nstream(message.table);
+    Common::ReadStream nstream(message.table);
     while (!nstream.isEof()) {
         processMmtTable(nstream);
     }
 }
 
-void MmtTlvDemuxer::processM2SectionMessage(Common::Stream& stream)
+void MmtTlvDemuxer::processM2SectionMessage(Common::ReadStream& stream)
 {
     M2SectionMessage message;
     message.unpack(stream);
     processMmtTable(stream);
 }
 
-void MmtTlvDemuxer::processM2ShortSectionMessage(Common::Stream& stream)
+void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
 {
     M2ShortSectionMessage message;
     message.unpack(stream);
     processMmtTable(stream);
 }
 
-void MmtTlvDemuxer::processTlvTable(Common::Stream& stream)
+void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream)
 {
     uint8_t tableId = stream.peek8U();
     const auto table = TlvTableFactory::create(tableId);
@@ -155,7 +162,7 @@ void MmtTlvDemuxer::processTlvTable(Common::Stream& stream)
     }
 }
 
-void MmtTlvDemuxer::processMmtTable(Common::Stream& stream)
+void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
 {
     uint8_t tableId = stream.peek8U();
     const auto table = MmtTableFactory::create(tableId);
@@ -282,8 +289,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             if (locationInfo.locationType == 0) {
                 if (asset.assetType == makeAssetType('h', 'e', 'v', '1') ||
                     asset.assetType == makeAssetType('m', 'p', '4', 'a') ||
-                    asset.assetType == makeAssetType('s', 't', 'p', 'p') ||
-                    asset.assetType == makeAssetType('a', 'a', 'p', 'p')) {
+                    asset.assetType == makeAssetType('s', 't', 'p', 'p')) {
                     mmtStream = getStream(locationInfo.packetId);
                     if (!mmtStream) {
                         mmtStream = std::make_shared<MmtStream>(locationInfo.packetId);
@@ -497,13 +503,13 @@ std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid)
     }
 }
 
-void MmtTlvDemuxer::processMpu(Common::Stream& stream)
+void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
 {
     if (!mpu.unpack(stream))
         return;
 
     auto assembler = getAssembler(mmt.packetId);
-    Common::Stream nstream(mpu.payload);
+    Common::ReadStream nstream(mpu.payload);
     std::shared_ptr<MmtStream> mmtStream = getStream(mmt.packetId);
 
     if (!mmtStream) {
@@ -547,7 +553,7 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
         }
 
         if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmt.packetSequenceNumber)) {
-            Common::Stream dataStream(assembler->data);
+            Common::ReadStream dataStream(assembler->data);
             processMfuData(dataStream);
             assembler->clear();
         }
@@ -561,7 +567,7 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
             }
 
             if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmt.packetSequenceNumber)) {
-                Common::Stream dataStream(assembler->data);
+                Common::ReadStream dataStream(assembler->data);
                 processMfuData(dataStream);
                 assembler->clear();
             }
@@ -569,7 +575,7 @@ void MmtTlvDemuxer::processMpu(Common::Stream& stream)
     }
 }
 
-void MmtTlvDemuxer::processMfuData(Common::Stream& stream)
+void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream)
 {
     std::shared_ptr<MmtStream> mmtStream = getStream(mmt.packetId);
     if (!mmtStream) {
@@ -616,7 +622,7 @@ void MmtTlvDemuxer::processMfuData(Common::Stream& stream)
     }
 }
 
-void MmtTlvDemuxer::processSignalingMessages(Common::Stream& stream)
+void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream)
 {
     SignalingMessage signalingMessage;
 
@@ -629,7 +635,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::Stream& stream)
 
     if (!signalingMessage.aggregationFlag) {
         if (assembler->assemble(signalingMessage.payload, signalingMessage.fragmentationIndicator, mmt.packetSequenceNumber)) {
-            Common::Stream messageStream(assembler->data);
+            Common::ReadStream messageStream(assembler->data);
             processSignalingMessage(messageStream);
             assembler->clear();
         }
@@ -639,7 +645,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::Stream& stream)
             return;
         }
 
-        Common::Stream nstream(signalingMessage.payload);
+        Common::ReadStream nstream(signalingMessage.payload);
         while (nstream.isEof()) {
             uint32_t length;
 
@@ -649,7 +655,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::Stream& stream)
                 length = nstream.getBe16U();
 
             if (assembler->assemble(signalingMessage.payload, signalingMessage.fragmentationIndicator, mmt.packetSequenceNumber)) {
-                Common::Stream messageStream(assembler->data);
+                Common::ReadStream messageStream(assembler->data);
                 processSignalingMessage(messageStream);
                 assembler->clear();
             }
@@ -659,7 +665,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::Stream& stream)
     return;
 }
 
-void MmtTlvDemuxer::processSignalingMessage(Common::Stream& stream)
+void MmtTlvDemuxer::processSignalingMessage(Common::ReadStream& stream)
 {
     MmtMessageId id = static_cast<MmtMessageId>(stream.peekBe16U());
 
@@ -674,7 +680,7 @@ void MmtTlvDemuxer::processSignalingMessage(Common::Stream& stream)
     }
 }
 
-bool MmtTlvDemuxer::isVaildTlv(Common::StreamBase& stream) const
+bool MmtTlvDemuxer::isVaildTlv(Common::ReadStream& stream) const
 {
     try {
         uint8_t bytes[2];

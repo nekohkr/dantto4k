@@ -6,7 +6,7 @@ namespace MmtTlv {
 
 class MmtDescriptors {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 	std::list<std::shared_ptr<MmtDescriptorBase>> list;
 
 };

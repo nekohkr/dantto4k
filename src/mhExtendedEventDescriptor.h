@@ -7,11 +7,11 @@ namespace MmtTlv {
 class MhExtendedEventDescriptor
     : public MmtDescriptorTemplate<0xF002, true> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     class Entry {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         uint8_t itemDescriptionLength;
         std::string itemDescriptionChar;

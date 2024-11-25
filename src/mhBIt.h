@@ -8,11 +8,11 @@ namespace MmtTlv {
 // MH-Broadcaster_Information_Table
 class MhBit : public MmtTableBase {
 public:
-    bool unpack(Common::Stream& stream);
+    bool unpack(Common::ReadStream& stream);
 
     class Broadcaster {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         uint8_t broadcasterId;
         uint16_t broadcasterDescriptorsLength;

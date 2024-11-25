@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhParentalRatingDescriptor::unpack(Common::Stream& stream)
+bool MhParentalRatingDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         while (!nstream.isEof()) {
             Entry entry;
@@ -26,7 +26,7 @@ bool MhParentalRatingDescriptor::unpack(Common::Stream& stream)
     return true;
 }
 
-bool MhParentalRatingDescriptor::Entry::unpack(Common::Stream& stream) {
+bool MhParentalRatingDescriptor::Entry::unpack(Common::ReadStream& stream) {
     stream.read(countryCode, 3);
     countryCode[3] = '\0';
 

@@ -26,8 +26,7 @@ constexpr uint8_t STREAM_TYPE_AUDIO_DTS						= 0x82;
 constexpr uint8_t STREAM_TYPE_AUDIO_TRUEHD					= 0x83;
 constexpr uint8_t STREAM_TYPE_AUDIO_EAC3					= 0x87;
 
-struct AVFormatContext;
-
+constexpr uint16_t PCR_PID = 0x01FF;
 
 namespace MmtTlv {
 
@@ -46,8 +45,8 @@ class MmtTlvDemuxer;
 
 class RemuxerHandler : public MmtTlv::DemuxerHandler {
 public:
-	RemuxerHandler(MmtTlv::MmtTlvDemuxer& demuxer, struct AVFormatContext** outputFormatContext, struct AVIOContext** avioContext)
-		: demuxer(demuxer), outputFormatContext(outputFormatContext), avioContext(avioContext) {
+	RemuxerHandler(MmtTlv::MmtTlvDemuxer& demuxer, std::vector<uint8_t>& output)
+		: demuxer(demuxer), output(output) {
 	}
 
 	// MPU data
@@ -73,9 +72,8 @@ public:
 
 private:
 	void writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, std::vector<uint8_t> data);
-
-	struct AVFormatContext** outputFormatContext;
-	struct AVIOContext** avioContext;
+	void writePCR(uint64_t pcr);
+	std::vector<uint8_t>& output;
 	MmtTlv::MmtTlvDemuxer& demuxer;
 
 	std::map<uint16_t, uint16_t> mapService2Pid;

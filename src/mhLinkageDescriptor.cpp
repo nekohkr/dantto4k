@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhLinkageDescriptor::unpack(Common::Stream& stream)
+bool MhLinkageDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         tlvStreamId = nstream.getBe16U();
         originalNetworkId = nstream.getBe16U();

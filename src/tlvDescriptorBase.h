@@ -7,7 +7,7 @@ class TlvDescriptorBase {
 public:
 	virtual ~TlvDescriptorBase() = default;
 
-	virtual bool unpack(Common::Stream& stream) {
+	virtual bool unpack(Common::ReadStream& stream) {
 		try {
 			descriptorTag = stream.get8U();
 			descriptorLength = stream.get8U();

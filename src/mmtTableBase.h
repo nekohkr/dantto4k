@@ -35,7 +35,7 @@ class MmtTableBase {
 public:
     virtual ~MmtTableBase() = default;
 
-    virtual bool unpack(Common::Stream& stream)
+    virtual bool unpack(Common::ReadStream& stream)
     {
 	    try {
 		    tableId = stream.get8U();

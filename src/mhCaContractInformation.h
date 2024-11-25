@@ -7,7 +7,7 @@ namespace MmtTlv {
 class MhCaContractInformation
     : public MmtDescriptorTemplate<0x8041> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     uint16_t caSystemId;
     uint8_t caUnitId;

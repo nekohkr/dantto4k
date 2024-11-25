@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhAudioComponentDescriptor::unpack(Common::Stream& stream)
+bool MhAudioComponentDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         uint8_t uint8 = nstream.get8U();
         streamContent = uint8 & 0b00001111;

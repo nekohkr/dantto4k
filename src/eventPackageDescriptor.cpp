@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool EventPackageDescriptor::unpack(Common::Stream& stream)
+bool EventPackageDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         mmtPackageIdLength = nstream.get8U();
 

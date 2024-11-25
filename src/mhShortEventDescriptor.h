@@ -6,7 +6,7 @@ namespace MmtTlv {
 class MhShortEventDescriptor
 	: public MmtDescriptorTemplate<0xF001, true> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
 	char language[4];
 	std::string eventName;

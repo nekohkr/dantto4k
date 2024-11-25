@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhLogoTransmissionDescriptor::unpack(Common::Stream& stream)
+bool MhLogoTransmissionDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
         }
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         logoTransmissionType = nstream.get8U();
         if (logoTransmissionType == 0x01) {
@@ -47,7 +47,7 @@ bool MhLogoTransmissionDescriptor::unpack(Common::Stream& stream)
     return true;
 }
 
-bool MhLogoTransmissionDescriptor::Entry::unpack(Common::Stream& stream)
+bool MhLogoTransmissionDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
     logoType = stream.get8U();
     startSectionNumber = stream.get8U();

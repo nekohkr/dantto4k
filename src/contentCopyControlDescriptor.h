@@ -7,11 +7,11 @@ namespace MmtTlv {
 class ContentCopyControlDescriptor
     : public MmtDescriptorTemplate<0x8038> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
     
     class Component {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         uint16_t componentTag;
         uint8_t digitalRecordingControlData;

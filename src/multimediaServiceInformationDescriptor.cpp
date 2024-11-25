@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MultimediaServiceInformationDescriptor::unpack(Common::Stream& stream)
+bool MultimediaServiceInformationDescriptor::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-        Common::Stream nstream(stream, descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
 
         dataComponentId = nstream.getBe16U();
 		if (dataComponentId == 0x0020) {

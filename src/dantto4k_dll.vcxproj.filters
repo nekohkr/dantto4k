@@ -217,6 +217,12 @@
     <ClCompile Include="timeUtil.cpp">
       <Filter>dantto4k</Filter>
     </ClCompile>
+    <ClCompile Include="pesPacket.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="timebase.cpp">
+      <Filter>mmttlv\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -470,6 +476,12 @@
     </ClInclude>
     <ClInclude Include="timeUtil.h">
       <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="pesPacket.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="timebase.h">
+      <Filter>mmttlv\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

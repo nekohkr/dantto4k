@@ -2,13 +2,13 @@
 
 namespace MmtTlv {
 
-bool SystemManagementDescriptor::unpack(Common::Stream& stream)
+bool SystemManagementDescriptor::unpack(Common::ReadStream& stream)
 {
     if (!TlvDescriptorTemplate::unpack(stream)) {
         return false;
     }
 
-    Common::Stream nstream(stream, descriptorLength);
+    Common::ReadStream nstream(stream, descriptorLength);
     
     systemManagementId = nstream.getBe16U();
 

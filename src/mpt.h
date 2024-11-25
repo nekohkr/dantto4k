@@ -8,11 +8,11 @@ namespace MmtTlv {
 // MMT Package Table
 class Mpt : public MmtTableBase {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	class Asset {
 	public:
-		bool unpack(Common::Stream& stream);
+		bool unpack(Common::ReadStream& stream);
 
 		uint8_t identifierType;
 		uint32_t assetIdScheme;

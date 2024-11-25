@@ -13,7 +13,7 @@ enum class ContextHeaderType : uint8_t {
 
 class CompressedIPPacket {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	std::vector<uint8_t> getCompressedHeader() const {
 		return compressedHeader;

@@ -14,7 +14,7 @@ enum class EncryptionFlag : uint8_t
 
 class ExtensionHeaderScrambling {
 public:
-	bool unpack(Common::Stream& stream, uint16_t extensionHeaderType, uint16_t extensionHeaderLength);
+	bool unpack(Common::ReadStream& stream, uint16_t extensionHeaderType, uint16_t extensionHeaderLength);
 	EncryptionFlag encryptionFlag;
 	uint8_t scramblingSubsystem;
 	uint8_t messageAuthenticationControl;

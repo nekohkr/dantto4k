@@ -5,7 +5,6 @@
 #include "config.h"
 
 std::vector<uint8_t> inputBuffer;
-std::vector<uint8_t> buffer;
 std::vector<uint8_t> outputBuffer;
 FILE* fp;
 
@@ -98,9 +97,9 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 		inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
 	}
 
-	MmtTlv::Common::Stream input(inputBuffer);
+	MmtTlv::Common::ReadStream input(inputBuffer);
 	while (!input.isEof()) {
-		uint64_t pos = input.cur;
+		size_t cur = input.getCur();
 		int n = demuxer.processPacket(input);
 
 		// not valid tlv
@@ -110,21 +109,21 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 
 		// not enough buffer for tlv payload
 		if (n == -1) {
-			input.cur = pos;
+			input.setCur(cur);
 			break;
 		}
 	}
 
 	inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - input.leftBytes()));
 
-	if (!muxedOutput.size()) {
+	if (!output.size()) {
 		return false;
 	}
 
-	outputBuffer = std::move(muxedOutput);
+	outputBuffer = std::move(output);
 
 	*ppDst = outputBuffer.data();
-	*pdwSize = outputBuffer.size();
+	*pdwSize = static_cast<uint32_t>(outputBuffer.size());
 	*pdwRemain = 0;
 	return true;
 }
@@ -159,7 +158,7 @@ const bool CBonTuner::SetChannel(const uint32_t dwSpace, const uint32_t dwChanne
 	std::lock_guard<std::mutex> lock(mutex);
 
 	inputBuffer.clear();
-	muxedOutput.clear();
+	output.clear();
 
 	if (config.mmtsDumpPath != "") {
 		if (fp) {

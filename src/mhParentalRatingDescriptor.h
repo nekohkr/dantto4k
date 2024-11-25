@@ -7,11 +7,11 @@ namespace MmtTlv {
 class MhParentalRatingDescriptor
     : public MmtDescriptorTemplate<0x8013> {
 public:
-    bool unpack(Common::Stream& stream) override;
+    bool unpack(Common::ReadStream& stream) override;
 
     class Entry {
     public:
-        bool unpack(Common::Stream& stream);
+        bool unpack(Common::ReadStream& stream);
 
         char countryCode[4];
         uint8_t rating;

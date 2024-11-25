@@ -6,7 +6,7 @@ namespace MmtTlv {
 class VideoComponentDescriptor
     : public MmtDescriptorTemplate<0x8010> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 
     bool Is8KVideo() const { return videoResolution == 7; }
 

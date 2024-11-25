@@ -3,7 +3,7 @@
 
 namespace MmtTlv {
 
-bool TlvDescriptors::unpack(Common::Stream& stream)
+bool TlvDescriptors::unpack(Common::ReadStream& stream)
 {
 	list.clear();
 	while (!stream.isEof()) {

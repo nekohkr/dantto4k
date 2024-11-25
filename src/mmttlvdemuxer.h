@@ -18,11 +18,6 @@
 #include "compressedIPPacket.h"
 #include "mfuDataProcessorBase.h"
 
-extern "C" {
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-}
-
 namespace MmtTlv {
 
 enum class MmtMessageId {
@@ -43,24 +38,24 @@ public:
 	MmtTlvDemuxer();
 	bool init();
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
-	int processPacket(Common::StreamBase& stream);
+	int processPacket(Common::ReadStream& stream);
 	void clear();
 
 private:
-	void processMpu(Common::Stream& stream);
-	void processMfuData(Common::Stream& stream);
+	void processMpu(Common::ReadStream& stream);
+	void processMfuData(Common::ReadStream& stream);
 
-	void processSignalingMessages(Common::Stream& stream);
-	void processSignalingMessage(Common::Stream& stream);
+	void processSignalingMessages(Common::ReadStream& stream);
+	void processSignalingMessage(Common::ReadStream& stream);
 
-	bool isVaildTlv(Common::StreamBase& stream) const;
+	bool isVaildTlv(Common::ReadStream& stream) const;
 
-	void processPaMessage(Common::Stream& stream);
-	void processM2SectionMessage(Common::Stream& stream);
-	void processM2ShortSectionMessage(Common::Stream& stream);
+	void processPaMessage(Common::ReadStream& stream);
+	void processM2SectionMessage(Common::ReadStream& stream);
+	void processM2ShortSectionMessage(Common::ReadStream& stream);
 	
-	void processTlvTable(Common::Stream& stream);
-	void processMmtTable(Common::Stream& stream);
+	void processTlvTable(Common::ReadStream& stream);
+	void processMmtTable(Common::ReadStream& stream);
 
 	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
 	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);

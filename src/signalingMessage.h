@@ -7,7 +7,7 @@ namespace MmtTlv {
 
 class SignalingMessage {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	FragmentationIndicator fragmentationIndicator;
 	uint8_t reserved;

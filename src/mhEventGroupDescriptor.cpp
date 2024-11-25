@@ -2,14 +2,14 @@
 
 namespace MmtTlv {
 
-bool MhEventGroupDescriptor::unpack(Common::Stream& stream)
+bool MhEventGroupDescriptor::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
-		Common::Stream nstream(stream, descriptorLength);
+		Common::ReadStream nstream(stream, descriptorLength);
 
 		uint8_t uint8 = nstream.get8U();
 		groupType = (uint8 & 0b11110000) >> 4;
@@ -42,14 +42,14 @@ bool MhEventGroupDescriptor::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool MhEventGroupDescriptor::Event::unpack(Common::Stream& stream)
+bool MhEventGroupDescriptor::Event::unpack(Common::ReadStream& stream)
 {
 	serviceId = stream.getBe16U();
 	eventId = stream.getBe16U();
 	return true;
 }
 
-bool MhEventGroupDescriptor::OtherNetworkEvent::unpack(Common::Stream& stream)
+bool MhEventGroupDescriptor::OtherNetworkEvent::unpack(Common::ReadStream& stream)
 {
 	originalNetworkId = stream.getBe16U();
 	tlvStreamId = stream.getBe16U();

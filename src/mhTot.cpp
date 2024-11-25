@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhTot::unpack(Common::Stream& stream)
+bool MhTot::unpack(Common::ReadStream& stream)
 {
 	try {
 		if (!MmtTableBase::unpack(stream)) {

@@ -11,7 +11,7 @@ namespace Common {
 
 class MmtGeneralLocationInfo {
 public:
-	bool unpack(Common::Stream& stream);
+	bool unpack(Common::ReadStream& stream);
 
 	uint8_t locationType;
 	uint16_t packetId;

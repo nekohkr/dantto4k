@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhExtendedEventDescriptor::unpack(Common::Stream& stream)
+bool MhExtendedEventDescriptor::unpack(Common::ReadStream& stream)
 {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
@@ -16,7 +16,7 @@ bool MhExtendedEventDescriptor::unpack(Common::Stream& stream)
         language[3] = '\0';
 
         lengthOfItems = stream.getBe16U();
-        Common::Stream nstream(stream, lengthOfItems);
+        Common::ReadStream nstream(stream, lengthOfItems);
         while (!nstream.isEof()) {
             Entry entry;
             if (!entry.unpack(nstream)) {
@@ -41,7 +41,7 @@ bool MhExtendedEventDescriptor::unpack(Common::Stream& stream)
 	return true;
 }
 
-bool MhExtendedEventDescriptor::Entry::unpack(Common::Stream& stream)
+bool MhExtendedEventDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
     try {
         itemDescriptionLength = stream.get8U();

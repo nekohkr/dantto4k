@@ -7,11 +7,11 @@ namespace MmtTlv {
 class RelatedBroadcasterDescriptor
 	: public MmtDescriptorTemplate<0x803E> {
 public:
-	bool unpack(Common::Stream& stream) override;
+	bool unpack(Common::ReadStream& stream) override;
 	
 	class BroadcasterId {
 	public:
-		bool unpack(Common::Stream& stream);
+		bool unpack(Common::ReadStream& stream);
 
 		uint16_t networkId;
 		uint8_t broadcasterId;

@@ -3,7 +3,7 @@
 
 namespace MmtTlv {
 
-bool SignalingMessage::unpack(Common::Stream& stream)
+bool SignalingMessage::unpack(Common::ReadStream& stream)
 {
 	try {
 		uint8_t uint8 = stream.get8U();
