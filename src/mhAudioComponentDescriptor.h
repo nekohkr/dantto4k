@@ -9,6 +9,9 @@ public:
     bool unpack(Common::ReadStream& stream) override;
 
     uint32_t getConvertedSamplingRate() const;
+    uint8_t getDialogControl() const { return componentType & 0b10000000 >> 7; }
+    uint8_t getAudioForHandicapped() const { return componentType & 0b01100000 >> 5; }
+    uint8_t getAudioMode() const { return componentType & 0b00011111; }
 
     uint8_t streamContent;
     uint8_t componentType;

@@ -11,7 +11,7 @@ static inline int convertAdtsAudioObjectType(int aot)
     }
 }
 
-bool ADTSConverter::convert(uint8_t* input, int size, std::vector<uint8_t>& output)
+bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& output)
 {
 	if (size < 3) {
 		return false;
@@ -54,8 +54,8 @@ bool ADTSConverter::convert(uint8_t* input, int size, std::vector<uint8_t>& outp
     output.data()[2] = (convertAdtsAudioObjectType(audioObjectType) & 0b11) << 6 |
                         sampleRate << 2 |
                         1 << 1 | // private bit
-                        (channelConfig & 0b100) >> 2;
-    output.data()[3] = (channelConfig & 0b011) << 6 |
+                        (channelConfiguration & 0b100) >> 2;
+    output.data()[3] = (channelConfiguration & 0b011) << 6 |
                         1 << 5 | // original
                         1 << 4 | // copy
                         1 << 3 | // cib
@@ -74,7 +74,7 @@ bool ADTSConverter::convert(uint8_t* input, int size, std::vector<uint8_t>& outp
     return true;
 }
 
-bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, int size)
+bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, size_t size)
 {
     int audioMuxVersion = (input[0] & 0b10000000) >> 7;
 
@@ -121,7 +121,7 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, int size)
     return true;
 }
 
-bool ADTSConverter::unpackAudioSpecificConfig(uint8_t* input, int size)
+bool ADTSConverter::unpackAudioSpecificConfig(uint8_t* input, size_t size)
 {
     audioObjectType = (input[2] & 0b11111000) >> 3;
     if (audioObjectType == 28) {
@@ -133,7 +133,7 @@ bool ADTSConverter::unpackAudioSpecificConfig(uint8_t* input, int size)
         return false;
     }
 
-    channelConfig = (input[3] & 0b01111000) >> 3;
+    channelConfiguration = (input[3] & 0b01111000) >> 3;
 
     bool framelenFlag = (input[3] & 0b00000100) >> 2;
     bool dependsOnCoder = (input[3] & 0b00000010) >> 1;

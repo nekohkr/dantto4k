@@ -8,10 +8,8 @@ std::vector<uint8_t> inputBuffer;
 std::vector<uint8_t> outputBuffer;
 FILE* fp;
 
-bool CBonTuner::init(Config& config)
+bool CBonTuner::init()
 {
-	this->config = config;
-
 	HINSTANCE hBonDriverDLL = LoadLibraryA(config.bondriverPath.c_str());
 	if (!hBonDriverDLL) {
 		std::cerr << "Failed to load BonDriver (Error code: " << GetLastError() << ")" << std::endl;
@@ -28,7 +26,7 @@ bool CBonTuner::init(Config& config)
 		std::cerr << "Could not get address CreateBonDriver()" << std::endl;
 		return false;
 	}
-
+	
 	pBonDriver2 = CreateBonDriver();
 
 	if (!pBonDriver2) {
@@ -130,6 +128,11 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 
 void CBonTuner::PurgeTsStream(void)
 {
+	std::lock_guard<std::mutex> lock(mutex);
+
+	inputBuffer.clear();
+	output.clear();
+
 	return pBonDriver2->PurgeTsStream();
 }
 

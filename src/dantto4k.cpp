@@ -12,8 +12,24 @@ RemuxerHandler handler(demuxer, output);
 CBonTuner bonTuner;
 
 #ifdef _WIN32
+HINSTANCE hDantto4kModule = nullptr;
+
 extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
 {
+    try {
+            
+        std::string path = getConfigFilePath(hDantto4kModule);
+        config = loadConfig(path);
+
+        demuxer.init();
+        demuxer.setDemuxerHandler(handler);
+
+        bonTuner.init();
+
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+    }
     return &bonTuner;
 }
 
@@ -22,18 +38,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
     {
-        try {
-            std::string path = getConfigFilePath(hModule);
-            Config config = loadConfig(path);
-
-            demuxer.init();
-            demuxer.setDemuxerHandler(handler);
-
-            bonTuner.init(config);
-        }
-        catch (const std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
+        hDantto4kModule = hModule;
         break;
     }
     case DLL_PROCESS_DETACH:
@@ -58,19 +63,24 @@ namespace {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "dantto4k.exe <input.mmts> <output.ts>" << std::endl;
+    if (argc < 3) {
+        std::cerr << "dantto4k.exe <input.mmts> <output.ts> [options]" << std::endl;
+        std::cerr << "options:" << std::endl;
+        std::cerr << "\t--disableADTSConversion: Uses the raw LATM format without converting to ADTS." << std::endl;
         return 1;
     }
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    demuxer.init();
-    demuxer.setDemuxerHandler(handler);
-
     std::string inputPath, outputPath;
     inputPath = argv[1];
     outputPath = argv[2];
+
+    for (int i = 3; i < argc; ++i) {
+        if (std::string(argv[i]) == "--disableADTSConversion") {
+            config.disableADTSConversion = true;
+        }
+    }
 
     std::ifstream inputFs(inputPath, std::ios::binary);
     if (!inputFs) {
@@ -79,10 +89,13 @@ int main(int argc, char* argv[]) {
     }
 
     std::ofstream outputFs(outputPath, std::ios::binary);
-    if (!inputFs) {
-        std::cerr << "Unable to output input file: " << inputPath << std::endl;
+    if (!outputFs) {
+        std::cerr << "Unable to open output file: " << inputPath << std::endl;
         return 1;
     }
+    
+    demuxer.init();
+    demuxer.setDemuxerHandler(handler);
 
     const size_t chunkSize = 1024 * 1024 * 20;
     std::vector<uint8_t> buffer;
@@ -101,7 +114,7 @@ int main(int argc, char* argv[]) {
         
 		MmtTlv::Common::ReadStream stream(buffer);
 		while (!stream.isEof()) {
-			int pos = stream.getCur();
+			int cur = stream.getCur();
 			int n = demuxer.processPacket(stream);
 
 			// not valid tlv
@@ -111,7 +124,7 @@ int main(int argc, char* argv[]) {
 
 			// not enough buffer for tlv payload
 			if (n == -1) {
-				stream.setCur(pos);
+				stream.setCur(cur);
 				break;
 			}
 		}

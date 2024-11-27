@@ -5,7 +5,10 @@
 ### dantto4k.exe
 mmtsから復号化およびMPEG TSへの変換を行います。
 ```
-dantto4k.exe <input.mmts> <output.ts>
+dantto4k.exe <input.mmts> <output.ts> [options]
+
+options:
+	--disableADTSConversion: Uses the raw LATM format without converting to ADTS.
 ```
 
 ### BonDriver_dantto4k.dll
@@ -20,7 +23,7 @@ mirakurunのソースコードを修正してtimeoutを30秒以上に変更す�
 https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13-L175C55
 
 ## ビルド
-/thirdpartyフォルダにopenssl 3, ffmpeg, tsduckを準備します。
+/thirdpartyフォルダにopenssl 3, tsduckを準備します。
 下記のURLからbinaryをダウンロードすることができます。
 
 - https://slproweb.com/products/Win32OpenSSL.html

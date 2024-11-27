@@ -28,19 +28,12 @@
 #include "mpt.h"
 #include "nit.h"
 #include "plt.h"
-
 #include "pesPacket.h"
 #include "adtsConverter.h"
-#include "aribUtil.h"
 #include "mmtTlvDemuxer.h"
 #include "timebase.h"
 #include "mfuDataProcessorBase.h"
-
-#include "dantto4k.h"
-
-extern "C" {
-//#include <libavformat/avformat.h>
-}
+#include "config.h"
 
 namespace {
 int convertRunningStatus(int runningStatus) {
@@ -87,7 +80,7 @@ int assetType2streamType(uint32_t assetType)
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
     case MmtTlv::makeAssetType('m', 'p', '4', 'a'):
-        stream_type = STREAM_TYPE_AUDIO_AAC; // STREAM_TYPE_AUDIO_AAC_LATM
+        stream_type = config.disableADTSConversion ? STREAM_TYPE_AUDIO_AAC_LATM : STREAM_TYPE_AUDIO_AAC;
         break;
     case MmtTlv::makeAssetType('s', 't', 'p', 'p'):
         stream_type = STREAM_TYPE_PRIVATE_DATA;
@@ -145,6 +138,11 @@ void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
 
 void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
+    if (config.disableADTSConversion) {
+        writeStream(mmtStream, mfuData, mfuData->data);
+        return;
+    }
+
     ADTSConverter converter;
     std::vector<uint8_t> output;
     if (!converter.convert(mfuData->data.data(), mfuData->data.size(), output)) {
@@ -195,11 +193,15 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     
     ts::TSPacketVector packets;
     zer.getPackets(packets);
+
+    int i = 0;
     for (auto& packet : packets) {
         packet.setCC(mapCC[mmtStream->getMpeg2Pid()] & 0xF);
-        mapCC[mmtStream->getMpeg2Pid()]++;
+
+        ++mapCC[mmtStream->getMpeg2Pid()];
 
         output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+        ++i;
     }
 }
 
@@ -530,7 +532,6 @@ void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
         for (auto& packet : packets) {
             packet.setCC(mapCC[DVB_SDT_PID] & 0xF);
             mapCC[DVB_SDT_PID]++;
-            packet.setPriority(true);
 
             output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
@@ -576,7 +577,6 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt)
         for (auto& packet : packets) {
             packet.setCC(mapCC[MPEG_PAT_PID] & 0xF);
             mapCC[MPEG_PAT_PID]++;
-            packet.setPriority(true);
 
             output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }
@@ -685,7 +685,6 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
         for (auto& packet : packets) {
             packet.setCC(mapCC[pid] & 0xF);
             mapCC[pid]++;
-            packet.setPriority(true);
 
             output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         }

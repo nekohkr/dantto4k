@@ -83,6 +83,10 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
     }
     case TlvPacketType::Ipv6Packet:
     {
+        IPv6Header ipv6(false);
+        ipv6.unpack(tlvDataStream);
+        // TODO
+
         break;
     }
     case TlvPacketType::HeaderCompressedIpPacket:

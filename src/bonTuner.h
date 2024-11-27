@@ -9,8 +9,7 @@ class CBonTuner : public IBonDriver2
 public:
 	virtual ~CBonTuner() {};
 
-	// Initialize channel
-	bool init(Config& config);
+	bool init();
 
 	// IBonDriver
 	const bool OpenTuner(void);
@@ -45,6 +44,5 @@ public:
 protected:
 	IBonDriver2* pBonDriver2;
 	std::vector<uint8_t> inputBuffer;
-	Config config;
 	std::mutex mutex;
 };

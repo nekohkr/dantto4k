@@ -3,6 +3,8 @@
 #define _WINSOCKAPI_
 #include <windows.h>
 
+Config config = Config{};
+
 static std::string trim(const std::string& str) {
     size_t first = str.find_first_not_of(" \t\n\r");
     if (first == std::string::npos) return "";
@@ -58,6 +60,19 @@ Config loadConfig(const std::string& filename)
                  }
                  if (key == "mmtsDumpPath") {
                      config.mmtsDumpPath = value;
+                 }
+             }
+         }
+         if (currentSection == "audio") {
+             size_t equalPos = line.find('=');
+             if (equalPos != std::string::npos) {
+                 std::string key = trim(line.substr(0, equalPos));
+                 std::string value = trim(line.substr(equalPos + 1));
+
+                 if (key == "disableADTSConversion") {
+                     if (value == "true") {
+                         config.disableADTSConversion = true;
+                     }
                  }
              }
          }

@@ -103,12 +103,12 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
 
         memcpy(&tsDescriptor[2], mmtDescriptor.language, 3); // language
 
-        tsDescriptor[5] = eventNameBlock.size(); // event_name_length
+        tsDescriptor[5] = static_cast<uint8_t>(eventNameBlock.size()); // event_name_length
         if(eventNameBlock.size()) {
             memcpy(&tsDescriptor[6], eventNameBlock.data(), eventNameBlock.size()); // event_name
         }
 
-        tsDescriptor[6 + eventNameBlock.size()] = textBlock.size(); // text_length
+        tsDescriptor[6 + eventNameBlock.size()] = static_cast<uint8_t>(textBlock.size()); // text_length
         if(textBlock.size()) {
             memcpy(&tsDescriptor[6 + eventNameBlock.size() + 1], textBlock.data(), textBlock.size()); // text
         }
@@ -177,7 +177,7 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
         int i = 0;
         int pos = 0;
         for (auto& item : mmtDescriptor.entries) {
-            tsDescriptor[7 + pos] = aribItemDescriptionChars[i].size();
+            tsDescriptor[7 + pos] = static_cast<uint8_t>(aribItemDescriptionChars[i].size());
             pos++;
 
             if(aribItemDescriptionChars[i].size()) {
