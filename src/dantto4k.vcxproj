@@ -160,11 +160,13 @@
     <ClCompile Include="ecm.cpp" />
     <ClCompile Include="eventPackageDescriptor.cpp" />
     <ClCompile Include="extensionHeaderScrambling.cpp" />
+    <ClCompile Include="ipv6.cpp" />
     <ClCompile Include="mhBIt.cpp" />
     <ClCompile Include="mhSiParameterDescriptor.cpp" />
     <ClCompile Include="mmtDescriptorFactory.cpp" />
     <ClCompile Include="mmtTableFactory.cpp" />
     <ClCompile Include="multimediaServiceInformationDescriptor.cpp" />
+    <ClCompile Include="ntp.cpp" />
     <ClCompile Include="pesPacket.cpp" />
     <ClCompile Include="relatedBroadcasterDescriptor.cpp" />
     <ClCompile Include="systemManagementDescriptor.cpp" />
@@ -173,7 +175,6 @@
     <ClCompile Include="tlvDescriptorFactory.cpp" />
     <ClCompile Include="tlvTableFactory.cpp" />
     <ClCompile Include="videoMfuDataProcessor.cpp" />
-    <ClCompile Include="ipv6Header.cpp" />
     <ClCompile Include="m2SectionMessage.cpp" />
     <ClCompile Include="m2ShortSectionMessage.cpp" />
     <ClCompile Include="mhAudioComponentDescriptor.cpp" />
@@ -239,12 +240,14 @@
     <ClInclude Include="eventPackageDescriptor.h" />
     <ClInclude Include="extensionHeaderScrambling.h" />
     <ClInclude Include="demuxerHandler.h" />
+    <ClInclude Include="ipv6.h" />
     <ClInclude Include="mhBIt.h" />
     <ClInclude Include="mhSiParameterDescriptor.h" />
     <ClInclude Include="mmtDescriptorFactory.h" />
     <ClInclude Include="mmtFragment.h" />
     <ClInclude Include="mmtTableFactory.h" />
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
+    <ClInclude Include="ntp.h" />
     <ClInclude Include="pesPacket.h" />
     <ClInclude Include="relatedBroadcasterDescriptor.h" />
     <ClInclude Include="systemManagementDescriptor.h" />
@@ -255,7 +258,6 @@
     <ClInclude Include="videoMfuDataProcessor.h" />
     <ClInclude Include="IBonDriver.h" />
     <ClInclude Include="ip.h" />
-    <ClInclude Include="ipv6Header.h" />
     <ClInclude Include="m2SectionMessage.h" />
     <ClInclude Include="m2ShortSectionMessage.h" />
     <ClInclude Include="mhAudioComponentDescriptor.h" />

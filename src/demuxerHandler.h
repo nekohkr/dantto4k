@@ -13,6 +13,7 @@ class MhTot;
 class Mpt;
 class Plt;
 class Nit;
+class NTPv4;
 
 class DemuxerHandler {
 public:
@@ -36,9 +37,10 @@ public:
 	
 	// TLV message
 	virtual void onNit(const std::shared_ptr<Nit>& nit) {}
+
+	// IPv6
+	virtual void onNtp(const std::shared_ptr<NTPv4>& ntp) {}
 	
-	
-	virtual void onStreamsChanged() {}
 };
 
 }

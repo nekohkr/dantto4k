@@ -145,7 +145,7 @@ public:
         return sizeof(T);
     }
 
-    size_t write(std::span<uint8_t> data) {
+    size_t write(std::span<const uint8_t> data) {
         buffer.insert(buffer.end(), data.begin(), data.end());
         return data.size();
     }

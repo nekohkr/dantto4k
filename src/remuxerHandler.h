@@ -40,6 +40,7 @@ class MhTot;
 class Nit;
 class MmtStream;
 class MmtTlvDemuxer;
+class NTPv4;
 
 }
 
@@ -68,18 +69,22 @@ public:
 	// TLV message
 	void onNit(const std::shared_ptr<MmtTlv::Nit>& nit) override;
 
-	void onStreamsChanged() override;
+	// IPv6
+	void onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) override;
+
+	void clear();
 
 private:
-	void writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, std::vector<uint8_t> data);
-	void writePCR(uint64_t pcr);
+	void writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& data);
 	std::vector<uint8_t>& output;
 	MmtTlv::MmtTlvDemuxer& demuxer;
 
 	std::map<uint16_t, uint16_t> mapService2Pid;
 	std::map<uint16_t, uint8_t> mapCC;
-	int tsid = -1;
-	int streamCount = 0;
+
+	int tsid{-1};
+	int streamCount{};
+	int64_t nextPcrTs{};
 
 	ts::DuckContext duck;
 };

@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
         
 		MmtTlv::Common::ReadStream stream(buffer);
 		while (!stream.isEof()) {
-			int cur = stream.getCur();
+			size_t cur = stream.getCur();
 			int n = demuxer.processPacket(stream);
 
 			// not valid tlv
@@ -137,6 +137,8 @@ int main(int argc, char* argv[]) {
 
     inputFs.close();
     outputFs.close();
+
+    demuxer.clear();
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;

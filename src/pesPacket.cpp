@@ -19,6 +19,10 @@ namespace {
 
 bool PESPacket::pack(std::vector<uint8_t>& output)
 {
+	if (!payload) {
+		return false;
+	}
+
 	MmtTlv::Common::WriteStream stream;
 
 	// packet_start_code_prefix
@@ -38,14 +42,12 @@ bool PESPacket::pack(std::vector<uint8_t>& output)
 		flags |= 0b01000000;
 	}
 
-	int length = payload.size() + headerLength + 3;
+	size_t length = payload->size() + headerLength + 3;
 	if (length > 0xffff) {
 		length = 0;
 	}
 
-	stream.putBe16U(length);
-
-	uint8_t uint8;
+	stream.putBe16U(static_cast<uint16_t>(length));
 	stream.put8U(2 << 6 /* reserved */ | dataAlignmentIndicator << 2);
 	stream.put8U(flags);
 	stream.put8U(headerLength);
@@ -57,9 +59,8 @@ bool PESPacket::pack(std::vector<uint8_t>& output)
 		writePts(stream, 1, dts);
 	}
 
-	stream.write(payload);
+	stream.write(std::span<const uint8_t>{payload->data(), payload->size()});
 
 	output = stream.getData();
 	return true;
 }
-

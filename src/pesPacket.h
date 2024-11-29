@@ -48,14 +48,14 @@ public:
 	uint64_t getPts() const { return pts; }
 	uint64_t getDts() const { return dts; }
 	uint8_t setStreamId() const { return streamId; }
+	void setPayload(const std::vector<uint8_t>* payload) { this->payload = payload; }
 	bool getDataAlignmentIndicator() const { return dataAlignmentIndicator; }
 
-    std::vector<uint8_t> pesPrivateData;
-	std::vector<uint8_t> payload;
 
 private:
 	uint8_t streamId{};
 	bool dataAlignmentIndicator{};
+	const std::vector<uint8_t>* payload{nullptr};
 
 	uint64_t pts{NOPTS_VALUE};
 	uint64_t dts{NOPTS_VALUE};

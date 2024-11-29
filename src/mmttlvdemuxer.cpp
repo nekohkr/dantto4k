@@ -26,7 +26,8 @@
 #include "videoMfuDataProcessor.h"
 #include "videoComponentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
-#include "ipv6Header.h"
+#include "ipv6.h"
+#include "ntp.h"
 
 namespace MmtTlv {
 
@@ -85,8 +86,21 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
     {
         IPv6Header ipv6(false);
         ipv6.unpack(tlvDataStream);
-        // TODO
+        if (ipv6.nexthdr == IPv6::PROTOCOL_UDP) {
+            UDPHeader udpHeader;
+            udpHeader.unpack(tlvDataStream);
 
+            // NTP
+            if (udpHeader.destination_port == IPv6::PORT_NTP) {
+                NTPv4 ntp;
+                if (!ntp.unpack(tlvDataStream)) {
+                    break;
+                }
+
+                demuxerHandler->onNtp(std::make_shared<NTPv4>(ntp));
+
+            }
+        }
         break;
     }
     case TlvPacketType::HeaderCompressedIpPacket:
@@ -252,8 +266,6 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
 
 void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
 {
-    bool changed = false;
-    
     // Remove streams that do not exist in the MPT
     std::map<uint16_t, uint32_t> mapMpt; // pid, assetType
     for (auto& asset : mpt->assets) {
@@ -270,7 +282,6 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             if (mptIt != mapMpt.end()) {
                 if (mptIt->second != it->second->assetType) {
                     it = mapStream.erase(it);
-                    changed = true;
                 }
                 else {
                     ++it;
@@ -278,7 +289,6 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             }
             else {
                 it = mapStream.erase(it);
-                changed = true;
             }
         }
     }
@@ -303,7 +313,6 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
                     mmtStream->streamIndex = streamIndex;
 
                     if (!mmtStream->mfuDataProcessor) {
-                        changed = true;
                         mmtStream->mfuDataProcessor = MfuDataProcessorFactory::create(mmtStream->assetType);
                     }
 
@@ -347,11 +356,6 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             }
         }
     }
-
-    if (changed) {
-        demuxerHandler->onStreamsChanged();
-    }
-
 }
 
 void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream)
@@ -479,6 +483,7 @@ void MmtTlvDemuxer::clear()
     mapAssembler.clear();
     mfuData.clear();
     mapStream.clear();
+    mapStreamByStreamIdx.clear();
 
     if (acasCard) {
         acasCard->clear();

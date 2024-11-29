@@ -114,7 +114,7 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 
 	inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - input.leftBytes()));
 
-	if (!output.size()) {
+	if (output.size() < 188 * 1024) {
 		return false;
 	}
 

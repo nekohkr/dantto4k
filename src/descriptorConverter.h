@@ -85,7 +85,7 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
             return std::nullopt;
         }
 
-        int descriptorLength = 1 // descriptor_tag
+        size_t descriptorLength = 1 // descriptor_tag
             + 1 // descriptor_length
             + 3 // language
             + 1 // event_name_length
@@ -99,7 +99,7 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
 
         std::vector<uint8_t> tsDescriptor(descriptorLength);
         tsDescriptor[0] = 0x4D; // descriptor_tag
-        tsDescriptor[1] = descriptorLength - 2; // descriptor_length
+        tsDescriptor[1] = static_cast<uint8_t>(descriptorLength) - 2; // descriptor_length
 
         memcpy(&tsDescriptor[2], mmtDescriptor.language, 3); // language
 
@@ -129,13 +129,13 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
         std::vector<ts::ByteBlock> aribItemDescriptionChars;
         std::vector<ts::ByteBlock> aribItemChars;
 
-        int descriptorLength = 1 // descriptor_tag
+        size_t descriptorLength = 1 // descriptor_tag
             + 1 // descriptor_length
             + 1 // descriptorNumber | lastDescriptorNumber
             + 3 // language
             + 1; // length_of_items
                    
-        int itemsLength = 0;
+        size_t itemsLength = 0;
         for (auto& item : mmtDescriptor.entries) {
             const ts::ByteBlock itemDescriptionCharBlock = aribEncode(item.itemDescriptionChar);
             const ts::ByteBlock itemCharBlock = aribEncode(item.itemChar);
@@ -168,14 +168,14 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
                 
         std::vector<uint8_t> tsDescriptor(descriptorLength);
         tsDescriptor[0] = 0x4E;
-        tsDescriptor[1] = descriptorLength - 2;
+        tsDescriptor[1] = static_cast<uint8_t>(descriptorLength) - 2;
         tsDescriptor[2] = (mmtDescriptor.descriptorNumber & 0b1111) << 4 | (mmtDescriptor.lastDescriptorNumber & 0b1111);
         memcpy(&tsDescriptor[3], mmtDescriptor.language, 3);
 
-        tsDescriptor[6] = itemsLength;
+        tsDescriptor[6] = static_cast<uint8_t>(itemsLength);
 
         int i = 0;
-        int pos = 0;
+        size_t pos = 0;
         for (auto& item : mmtDescriptor.entries) {
             tsDescriptor[7 + pos] = static_cast<uint8_t>(aribItemDescriptionChars[i].size());
             pos++;
@@ -185,7 +185,7 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
                 pos += aribItemDescriptionChars[i].size();
             }
 
-            tsDescriptor[7 + pos] = aribItemChars[i].size();
+            tsDescriptor[7 + pos] = static_cast<uint8_t>(aribItemChars[i].size());
             pos++;
 
             if(aribItemChars[i].size()) {
@@ -196,7 +196,7 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
             i++;
         }
 
-        tsDescriptor[7 + pos] = textBlock.size();
+        tsDescriptor[7 + pos] = static_cast<uint8_t>(textBlock.size());
         pos++;
 
         if (textBlock.size()) {
@@ -213,7 +213,7 @@ struct DescriptorConverter<MmtTlv::MhAudioComponentDescriptor> {
         ts::AudioComponentDescriptor tsDescriptor;
         tsDescriptor.stream_content = 2; // audio
         tsDescriptor.component_type = convertAudioComponentType(mmtDescriptor.componentType);
-        tsDescriptor.component_tag = mmtDescriptor.componentTag;
+        tsDescriptor.component_tag = static_cast<uint8_t>(mmtDescriptor.componentTag);
         tsDescriptor.stream_type = 0x0F; // ISO/IEC13818-7 audio
         tsDescriptor.simulcast_group_tag = mmtDescriptor.simulcastGroupTag;
         if (mmtDescriptor.esMultiLingualFlag) {
@@ -358,7 +358,7 @@ struct DescriptorConverter<MmtTlv::ContentCopyControlDescriptor> {
 
         for (const auto& component : mmtDescriptor.components) {
             ts::DigitalCopyControlDescriptor::Component tsComponent;
-            tsComponent.component_tag = component.componentTag;
+            tsComponent.component_tag = static_cast<uint8_t>(component.componentTag);
             tsComponent.digital_recording_control_data = component.digitalRecordingControlData;
             if (component.maximumBitrateFlag) {
                 tsComponent.maximum_bitrate = component.maximumBitrate;
@@ -429,7 +429,7 @@ struct DescriptorConverter<MmtTlv::MhLogoTransmissionDescriptor> {
 template <>
 struct DescriptorConverter<MmtTlv::MhStreamIdentificationDescriptor> {
     static ts::StreamIdentifierDescriptor convert(const MmtTlv::MhStreamIdentificationDescriptor& mmtDescriptor) {
-        ts::StreamIdentifierDescriptor tsDescriptor(mmtDescriptor.componentTag);
+        ts::StreamIdentifierDescriptor tsDescriptor(static_cast<uint8_t>(mmtDescriptor.componentTag));
         return tsDescriptor;
     }
 };

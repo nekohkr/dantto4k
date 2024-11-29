@@ -32,7 +32,7 @@ bool MhAudioComponentDescriptor::unpack(Common::ReadStream& stream)
             language2[3] = '\0';
         }
 
-        int textLength = nstream.leftBytes();
+        size_t textLength = nstream.leftBytes();
         if (textLength) {
             text.resize(textLength);
             nstream.read(text.data(), textLength);

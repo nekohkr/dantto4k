@@ -110,7 +110,7 @@ bool Mmt::decryptPayload(Acas::DecryptedEcm* decryptedEcm)
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), nullptr, key.data(), iv.data());
 
 	int outlen;
-	EVP_EncryptUpdate(ctx, payload.data() + 8, &outlen, payload.data() + 8, payload.size() - 8);
+	EVP_EncryptUpdate(ctx, payload.data() + 8, &outlen, static_cast<int>(payload.data() + 8, payload.size() - 8));
 	EVP_EncryptFinal_ex(ctx, payload.data() + 8 + outlen, &outlen);
 	EVP_CIPHER_CTX_free(ctx);
 

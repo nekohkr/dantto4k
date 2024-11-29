@@ -21,7 +21,7 @@ bool MhSeriesDescriptor::unpack(Common::ReadStream& stream)
 
         expireDate = nstream.getBe16U();
 
-        uint8_t uint16 = nstream.getBe16U();
+        uint16_t uint16 = nstream.getBe16U();
         episodeNumber = (uint16 & 0b1111111111110000) >> 4;
         lastEpisodeNumber = (uint16 & 0b0000000000001111) << 8 | nstream.get8U();
 

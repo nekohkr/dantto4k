@@ -34,6 +34,7 @@
 #include "timebase.h"
 #include "mfuDataProcessorBase.h"
 #include "config.h"
+#include "ntp.h"
 
 namespace {
 int convertRunningStatus(int runningStatus) {
@@ -161,59 +162,40 @@ void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> 
 {
 }
 
-void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, std::vector<uint8_t> streamData)
+void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData)
 {
     const AVRational tsTimeBase = { 1, 90000 };
     AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
 
     uint64_t tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
     uint64_t tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
-
+    
+    std::vector<uint8_t> pesOutput;
     PESPacket pes;
     pes.setPts(tsPts);
     pes.setDts(tsDts);
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     if (mmtStream->getAssetType() == MmtTlv::makeAssetType('h', 'e', 'v', '1') ||
         mmtStream->getAssetType() == MmtTlv::makeAssetType('m', 'p', '4', 'a')) {
-        pes.setDataAlignmentIndicator(1);
+        pes.setDataAlignmentIndicator(true);
     }
-    pes.payload = streamData;
-
-    std::vector<uint8_t> pesOutput;
+    pes.setPayload(&streamData);
     pes.pack(pesOutput);
 
-    if (mmtStream->getAssetType() == MmtTlv::makeAssetType('h', 'e', 'v', '1')) {
-        writePCR(tsDts * 300);
-    }
-
     ts::PESPacket tsPES(pesOutput.data(), pesOutput.size());
-    
+
     ts::PESOneShotPacketizer zer(duck, mmtStream->getMpeg2Pid());
     zer.addPES(tsPES, ts::ShareMode::SHARE);
-    
+
     ts::TSPacketVector packets;
     zer.getPackets(packets);
 
-    int i = 0;
     for (auto& packet : packets) {
         packet.setCC(mapCC[mmtStream->getMpeg2Pid()] & 0xF);
-
         ++mapCC[mmtStream->getMpeg2Pid()];
 
         output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
-        ++i;
     }
-}
-
-void RemuxerHandler::writePCR(uint64_t pcr)
-{
-    ts::TSPacket packet;
-    packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
-    mapCC[PCR_PID]++;
-
-    packet.setPCR(pcr, true);
-
-    output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
 }
 
 void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
@@ -357,7 +339,6 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
         tsEvent.duration = std::chrono::seconds(EITConvertDuration(mhEvent->duration));
         tsEvent.running_status = convertRunningStatus(mhEvent->runningStatus);
         tsEvent.event_id = mhEvent->eventId;
-
 
         for (const auto& descriptor : mhEvent->descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
@@ -804,7 +785,26 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
     }
 }
 
-void RemuxerHandler::onStreamsChanged()
+void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
 {
+    if(nextPcrTs > ntp->transmit_timestamp.toPCRValue()) {
+        return;
+    }
 
+    ts::TSPacket packet;
+    packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
+    mapCC[PCR_PID]++;
+    packet.setPCR(ntp->transmit_timestamp.toPCRValue() , true);
+    output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+
+    nextPcrTs = ntp->transmit_timestamp.toPCRValue() + 27000 * 100;
+}
+
+void RemuxerHandler::clear()
+{
+    mapService2Pid.clear();
+    mapCC.clear();
+    tsid = -1;
+    streamCount = 0;
+    nextPcrTs = 0;
 }

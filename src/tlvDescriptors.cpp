@@ -7,7 +7,7 @@ bool TlvDescriptors::unpack(Common::ReadStream& stream)
 {
 	list.clear();
 	while (!stream.isEof()) {
-		uint16_t descriptorTag = stream.peekBe16U();
+		uint8_t descriptorTag = stream.peek8U();
 		auto it = TlvDescriptorFactory::create(descriptorTag);
 		if (it == nullptr) {
 			TlvDescriptorBase base;
