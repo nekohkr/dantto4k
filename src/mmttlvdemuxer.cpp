@@ -172,7 +172,7 @@ void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream)
     table->unpack(stream);
 
     switch (tableId) {
-    case MmtTableId::Ecm:
+    case TlvTableId::Nit:
         if (demuxerHandler) {
             demuxerHandler->onNit(std::dynamic_pointer_cast<Nit>(table));
         }
