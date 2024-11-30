@@ -166,11 +166,11 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
 {
     const AVRational tsTimeBase = { 1, 90000 };
     AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
-
-    uint64_t tsPts = 0;
-    uint64_t tsDts = 0;
-
-    if(mfuData->pts && mfuData->dts && timeBase.den > 0) {
+    
+    uint64_t tsPts = MmtTlv::NOPTS_VALUE;
+    uint64_t tsDts = MmtTlv::NOPTS_VALUE;
+    
+    if ((mfuData->pts != MmtTlv::NOPTS_VALUE && mfuData->dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
         tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
         tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
     }

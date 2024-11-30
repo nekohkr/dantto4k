@@ -2,8 +2,8 @@
 #include <cstdint>
 
 typedef struct AVRational{
-    int num; ///< Numerator
-    int den; ///< Denominator
+    int num{1};
+    int den{1};
 } AVRational;
 
 enum AVRounding {

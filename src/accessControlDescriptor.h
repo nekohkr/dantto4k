@@ -10,7 +10,7 @@ class AccessControlDescriptor
 public:
     bool unpack(Common::ReadStream& stream) override;
     
-    uint8_t caSystemId;
+    uint16_t caSystemId;
     MmtGeneralLocationInfo locationInfo;
     std::vector<uint8_t> privateData;
 };

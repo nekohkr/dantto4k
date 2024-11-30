@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "\t--disableADTSConversion: Uses the raw LATM format without converting to ADTS." << std::endl;
         return 1;
     }
-
+    
     auto start = std::chrono::high_resolution_clock::now();
 
     std::string inputPath, outputPath;

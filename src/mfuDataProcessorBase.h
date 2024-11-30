@@ -16,11 +16,13 @@ namespace AssetType {
 	constexpr int32_t aapp = makeAssetType('a', 'a', 'p', 'p');
 }
 
+constexpr uint64_t NOPTS_VALUE = 0x8000000000000000;
+
 struct MfuData {
 	std::vector<uint8_t> data;
-	int64_t pts;
-	int64_t dts;
-	int streamIndex;
+	uint64_t pts{NOPTS_VALUE};
+	uint64_t dts{NOPTS_VALUE};
+	int streamIndex{};
 };
 
 class MfuDataProcessorBase {

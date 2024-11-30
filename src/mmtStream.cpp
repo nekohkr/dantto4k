@@ -17,7 +17,7 @@ std::pair<int64_t, int64_t> MmtStream::getNextPtsDts()
     }
 
     int64_t dts = ptime - timestamp.second.mpuDecodingTimeOffset;
-    for (int j = 0; j < auIndex; ++j) {
+    for (uint32_t j = 0; j < auIndex; ++j) {
         dts += timestamp.second.ptsOffsets[j];
     }
 
