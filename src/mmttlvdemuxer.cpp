@@ -301,9 +301,9 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
 
         for (auto& locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
-                if (asset.assetType == makeAssetType('h', 'e', 'v', '1') ||
-                    asset.assetType == makeAssetType('m', 'p', '4', 'a') ||
-                    asset.assetType == makeAssetType('s', 't', 'p', 'p')) {
+                if (asset.assetType == AssetType::hev1 ||
+                    asset.assetType == AssetType::mp4a ||
+                    asset.assetType == AssetType::stpp) {
                     mmtStream = getStream(locationInfo.packetId);
                     if (!mmtStream) {
                         mmtStream = std::make_shared<MmtStream>(locationInfo.packetId);
@@ -607,22 +607,22 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream)
         }
 
         switch (mmtStream->assetType) {
-        case makeAssetType('h', 'e', 'v', '1'):
+        case AssetType::hev1:
             if(demuxerHandler) {
                 demuxerHandler->onVideoData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
-        case makeAssetType('m', 'p', '4', 'a'):
+        case AssetType::mp4a:
             if(demuxerHandler) {
                 demuxerHandler->onAudioData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
-        case makeAssetType('s', 't', 'p', 'p'):
+        case AssetType::stpp:
             if(demuxerHandler) {
                 demuxerHandler->onSubtitleData(it->second, std::make_shared<MfuData>(mfuData));
             }
             break;
-        case makeAssetType('a', 'a', 'p', 'p'):
+        case AssetType::aapp:
             if(demuxerHandler) {
                 demuxerHandler->onApplicationData(it->second, std::make_shared<MfuData>(mfuData));
             }

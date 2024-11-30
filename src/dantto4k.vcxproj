@@ -162,6 +162,8 @@
     <ClCompile Include="extensionHeaderScrambling.cpp" />
     <ClCompile Include="ipv6.cpp" />
     <ClCompile Include="mhBIt.cpp" />
+    <ClCompile Include="mhBroadcasterNameDescriptor.cpp" />
+    <ClCompile Include="mhServiceListDescriptor.cpp" />
     <ClCompile Include="mhSiParameterDescriptor.cpp" />
     <ClCompile Include="mmtDescriptorFactory.cpp" />
     <ClCompile Include="mmtTableFactory.cpp" />
@@ -241,7 +243,10 @@
     <ClInclude Include="extensionHeaderScrambling.h" />
     <ClInclude Include="demuxerHandler.h" />
     <ClInclude Include="ipv6.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="mhBIt.h" />
+    <ClInclude Include="mhBroadcasterNameDescriptor.h" />
+    <ClInclude Include="mhServiceListDescriptor.h" />
     <ClInclude Include="mhSiParameterDescriptor.h" />
     <ClInclude Include="mmtDescriptorFactory.h" />
     <ClInclude Include="mmtFragment.h" />

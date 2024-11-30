@@ -12,7 +12,7 @@ class MhAudioComponentDescriptor;
 class MmtStream final {
 public:
 	MmtStream(uint16_t pid)
-		: pid(pid) {}
+		: pid(pid), timeBase({1, 1}) {}
 
 	MmtStream(const MmtStream&) = delete;
     MmtStream& operator=(const MmtStream&) = delete;

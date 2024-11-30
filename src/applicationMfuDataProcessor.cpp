@@ -6,6 +6,9 @@ std::optional<MfuData> ApplicationMfuDataProcessor::process(const std::shared_pt
 {
     Common::ReadStream stream(data);
     size_t size = stream.leftBytes();
+    if (size == 0) {
+        return std::nullopt;
+    }
 
     MfuData mfuData;
     mfuData.data.resize(size);

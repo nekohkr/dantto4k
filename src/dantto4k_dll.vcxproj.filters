@@ -157,9 +157,6 @@
     <ClCompile Include="compressedIPPacket.cpp">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClCompile>
-    <ClCompile Include="ipv6Header.cpp">
-      <Filter>mmttlv\tlv\structs</Filter>
-    </ClCompile>
     <ClCompile Include="nit.cpp">
       <Filter>mmttlv\tlv\tables</Filter>
     </ClCompile>
@@ -222,6 +219,18 @@
     </ClCompile>
     <ClCompile Include="timebase.cpp">
       <Filter>mmttlv\common</Filter>
+    </ClCompile>
+    <ClCompile Include="ipv6.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="ntp.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="mhBroadcasterNameDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhServiceListDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -399,9 +408,6 @@
     <ClInclude Include="compressedIPPacket.h">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClInclude>
-    <ClInclude Include="ipv6Header.h">
-      <Filter>mmttlv\tlv\structs</Filter>
-    </ClInclude>
     <ClInclude Include="nit.h">
       <Filter>mmttlv\tlv\tables</Filter>
     </ClInclude>
@@ -482,6 +488,21 @@
     </ClInclude>
     <ClInclude Include="timebase.h">
       <Filter>mmttlv\common</Filter>
+    </ClInclude>
+    <ClInclude Include="ipv6.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="ntp.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="mhBroadcasterNameDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhServiceListDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

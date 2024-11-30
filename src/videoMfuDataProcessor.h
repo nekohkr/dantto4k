@@ -3,7 +3,7 @@
 
 namespace MmtTlv {
 
-class VideoMfuDataProcessor : public MfuDataProcessorTemplate<makeAssetType('h', 'e', 'v', '1')> {
+class VideoMfuDataProcessor : public MfuDataProcessorTemplate<AssetType::hev1> {
 public:
 	std::optional<MfuData> process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data);
 

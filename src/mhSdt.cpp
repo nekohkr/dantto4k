@@ -48,29 +48,27 @@ bool MhSdt::unpack(Common::ReadStream& stream)
 
 bool MhSdt::Service::unpack(Common::ReadStream& stream)
 {
-    if (stream.leftBytes() < 2 + 1 + 2) {
-        return false;
-    }
+    try {
 
-    serviceId = stream.getBe16U();
+        serviceId = stream.getBe16U();
 
-    uint8_t uint8 = stream.get8U();
-    eitUserDefinedFlags = (uint8 & 0b00011100) >> 2;
-    eitScheduleFlag = (uint8 & 0b00000010) >> 1;
-    eitPresentFollowingFlag = (uint8 & 0b00000001) >> 1;
+        uint8_t uint8 = stream.get8U();
+        eitUserDefinedFlags = (uint8 & 0b00011100) >> 2;
+        eitScheduleFlag = (uint8 & 0b00000010) >> 1;
+        eitPresentFollowingFlag = (uint8 & 0b00000001) >> 1;
 
-    uint16_t uint16 = stream.getBe16U();
-    runningStatus = (uint16 & 0b1110000000000000) >> 13;
-    freeCaMode = (uint16 & 0b0001000000000000) >> 12;
-    descriptorsLoopLength = uint16 & 0b0000111111111111;
+        uint16_t uint16 = stream.getBe16U();
+        runningStatus = (uint16 & 0b1110000000000000) >> 13;
+        freeCaMode = (uint16 & 0b0001000000000000) >> 12;
+        descriptorsLoopLength = uint16 & 0b0000111111111111;
 
-    if (stream.leftBytes() < descriptorsLoopLength) {
-        return false;
-    }
-
-    Common::ReadStream nstream(stream, descriptorsLoopLength);
-    descriptors.unpack(nstream);
-    stream.skip(descriptorsLoopLength);
+        Common::ReadStream nstream(stream, descriptorsLoopLength);
+        descriptors.unpack(nstream);
+        stream.skip(descriptorsLoopLength);
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
 
     return true;
 }

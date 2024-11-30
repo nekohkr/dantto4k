@@ -35,6 +35,7 @@
 #include "mfuDataProcessorBase.h"
 #include "config.h"
 #include "ntp.h"
+#include "logger.h"
 
 namespace {
 int convertRunningStatus(int runningStatus) {
@@ -77,20 +78,19 @@ int assetType2streamType(uint32_t assetType)
 {
     int stream_type = 0;
     switch (assetType) {
-    case MmtTlv::makeAssetType('h', 'e', 'v', '1'):
+    case MmtTlv::AssetType::hev1:
         stream_type = STREAM_TYPE_VIDEO_HEVC;
         break;
-    case MmtTlv::makeAssetType('m', 'p', '4', 'a'):
+    case MmtTlv::AssetType::mp4a:
         stream_type = config.disableADTSConversion ? STREAM_TYPE_AUDIO_AAC_LATM : STREAM_TYPE_AUDIO_AAC;
         break;
-    case MmtTlv::makeAssetType('s', 't', 'p', 'p'):
+    case MmtTlv::AssetType::stpp:
         stream_type = STREAM_TYPE_PRIVATE_DATA;
         break;
     }
 
     return stream_type;
 }
-
 
 uint8_t convertTableId(uint8_t mmtTableId) {
     switch (mmtTableId) {
@@ -167,16 +167,21 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     const AVRational tsTimeBase = { 1, 90000 };
     AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
 
-    uint64_t tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
-    uint64_t tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
-    
+    uint64_t tsPts = 0;
+    uint64_t tsDts = 0;
+
+    if(mfuData->pts && mfuData->dts && timeBase.den > 0) {
+        tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
+        tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
+    }
+
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
     pes.setPts(tsPts);
     pes.setDts(tsDts);
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
-    if (mmtStream->getAssetType() == MmtTlv::makeAssetType('h', 'e', 'v', '1') ||
-        mmtStream->getAssetType() == MmtTlv::makeAssetType('m', 'p', '4', 'a')) {
+    if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
+        mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
         pes.setDataAlignmentIndicator(true);
     }
     pes.setPayload(&streamData);
@@ -787,9 +792,9 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
 
 void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
 {
-    if(nextPcrTs > ntp->transmit_timestamp.toPCRValue()) {
-        return;
-    }
+    //if(nextPcrTs > ntp->transmit_timestamp.toPCRValue()) {
+    //    return;
+    //}
 
     ts::TSPacket packet;
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
@@ -797,7 +802,7 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
     packet.setPCR(ntp->transmit_timestamp.toPCRValue() , true);
     output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
 
-    nextPcrTs = ntp->transmit_timestamp.toPCRValue() + 27000 * 100;
+    //nextPcrTs = ntp->transmit_timestamp.toPCRValue() + 27000 * 100;
 }
 
 void RemuxerHandler::clear()

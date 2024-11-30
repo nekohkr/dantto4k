@@ -27,10 +27,15 @@ bool MhParentalRatingDescriptor::unpack(Common::ReadStream& stream)
 }
 
 bool MhParentalRatingDescriptor::Entry::unpack(Common::ReadStream& stream) {
-    stream.read(countryCode, 3);
-    countryCode[3] = '\0';
+    try {
+        stream.read(countryCode, 3);
+        countryCode[3] = '\0';
 
-    rating = stream.get8U();
+        rating = stream.get8U();
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
 
     return true;
 }

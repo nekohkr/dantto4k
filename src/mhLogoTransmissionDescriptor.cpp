@@ -49,9 +49,15 @@ bool MhLogoTransmissionDescriptor::unpack(Common::ReadStream& stream)
 
 bool MhLogoTransmissionDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
-    logoType = stream.get8U();
-    startSectionNumber = stream.get8U();
-    numOfSections = stream.get8U();
+    try {
+        logoType = stream.get8U();
+        startSectionNumber = stream.get8U();
+        numOfSections = stream.get8U();
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+
     return true;
 }
 

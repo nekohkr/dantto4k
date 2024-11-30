@@ -25,7 +25,7 @@ bool VideoComponentDescriptor::unpack(Common::ReadStream& stream)
         nstream.read(language, 3);
         language[3] = '\0';
 
-        int textLength = nstream.leftBytes();
+        size_t textLength = nstream.leftBytes();
         if (textLength) {
             text.resize(textLength);
             nstream.read(text.data(), textLength);

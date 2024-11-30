@@ -25,7 +25,7 @@ bool RelatedBroadcasterDescriptor::unpack(Common::ReadStream& stream)
 		}
 		
 		for (int i = 0; i < numOfAffiliationId; i++) {
-			affiliationIds.push_back(nstream.getBe16U());
+			affiliationIds.push_back(nstream.get8U());
 		}
 		
 		for (int i = 0; i < numOfOriginalNetworkId; i++) {

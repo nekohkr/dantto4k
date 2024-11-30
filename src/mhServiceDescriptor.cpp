@@ -8,23 +8,28 @@ bool MhServiceDescriptor::unpack(Common::ReadStream& stream)
 		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
+		
+        Common::ReadStream nstream(stream, descriptorLength);
 
-		serviceType = stream.get8U();
-		serviceProviderNameLength = stream.get8U();
+		serviceType = nstream.get8U();
+		serviceProviderNameLength = nstream.get8U();
 		if (serviceProviderNameLength) {
 			serviceProviderName.resize(serviceProviderNameLength);
-			stream.read(serviceProviderName.data(), serviceProviderNameLength);
+			nstream.read(serviceProviderName.data(), serviceProviderNameLength);
 		}
 
-		serviceNameLength = stream.get8U();
+		serviceNameLength = nstream.get8U();
 		if (serviceNameLength) {
 			serviceName.resize(serviceNameLength);
-			stream.read(serviceName.data(), serviceNameLength);
+			nstream.read(serviceName.data(), serviceNameLength);
 		}
+
+		stream.skip(descriptorLength);
 	}
 	catch (const std::out_of_range&) {
 		return false;
 	}
+
 	return true;
 }
 

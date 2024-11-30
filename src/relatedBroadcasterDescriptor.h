@@ -22,7 +22,7 @@ public:
 	uint8_t numOfOriginalNetworkId;
 
 	std::list<BroadcasterId> broadcasterIds;
-	std::list<uint16_t> affiliationIds;
+	std::list<uint8_t> affiliationIds;
 	std::list<uint16_t> originalNetworkIds;
 
 };

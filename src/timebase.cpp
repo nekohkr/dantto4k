@@ -1,5 +1,6 @@
 #include "timebase.h"
 #include <climits>
+#include <stdexcept>
 
 int64_t av_rescale_rnd(int64_t a, int64_t b, int64_t c, enum AVRounding rnd) {
     int64_t r = 0;
@@ -10,10 +11,24 @@ int64_t av_rescale_rnd(int64_t a, int64_t b, int64_t c, enum AVRounding rnd) {
     else if (rnd & 1)             r = c - 1;
 
     if (b <= INT_MAX && c <= INT_MAX) {
-        if (a <= INT_MAX)
+        if (a <= INT_MAX) {
+            if (c == 0) {
+                return 0;
+            }
             return (a * b + r) / c;
-        else
+        }
+        else {
+            if (c == 0) {
+                return 0;
+            }
+            if (c * b + r == 0) {
+                return 0;
+            }
+            if (c * b + (a % c * b + r) == 0 ) {
+                return 0;
+            }
             return a / c * b + (a % c * b + r) / c;
+        }
     }
     else {
         uint64_t a0 = a & 0xFFFFFFFF;

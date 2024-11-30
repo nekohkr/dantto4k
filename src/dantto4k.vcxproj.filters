@@ -226,6 +226,12 @@
     <ClCompile Include="ntp.cpp">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClCompile>
+    <ClCompile Include="mhBroadcasterNameDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="mhServiceListDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -488,6 +494,15 @@
     </ClInclude>
     <ClInclude Include="ntp.h">
       <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="mhBroadcasterNameDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="mhServiceListDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

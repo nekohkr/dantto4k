@@ -24,6 +24,8 @@
 #include "accessControlDescriptor.h"
 #include "mhSiParameterDescriptor.h"
 #include "relatedBroadcasterDescriptor.h"
+#include "mhBroadcasterNameDescriptor.h"
+#include "mhServiceListDescriptor.h"
 
 namespace MmtTlv {
 	
@@ -50,7 +52,9 @@ static const std::unordered_map<uint16_t, std::function<std::shared_ptr<MmtDescr
 	{ AccessControlDescriptor::kDescriptorTag,					[] { return std::make_shared<AccessControlDescriptor>(); } },
 	{ MhSiParameterDescriptor::kDescriptorTag,					[] { return std::make_shared<MhSiParameterDescriptor>(); } },
 	{ RelatedBroadcasterDescriptor::kDescriptorTag,				[] { return std::make_shared<RelatedBroadcasterDescriptor>(); } },
-
+	{ MhBroadcasterNameDescriptor::kDescriptorTag,				[] { return std::make_shared<MhBroadcasterNameDescriptor>(); } },
+	{ MhServiceListDescriptor::kDescriptorTag,					[] { return std::make_shared<MhServiceListDescriptor>(); } },
+	
 	
 };
 

@@ -46,7 +46,6 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
             mfuData.pts = ptsDts.first;
             mfuData.dts = ptsDts.second;
             mfuData.streamIndex = mmtStream->getStreamIndex();
-            mfuData.flags = 0; // mmtStream->GetRapFlag() ? AV_PKT_FLAG_KEY : 0;
 
             return mfuData;
         }

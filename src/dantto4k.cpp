@@ -111,7 +111,6 @@ int main(int argc, char* argv[]) {
             inputFs.read(reinterpret_cast<char*>(buffer.data() + buffer.size() - readSize), readSize);
         }
 
-        
 		MmtTlv::Common::ReadStream stream(buffer);
 		while (!stream.isEof()) {
 			size_t cur = stream.getCur();

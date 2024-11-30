@@ -4,17 +4,23 @@ namespace MmtTlv {
 
 bool ServiceListDescriptor::unpack(Common::ReadStream& stream)
 {
-    if (!TlvDescriptorTemplate::unpack(stream)) {
-        return false;
-    }
+    try {
+        if (!TlvDescriptorTemplate::unpack(stream)) {
+            return false;
+        }
 
-    Common::ReadStream nstream(stream, descriptorLength);
-    while (!nstream.isEof()) {
-        Entry item;
-        item.unpack(nstream);
-        services.push_back(item);
-    }
-    stream.skip(descriptorLength);
+        Common::ReadStream nstream(stream, descriptorLength);
+        while (!nstream.isEof()) {
+            Entry item;
+            item.unpack(nstream);
+            services.push_back(item);
+        }
+        stream.skip(descriptorLength);
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+
     return true;
 }
 

@@ -26,10 +26,12 @@ bool MhBit::unpack(Common::ReadStream& stream)
         firstDescriptorsLength = uint16 & 0b0000111111111111;
         
         Common::ReadStream nstream(stream, firstDescriptorsLength);
+
         descriptors.unpack(nstream);
+
         stream.skip(firstDescriptorsLength);
 
-        while (stream.leftBytes()) {
+        while (stream.leftBytes() - 4 > 0) {
             Broadcaster entry;
             if (!entry.unpack(stream)) {
                 return false;
@@ -57,6 +59,7 @@ bool MhBit::Broadcaster::unpack(Common::ReadStream& stream)
         
         Common::ReadStream nstream(stream, broadcasterDescriptorsLength);
         descriptors.unpack(nstream);
+
         stream.skip(broadcasterDescriptorsLength);
     }
     catch (const std::out_of_range&) {

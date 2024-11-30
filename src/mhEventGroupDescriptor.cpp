@@ -44,17 +44,29 @@ bool MhEventGroupDescriptor::unpack(Common::ReadStream& stream)
 
 bool MhEventGroupDescriptor::Event::unpack(Common::ReadStream& stream)
 {
-	serviceId = stream.getBe16U();
-	eventId = stream.getBe16U();
+	try {
+		serviceId = stream.getBe16U();
+		eventId = stream.getBe16U();
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+
 	return true;
 }
 
 bool MhEventGroupDescriptor::OtherNetworkEvent::unpack(Common::ReadStream& stream)
 {
-	originalNetworkId = stream.getBe16U();
-	tlvStreamId = stream.getBe16U();
-	serviceId = stream.getBe16U();
-	eventId = stream.getBe16U();
+	try {
+		originalNetworkId = stream.getBe16U();
+		tlvStreamId = stream.getBe16U();
+		serviceId = stream.getBe16U();
+		eventId = stream.getBe16U();
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+
 	return true;
 }
 
