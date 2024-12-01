@@ -449,6 +449,14 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
     ts::OneShotPacketizer packetizer(duck, DVB_EIT_PID);
     for (int i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
+        if (mhEit->isPf()) {
+            section.get()->setTableId(0x4E);
+        }
+        else {
+            // EITs table ID range in MMT/TLV:   0x8C ~ 0x9B
+            // EITs table ID range in MPEG-2 TS: 0x50 ~ 0x5F
+            section.get()->setTableId(mhEit->getTableId() - 0x8C + 0x50);
+        }
         section.get()->setSectionNumber(mhEit->sectionNumber);
         section.get()->setLastSectionNumber(mhEit->lastSectionNumber);
 
