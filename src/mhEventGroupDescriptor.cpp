@@ -17,14 +17,18 @@ bool MhEventGroupDescriptor::unpack(Common::ReadStream& stream)
 
 		for (int i = 0; i < eventCount; i++) {
 			Event event;
-			event.unpack(nstream);
+			if (!event.unpack(nstream)) {
+				return false;
+			}
 			events.push_back(event);
 		}
 
 		if (groupType == 4 || groupType == 5) {
 			while (!nstream.isEof()) {
 				OtherNetworkEvent otherNetworkEvent;
-				otherNetworkEvent.unpack(nstream);
+				if (!otherNetworkEvent.unpack(nstream)) {
+					return false;
+				}
 				otherNetworkEvents.push_back(otherNetworkEvent);
 			}
 		}

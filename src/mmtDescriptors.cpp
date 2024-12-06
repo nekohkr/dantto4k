@@ -11,7 +11,9 @@ bool MmtDescriptors::unpack(Common::ReadStream& stream)
 		auto it = MmtDescriptorFactory::create(descriptorTag);
 		if (it == nullptr) {
 			MmtDescriptorBase base;
-			base.unpack(stream);
+			if (!base.unpack(stream)) {
+				return false;
+			}
 			stream.skip(base.getDescriptorLength());
 		}
 		else {

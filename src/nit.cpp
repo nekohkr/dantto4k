@@ -26,7 +26,9 @@ bool Nit::unpack(Common::ReadStream& stream)
 
         {
             Common::ReadStream nstream(stream, networkDescriptorsLength);
-            descriptors.unpack(nstream);
+            if (!descriptors.unpack(nstream)) {
+                return false;
+            }
             stream.skip(networkDescriptorsLength);
         }
 
@@ -36,7 +38,9 @@ bool Nit::unpack(Common::ReadStream& stream)
         Common::ReadStream nstream(stream, tlvStreamLoopLength);
         while (!nstream.isEof()) {
             Entry entry;
-            entry.unpack(nstream);
+            if (!entry.unpack(nstream)) {
+                return false;
+            }
             entries.push_back(entry);
         }
         stream.skip(tlvStreamLoopLength);
@@ -58,7 +62,9 @@ bool Nit::Entry::unpack(Common::ReadStream& stream)
         tlvStreamDescriptorsLength = uint16 & 0b0000111111111111;
 
         Common::ReadStream nstream(stream, tlvStreamDescriptorsLength);
-        descriptors.unpack(nstream);
+        if (!descriptors.unpack(nstream)) {
+            return false;
+        }
         stream.skip(tlvStreamDescriptorsLength);
 	}
 	catch (const std::out_of_range&) {

@@ -21,10 +21,12 @@ bool MpuExtendedTimestampDescriptor::unpack(Common::ReadStream& stream)
 			defaultPtsOffset = stream.getBe16U();
 		}
 
-		entries.reserve(50);
+		entries.reserve(15);
 		while (!stream.isEof()) {
 			Entry entry;
-			entry.unpack(stream, ptsOffsetType, defaultPtsOffset);
+			if (!entry.unpack(stream, ptsOffsetType, defaultPtsOffset)) {
+				return false;
+			}
 
 			entries.push_back(entry);
 		}

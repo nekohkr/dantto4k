@@ -15,7 +15,9 @@ bool Plt::unpack(Common::ReadStream& stream)
 
 		for (int i = 0; i < numOfPackage; i++) {
 			Entry item;
-			item.unpack(stream);
+			if (!item.unpack(stream)) {
+				return false;
+			}
 			entries.push_back(item);
 		}
 	}
@@ -36,7 +38,9 @@ bool Plt::Entry::unpack(Common::ReadStream& stream)
 
 		mmtPackageIdByte.resize(mmtPackageIdLength);
 		stream.read(mmtPackageIdByte.data(), mmtPackageIdLength);
-		locationInfos.unpack(stream);
+		if (!locationInfos.unpack(stream)) {
+			return false;
+		}
 	}
 	catch (const std::out_of_range&) {
 		return false;

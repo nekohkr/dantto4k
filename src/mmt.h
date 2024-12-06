@@ -19,7 +19,7 @@ enum class PayloadType
 
 class Mmt {
 public:
-	void unpack(Common::ReadStream& stream);
+	bool unpack(Common::ReadStream& stream);
 	bool decryptPayload(Acas::DecryptedEcm* decryptedEcm);
 
 	uint8_t version;

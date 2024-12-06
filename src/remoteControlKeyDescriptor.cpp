@@ -12,7 +12,9 @@ bool RemoteControlKeyDescriptor::unpack(Common::ReadStream& stream)
         numOfRemoteControlKeyId = stream.get8U();
         for (int i = 0; i < numOfRemoteControlKeyId; i++) {
             Entry item;
-            item.unpack(stream);
+            if (!item.unpack(stream)) {
+                return false;
+            }
             entries.push_back(item);
         }
 	}

@@ -12,7 +12,9 @@ bool ServiceListDescriptor::unpack(Common::ReadStream& stream)
         Common::ReadStream nstream(stream, descriptorLength);
         while (!nstream.isEof()) {
             Entry item;
-            item.unpack(nstream);
+            if (!item.unpack(nstream)) {
+                return false;
+            }
             services.push_back(item);
         }
         stream.skip(descriptorLength);

@@ -8,13 +8,17 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
 {
     Common::ReadStream stream(data);
     if (stream.leftBytes() < 4) {
+#ifndef _DANTTO4K_DLL
         std::cerr << "MFU data appears to be corrupted." << std::endl;
+#endif
         return std::nullopt;
     }
 
     uint32_t size = stream.getBe32U();
     if (size != stream.leftBytes()) {
+#ifndef _DANTTO4K_DLL
         std::cerr << "MFU data appears to be corrupted." << std::endl;
+#endif
         return std::nullopt;
     }
 
@@ -36,8 +40,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
             try {
                 ptsDts = mmtStream->getNextPtsDts();
             }
-            catch (const std::out_of_range& e) {
-                std::cerr << e.what() << std::endl;
+            catch (const std::out_of_range&) {
                 return std::nullopt;
             }
 
@@ -46,6 +49,10 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
             mfuData.pts = ptsDts.first;
             mfuData.dts = ptsDts.second;
             mfuData.streamIndex = mmtStream->getStreamIndex();
+            
+            if (nalUnitType == 0x15 /* CRA_NUT */) {
+                mfuData.keyframe = true;
+            }
 
             return mfuData;
         }

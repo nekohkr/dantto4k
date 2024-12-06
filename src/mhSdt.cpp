@@ -49,7 +49,6 @@ bool MhSdt::unpack(Common::ReadStream& stream)
 bool MhSdt::Service::unpack(Common::ReadStream& stream)
 {
     try {
-
         serviceId = stream.getBe16U();
 
         uint8_t uint8 = stream.get8U();
@@ -63,7 +62,9 @@ bool MhSdt::Service::unpack(Common::ReadStream& stream)
         descriptorsLoopLength = uint16 & 0b0000111111111111;
 
         Common::ReadStream nstream(stream, descriptorsLoopLength);
-        descriptors.unpack(nstream);
+        if (!descriptors.unpack(nstream)) {
+            return false;
+        }
         stream.skip(descriptorsLoopLength);
 	}
 	catch (const std::out_of_range&) {

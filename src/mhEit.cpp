@@ -67,7 +67,9 @@ bool MhEit::Event::unpack(Common::ReadStream& stream)
         }
 
         Common::ReadStream nstream(stream, descriptorsLoopLength);
-        descriptors.unpack(nstream);
+        if (!descriptors.unpack(nstream)) {
+            return false;
+        }
         stream.skip(descriptorsLoopLength);
     }
     catch (const std::out_of_range&) {

@@ -5,7 +5,7 @@
 
 namespace MmtTlv {
 
-void Mmt::unpack(Common::ReadStream& stream)
+bool Mmt::unpack(Common::ReadStream& stream)
 {
 	try {
 		uint8_t uint8 = stream.get8U();
@@ -26,21 +26,20 @@ void Mmt::unpack(Common::ReadStream& stream)
 
 		if (packetCounterFlag) {
 			if (stream.leftBytes() < 4) {
-				return;
+				return false;
 			}
 			packetCounter = stream.getBe32U();
 		}
 
-
 		if (extensionHeaderFlag) {
 			if (stream.leftBytes() < 4) {
-				return;
+				return false;
 			}
 			extensionHeaderType = stream.getBe16U();
 			extensionHeaderLength = stream.getBe16U();
 
 			if (stream.leftBytes() < extensionHeaderLength) {
-				return;
+				return false;
 			}
 			extensionHeaderField.resize(extensionHeaderLength);
 			stream.read(extensionHeaderField.data(), extensionHeaderLength);
@@ -66,8 +65,10 @@ void Mmt::unpack(Common::ReadStream& stream)
 		stream.read(payload.data(), stream.leftBytes());
 	}
 	catch (const std::out_of_range&) {
-		return;
+		return false;
 	}
+
+	return true;
 }
 
 bool Mmt::decryptPayload(Acas::DecryptedEcm* decryptedEcm)

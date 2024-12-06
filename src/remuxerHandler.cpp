@@ -49,7 +49,7 @@ int convertRunningStatus(int runningStatus) {
        4 In operation
        5 – 7 Reserved for use in the future
 
-       MPEG TS
+       MPEG2 TS
        GST_MPEGTS_RUNNING_STATUS_UNDEFINED (0)
        GST_MPEGTS_RUNNING_STATUS_NOT_RUNNING (1)
        GST_MPEGTS_RUNNING_STATUS_STARTS_IN_FEW_SECONDS (2)
@@ -164,9 +164,9 @@ void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> 
 
 void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData)
 {
-    const AVRational tsTimeBase = { 1, 90000 };
-    AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
-    
+    constexpr AVRational tsTimeBase = { 1, 90000 };
+    const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
+
     uint64_t tsPts = MmtTlv::NOPTS_VALUE;
     uint64_t tsDts = MmtTlv::NOPTS_VALUE;
     
@@ -187,19 +187,27 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     pes.setPayload(&streamData);
     pes.pack(pesOutput);
 
-    ts::PESPacket tsPES(pesOutput.data(), pesOutput.size());
-
-    ts::PESOneShotPacketizer zer(duck, mmtStream->getMpeg2Pid());
-    zer.addPES(tsPES, ts::ShareMode::SHARE);
-
-    ts::TSPacketVector packets;
-    zer.getPackets(packets);
-
-    for (auto& packet : packets) {
-        packet.setCC(mapCC[mmtStream->getMpeg2Pid()] & 0xF);
+    size_t payloadLength = pesOutput.size();
+    int i = 0;
+    while(payloadLength > 0) {
+        ts::TSPacket packet;
+        packet.init(mmtStream->getMpeg2Pid(), mapCC[mmtStream->getMpeg2Pid()] & 0xF, 0);
         ++mapCC[mmtStream->getMpeg2Pid()];
 
+        if (i == 0) {
+            packet.setPUSI();
+            if (mfuData->keyframe) {
+                packet.setRandomAccessIndicator(true);
+            }
+        }
+
+        const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
+        packet.setPayloadSize(chunkSize);
+        memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
+        payloadLength -= chunkSize;
+
         output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+        ++i;
     }
 }
 
@@ -800,17 +808,11 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
 
 void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
 {
-    //if(nextPcrTs > ntp->transmit_timestamp.toPCRValue()) {
-    //    return;
-    //}
-
     ts::TSPacket packet;
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
     mapCC[PCR_PID]++;
     packet.setPCR(ntp->transmit_timestamp.toPCRValue() , true);
     output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
-
-    //nextPcrTs = ntp->transmit_timestamp.toPCRValue() + 27000 * 100;
 }
 
 void RemuxerHandler::clear()
@@ -819,5 +821,4 @@ void RemuxerHandler::clear()
     mapCC.clear();
     tsid = -1;
     streamCount = 0;
-    nextPcrTs = 0;
 }

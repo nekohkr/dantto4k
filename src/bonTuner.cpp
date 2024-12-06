@@ -4,12 +4,6 @@
 #include "dantto4k.h"
 #include "config.h"
 
-#ifdef _WIN32
-#include "logger.h"
-#include <dbghelp.h>
-#pragma comment(lib, "dbghelp.lib")
-#endif
-
 std::vector<uint8_t> inputBuffer;
 std::vector<uint8_t> outputBuffer;
 FILE* fp = nullptr;
@@ -89,37 +83,6 @@ const bool CBonTuner::GetTsStream(uint8_t* pDst, uint32_t* pdwSize, uint32_t* pd
 }
 
 #ifdef _WIN32
-void PrintStackTrace(CONTEXT* context) {
-    HANDLE process = GetCurrentProcess();
-    HANDLE thread = GetCurrentThread();
-    
-    SymInitialize(process, NULL, TRUE);
-    
-    STACKFRAME64 stackFrame = { 0 };
-    DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
-
-    stackFrame.AddrPC.Offset = context->Rip;
-    stackFrame.AddrPC.Mode = AddrModeFlat;
-    stackFrame.AddrFrame.Offset = context->Rsp;
-    stackFrame.AddrFrame.Mode = AddrModeFlat;
-    stackFrame.AddrStack.Offset = context->Rsp;
-    stackFrame.AddrStack.Mode = AddrModeFlat;
-
-    while (StackWalk64(machineType, process, thread, &stackFrame, context, NULL,
-                       SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
-        log_debug(L"RIP: %llx", stackFrame.AddrPC.Offset);
-    }
-
-    SymCleanup(process);
-}
-
-
-LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
-	log_debug(L"Exception caught!");
-    PrintStackTrace(exceptionInfo->ContextRecord);
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
 static int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
 	__try {
 		return demuxer.processPacket(input);

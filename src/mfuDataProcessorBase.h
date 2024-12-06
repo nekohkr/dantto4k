@@ -23,6 +23,7 @@ struct MfuData {
 	uint64_t pts{NOPTS_VALUE};
 	uint64_t dts{NOPTS_VALUE};
 	int streamIndex{};
+	bool keyframe{false};
 };
 
 class MfuDataProcessorBase {

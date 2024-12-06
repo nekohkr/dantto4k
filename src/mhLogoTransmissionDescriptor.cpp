@@ -24,7 +24,9 @@ bool MhLogoTransmissionDescriptor::unpack(Common::ReadStream& stream)
 
             while (!nstream.isEof()) {
                 Entry entry;
-                entry.unpack(nstream);
+                if (!entry.unpack(nstream)) {
+                    return false;
+                }
                 entries.push_back(entry);
             }
         }

@@ -26,13 +26,17 @@ bool Mpt::unpack(Common::ReadStream& stream)
 		mptDescriptorsLength = stream.getBe16U();
 		
 		Common::ReadStream nstream(stream, mptDescriptorsLength);
-		descriptors.unpack(nstream);
+		if (!descriptors.unpack(nstream)) {
+			return false;
+		}
 		stream.skip(mptDescriptorsLength);
 
 		numberOfAssets = stream.get8U();
 		for (int i = 0; i < numberOfAssets; i++) {
 			Asset asset;
-			asset.unpack(stream);
+			if (!asset.unpack(stream)) {
+				return false;
+			}
 			assets.push_back(asset);
 		}
 	}
@@ -60,19 +64,24 @@ bool Mpt::Asset::unpack(Common::ReadStream& stream)
 		locationCount = stream.get8U();
 		for (int i = 0; i < locationCount; i++) {
 			MmtGeneralLocationInfo locationInfo;
-			locationInfo.unpack(stream);
+			if (!locationInfo.unpack(stream)) {
+				return false;
+			}
 			locationInfos.push_back(locationInfo);
 		}
 
 		assetDescriptorsLength = stream.getBe16U();
 
 		Common::ReadStream nstream(stream, assetDescriptorsLength);
-		descriptors.unpack(nstream);
+		if (!descriptors.unpack(nstream)) {
+			return false;
+		}
 		stream.skip(assetDescriptorsLength);
 	}
 	catch (const std::out_of_range&) {
 		return false;
 	}
+
 	return true;
 }
 

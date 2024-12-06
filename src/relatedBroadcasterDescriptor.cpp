@@ -20,7 +20,9 @@ bool RelatedBroadcasterDescriptor::unpack(Common::ReadStream& stream)
 
 		for (int i = 0; i < numOfBroadcasterId; i++) {
 			BroadcasterId broadcasterId;
-			broadcasterId.unpack(nstream);
+			if (!broadcasterId.unpack(nstream)) {
+				return false;
+			}
 			broadcasterIds.push_back(broadcasterId);
 		}
 		

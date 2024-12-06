@@ -85,10 +85,15 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
     case TlvPacketType::Ipv6Packet:
     {
         IPv6Header ipv6(false);
-        ipv6.unpack(tlvDataStream);
+        if (!ipv6.unpack(tlvDataStream)) {
+            break;
+        }
+
         if (ipv6.nexthdr == IPv6::PROTOCOL_UDP) {
             UDPHeader udpHeader;
-            udpHeader.unpack(tlvDataStream);
+            if (!udpHeader.unpack(tlvDataStream)) {
+                break;
+            }
 
             // NTP
             if (udpHeader.destination_port == IPv6::PORT_NTP) {
@@ -98,15 +103,18 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
                 }
 
                 demuxerHandler->onNtp(std::make_shared<NTPv4>(ntp));
-
             }
         }
         break;
     }
     case TlvPacketType::HeaderCompressedIpPacket:
     {
-        compressedIPPacket.unpack(tlvDataStream);
-        mmt.unpack(tlvDataStream);
+        if (!compressedIPPacket.unpack(tlvDataStream)) {
+            break;
+        }
+        if (!mmt.unpack(tlvDataStream)) {
+            break;
+        }
 
         if (mmt.extensionHeaderScrambling.has_value()) {
             if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
@@ -139,7 +147,9 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
 void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream)
 {
     PaMessage message;
-    message.unpack(stream);
+    if (!message.unpack(stream)) {
+        return;
+    }
 
     Common::ReadStream nstream(message.table);
     while (!nstream.isEof()) {
@@ -150,14 +160,20 @@ void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream)
 void MmtTlvDemuxer::processM2SectionMessage(Common::ReadStream& stream)
 {
     M2SectionMessage message;
-    message.unpack(stream);
+    if (!message.unpack(stream)) {
+        return;
+    }
+
     processMmtTable(stream);
 }
 
 void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
 {
     M2ShortSectionMessage message;
-    message.unpack(stream);
+    if (!message.unpack(stream)) {
+        return;
+    }
+
     processMmtTable(stream);
 }
 
@@ -514,8 +530,9 @@ std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid)
 
 void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
 {
-    if (!mpu.unpack(stream))
+    if (!mpu.unpack(stream)) {
         return;
+    }
 
     auto assembler = getAssembler(mmt.packetId);
     Common::ReadStream nstream(mpu.payload);
@@ -545,7 +562,9 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
         mmtStream->auIndex = 0;
     }
     else if (mpu.mpuSequenceNumber != mmtStream->lastMpuSequenceNumber) {
+#ifndef _DANTTO4K_DLL
         std::cerr << "drop found (" << mmtStream->lastMpuSequenceNumber << " != " << mpu.mpuSequenceNumber << ")" << std::endl;
+#endif
         assembler->state = FragmentAssembler::State::Init;
         return;
     }

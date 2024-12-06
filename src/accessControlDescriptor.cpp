@@ -12,7 +12,9 @@ bool AccessControlDescriptor::unpack(Common::ReadStream& stream)
         Common::ReadStream nstream(stream, descriptorLength);
 
         caSystemId = nstream.getBe16U();
-        locationInfo.unpack(nstream);
+        if (!locationInfo.unpack(nstream)) {
+            return false;
+        }
 
         privateData.resize(nstream.leftBytes());
         nstream.read(privateData.data(), nstream.leftBytes());
