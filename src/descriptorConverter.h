@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "accessControlDescriptor.h"
 #include "contentCopyControlDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
@@ -29,7 +29,7 @@ constexpr uint8_t convertAudioComponentType(uint8_t componentType) {
     switch (audioMode) {
     case 0b00001: // 1/0 mode (single mono) 
         return 0x01;
-    case 0b00010: // 1/0£«1/0 mode (dual mono) 
+    case 0b00010: // 1/0ï¼‹1/0 mode (dual mono) 
         return 0x02;
     case 0b00011: // 2/0 mode (stereo) 
         return 0x03;
@@ -37,7 +37,7 @@ constexpr uint8_t convertAudioComponentType(uint8_t componentType) {
         return 0x07;
     case 0b01000: // 3/2 mode
         return 0x08;
-    case 0b01001: // 3/2£«LFE mode (3/2.1 mode)
+    case 0b01001: // 3/2ï¼‹LFE mode (3/2.1 mode)
         return 0x09;
     }
 
@@ -74,14 +74,13 @@ struct DescriptorConverter;
 template <>
 struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
     static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhShortEventDescriptor& mmtDescriptor) {
-        const ts::ByteBlock eventNameBlock = aribEncode(mmtDescriptor.eventName);
-        const ts::ByteBlock textBlock = aribEncode(mmtDescriptor.text);
-        
-        if (eventNameBlock.size() > 255) {
-            return std::nullopt;
-        }
+        ts::UString testEventName = ts::UString::FromUTF8(mmtDescriptor.eventName);
+        ts::UString testText = ts::UString::FromUTF8(mmtDescriptor.text);
 
-        if (textBlock.size() > 255) {
+        const ts::ByteBlock eventNameBlock = aribEncode(mmtDescriptor.eventName);
+        ts::ByteBlock textBlock = aribEncode(mmtDescriptor.text);
+       
+        if (eventNameBlock.size() > 257) {
             return std::nullopt;
         }
 
@@ -93,8 +92,21 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
             + 1 // text_length
             + textBlock.size(); // text
 
-        if (descriptorLength > 255) {
-            return std::nullopt;
+        // cut the text if the descriptor length is exceeded
+        if (descriptorLength > 257) {
+            if (descriptorLength - textBlock.size() > 257) {
+                return std::nullopt;
+            }
+
+            textBlock.resize(257 - (descriptorLength - textBlock.size()));
+
+            descriptorLength = 1 // descriptor_tag
+                + 1 // descriptor_length
+                + 3 // language
+                + 1 // event_name_length
+                + eventNameBlock.size() // event_name
+                + 1 // text_length
+                + textBlock.size();
         }
 
         std::vector<uint8_t> tsDescriptor(descriptorLength);
