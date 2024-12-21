@@ -191,6 +191,9 @@
     <ClCompile Include="timeUtil.cpp" />
     <ClCompile Include="tlvDescriptorFactory.cpp" />
     <ClCompile Include="tlvTableFactory.cpp" />
+    <ClCompile Include="tsARIBCharset.cpp" />
+    <ClCompile Include="tsARIBCharsetData.cpp" />
+    <ClCompile Include="tsARIBCharsetEncoding.cpp" />
     <ClCompile Include="videoMfuDataProcessor.cpp" />
     <ClCompile Include="m2SectionMessage.cpp" />
     <ClCompile Include="m2ShortSectionMessage.cpp" />
@@ -275,6 +278,7 @@
     <ClInclude Include="timeUtil.h" />
     <ClInclude Include="tlvDescriptorFactory.h" />
     <ClInclude Include="tlvTableFactory.h" />
+    <ClInclude Include="tsARIBCharset.h" />
     <ClInclude Include="videoMfuDataProcessor.h" />
     <ClInclude Include="IBonDriver.h" />
     <ClInclude Include="ip.h" />

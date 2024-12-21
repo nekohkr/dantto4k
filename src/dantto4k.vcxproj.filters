@@ -232,6 +232,15 @@
     <ClCompile Include="mhServiceListDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
+    <ClCompile Include="tsARIBCharset.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="tsARIBCharsetData.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="tsARIBCharsetEncoding.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -504,25 +513,25 @@
     <ClInclude Include="logger.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
+    <ClInclude Include="tsARIBCharset.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="mmttlv">
-      <UniqueIdentifier>{4f5b7383-f468-4008-b0d7-ba1a595e01c0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mmttlv\acas">
-      <UniqueIdentifier>{5dccb4d7-560f-4244-9d84-334de3cf19f2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="dantto4k">
       <UniqueIdentifier>{89d5921c-1305-4fcd-9b4b-b323b85b8375}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="dantto4k\config">
-      <UniqueIdentifier>{0392b5d1-6a98-4ab7-bab9-4649b64a3cef}</UniqueIdentifier>
     </Filter>
     <Filter Include="dantto4k\adts">
       <UniqueIdentifier>{b026877e-512f-4823-9779-1a919bfb08bd}</UniqueIdentifier>
     </Filter>
     <Filter Include="dantto4k\bondriver">
       <UniqueIdentifier>{2ed2741f-a39d-4175-b9e8-d350d2a84927}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv">
+      <UniqueIdentifier>{4f5b7383-f468-4008-b0d7-ba1a595e01c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mmttlv\acas">
+      <UniqueIdentifier>{5dccb4d7-560f-4244-9d84-334de3cf19f2}</UniqueIdentifier>
     </Filter>
     <Filter Include="mmttlv\common">
       <UniqueIdentifier>{f40fdc0c-24bd-44cd-9272-d96c62b86634}</UniqueIdentifier>
@@ -539,6 +548,9 @@
     <Filter Include="mmttlv\mmt\descriptors">
       <UniqueIdentifier>{8439f5b9-7d80-4b3e-a5b0-c43597f4c780}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mmttlv\mmt\mfu">
+      <UniqueIdentifier>{39e74407-f57e-47e0-97fc-4c84f854aa1e}</UniqueIdentifier>
+    </Filter>
     <Filter Include="mmttlv\tlv">
       <UniqueIdentifier>{cc259d6d-f43c-48ee-a83c-343ef27089a6}</UniqueIdentifier>
     </Filter>
@@ -551,8 +563,8 @@
     <Filter Include="mmttlv\tlv\tables">
       <UniqueIdentifier>{5028c261-c9a8-4e76-ba4b-ba2fcbea2d44}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mmttlv\mmt\mfu">
-      <UniqueIdentifier>{39e74407-f57e-47e0-97fc-4c84f854aa1e}</UniqueIdentifier>
+    <Filter Include="dantto4k\config">
+      <UniqueIdentifier>{0392b5d1-6a98-4ab7-bab9-4649b64a3cef}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

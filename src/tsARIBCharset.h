@@ -35,7 +35,7 @@ namespace ts {
     //! @see https://en.wikipedia.org/wiki/ISO/IEC_2022
     //! @ingroup mpeg
     //!
-    class TSDUCKDLL ARIBCharset2: public Charset
+    class ARIBCharset2: public Charset
     {
         TS_NOCOPY(ARIBCharset2);
     public:

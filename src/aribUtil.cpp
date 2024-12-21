@@ -9,7 +9,7 @@ struct B62Gaiji {
     };
 };
 
-struct B24SymbolTable {
+struct B24Symbol {
     union {
         char8_t utf8[4];
         uint32_t uint32;
@@ -39,7 +39,7 @@ constexpr B62Gaiji b62GaijiTable[] = {
     {u8"令和",       {0xE3, 0x8B, 0xBF, 0}}
 };
 
-constexpr B24SymbolTable b24SymbolTable[] = {
+constexpr B24Symbol b24SymbolTable[] = {
     {0xE2, 0x85, 0x90, 0x00}, 
     {0xE2, 0x85, 0x91, 0x00}, 
     {0xE2, 0x85, 0x92, 0x00}, 
