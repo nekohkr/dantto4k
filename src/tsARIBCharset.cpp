@@ -217,11 +217,11 @@ size_t ts::ARIBCharset2::encode(uint8_t*& buffer, size_t& size, const UString& s
 //----------------------------------------------------------------------------
 
 ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*& in, size_t& in_count) :
-    _G{KANJI_ADDITIONAL_MAP.selector1,   // Same initial state as decoding engine
+    _G{KANJI_STANDARD_MAP.selector1,   // Same initial state as decoding engine
        ALPHANUMERIC_MAP.selector1,
        HIRAGANA_MAP.selector1,
        KATAKANA_MAP.selector1},
-    _byte2{KANJI_ADDITIONAL_MAP.byte2,   // Same order as _G
+    _byte2{KANJI_STANDARD_MAP.byte2,   // Same order as _G
            ALPHANUMERIC_MAP.byte2,
            HIRAGANA_MAP.byte2,
            KATAKANA_MAP.byte2},
@@ -229,7 +229,8 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
     _GR(2),             // G2 -> GR
     _GL_last(false),    // First charset switch will use GL
     _Gn_history(0x3210), // G3=oldest, G0=last-used
-    first(true)
+    first(true),
+    character_size(NSZ)
 {
     // Previous index in encoding table.
     size_t prev_index = NPOS;
@@ -391,7 +392,7 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
     size_t seq_size = 0;
 
     // There is some switching sequence to add only if the charset is neither in GL nor GR.
-    if (first || (selectorF != _G[_GL] && selectorF != _G[_GR])) {
+    if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
         // If the charset is not in G0-G3, we need to load it in one of them.
         if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
             seq_size = selectG0123(seq, selectorF, byte2);
@@ -424,51 +425,58 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
 
 size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
 {
+    int i = 0;
+    if(F == 0x4A /* ascii */) {
+        if(character_size != MSZ) {
+            seq[i++] = MSZ;
+            character_size = MSZ;
+        }
+    }
+
     // If GL was last used, use GR and vice versa.
     if (F == _G[0]) {
         // G0 can be routed to GL only.
         _GL = 0;
-        seq[0] = NSZ;
-        seq[1] = LS0;
-        return 2;
+        seq[i++] = LS0;
+        return i;
     }
     else if (F == _G[1]) {
         if (_GL_last) {
             _GR = 1;
-            seq[0] = ESC; seq[1] = 0x7E;
-            return 2;
+            seq[i++] = ESC; seq[i++] = 0x7E;
+            return i;
 
         }
         else {
             _GL = 1;
-            seq[0] = MSZ; seq[1] = LS1;
-            return 2;
+             seq[i++] = LS1;
+            return i;
         }
     }
     else if (F == _G[2]) {
         if (_GL_last) {
             _GR = 2;
-            seq[0] = ESC; seq[1] = 0x7D;
-            return 2;
+            seq[i++] = ESC; seq[i++] = 0x7D;
+            return i;
 
         }
         else {
             _GL = 2;
-            seq[0] = ESC; seq[1] = 0x6E;
-            return 2;
+            seq[i++] = ESC; seq[i++] = 0x6E;
+            return i;
         }
     }
     else {
         assert(F == _G[3]);
         if (_GL_last) {
             _GR = 3;
-            seq[0] = ESC; seq[1] = 0x7C;
-            return 2;
+            seq[i++] = ESC; seq[i++] = 0x7C;
+            return i;
         }
         else {
             _GL = 3;
-            seq[0] = ESC; seq[1] = 0x6F;
-            return 2;
+            seq[i++] = ESC; seq[i++] = 0x6F;
+            return i;
         }
     }
 }
@@ -480,9 +488,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
 
 size_t ts::ARIBCharset2::Encoder::selectG0123(uint8_t* seq, uint8_t F, bool byte2)
 {
-    // Get index oldest used charset. Reuse it. Mark it as last used.
-    const uint8_t index = uint8_t(_Gn_history >> 12) & 0x03;
-    _Gn_history = uint16_t(_Gn_history << 4) | index;
+    const uint8_t index = 0;
 
     // Assign the new character set.
     _G[index] = F;

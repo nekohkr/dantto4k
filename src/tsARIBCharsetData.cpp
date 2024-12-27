@@ -201,11 +201,11 @@ const ts::ARIBCharset2::CharMap ts::ARIBCharset2::KANJI_STANDARD_MAP = {
 const ts::ARIBCharset2::CharMap ts::ARIBCharset2::KANJI_ADDITIONAL_MAP = {
     true,  // 2-byte charset
     false, // Not macro
-    0x42,  // Kanji, 2-byte code
     0x3B,  // Additional symbols, 2-byte code
+    0,
     {
-        {0, 86, &KANJI_BASE_ROWS[0]},
         {89, 5, &KANJI_ADDITIONAL_ROWS[0]},
+        {0,  0, nullptr},
         {0,  0, nullptr},
         {0,  0, nullptr},
     }

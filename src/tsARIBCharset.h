@@ -220,6 +220,7 @@ namespace ts {
             bool     _GL_last;    // true if GL was used last (ie. not GR)
             uint16_t _Gn_history; // 4 nibbles with values 0,1,2,3, MSB=oldest, LSB=last-used
             bool     first;
+            uint8_t  character_size;
 
             // Check if Gn (n=0-3) is alphanumeric.
             bool isAlphaNumeric(uint8_t index) const;
