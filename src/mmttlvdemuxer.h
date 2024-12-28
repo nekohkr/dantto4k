@@ -40,27 +40,23 @@ public:
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
 	int processPacket(Common::ReadStream& stream);
 	void clear();
+	void release();
 
 private:
-	void processMpu(Common::ReadStream& stream);
-	void processMfuData(Common::ReadStream& stream);
-
-	void processSignalingMessages(Common::ReadStream& stream);
-	void processSignalingMessage(Common::ReadStream& stream);
-
 	bool isVaildTlv(Common::ReadStream& stream) const;
 
+	void processMpu(Common::ReadStream& stream);
+	void processMfuData(Common::ReadStream& stream);
+	void processSignalingMessages(Common::ReadStream& stream);
+	void processSignalingMessage(Common::ReadStream& stream);
 	void processPaMessage(Common::ReadStream& stream);
 	void processM2SectionMessage(Common::ReadStream& stream);
 	void processM2ShortSectionMessage(Common::ReadStream& stream);
-	
 	void processTlvTable(Common::ReadStream& stream);
 	void processMmtTable(Common::ReadStream& stream);
-
 	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
 	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
 	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
-
 	void processEcm(std::shared_ptr<Ecm> ecm);
 
 public:

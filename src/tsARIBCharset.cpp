@@ -432,6 +432,12 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
             character_size = MSZ;
         }
     }
+    else {
+        if(character_size != NSZ) {
+            seq[i++] = NSZ;
+            character_size = NSZ;
+        }
+    }
 
     // If GL was last used, use GR and vice versa.
     if (F == _G[0]) {

@@ -72,11 +72,12 @@ private:
 
 class SmartCard {
 public:
-    bool initCard();
+    bool init();
     bool isConnected();
     void connect();
     ApduResponse transmit(const std::vector<BYTE>& sendData);
     void disconnect();
+    void release();
 
 private:
     SCARDCONTEXT hContext = NULL;

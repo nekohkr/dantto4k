@@ -74,9 +74,6 @@ struct DescriptorConverter;
 template <>
 struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
     static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhShortEventDescriptor& mmtDescriptor) {
-        ts::UString testEventName = ts::UString::FromUTF8(mmtDescriptor.eventName);
-        ts::UString testText = ts::UString::FromUTF8(mmtDescriptor.text);
-
         const ts::ByteBlock eventNameBlock = aribEncode(mmtDescriptor.eventName);
         ts::ByteBlock textBlock = aribEncode(mmtDescriptor.text);
        

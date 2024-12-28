@@ -2,7 +2,7 @@
 
 namespace MmtTlv::Acas {
 
-bool SmartCard::initCard() {
+bool SmartCard::init() {
     LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
     return result == SCARD_S_SUCCESS;
 }
@@ -69,8 +69,18 @@ ApduResponse SmartCard::transmit(const std::vector<uint8_t>& sendData) {
 
 void SmartCard::disconnect() {
     if (hCard != NULL) {
-        SCardDisconnect(hCard, SCARD_UNPOWER_CARD);
+        SCardDisconnect(hCard, SCARD_LEAVE_CARD);
         hCard = NULL;
+    }
+}
+
+void SmartCard::release()
+{
+    disconnect();
+
+    if (hContext != NULL) {
+		SCardReleaseContext(hContext);
+        hContext = NULL;
     }
 }
 

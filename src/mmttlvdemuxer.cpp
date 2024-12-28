@@ -40,7 +40,7 @@ MmtTlvDemuxer::MmtTlvDemuxer()
 bool MmtTlvDemuxer::init()
 {
     try {
-        smartCard->initCard();
+        smartCard->init();
         smartCard->connect();
     }
     catch (const std::runtime_error& e) {
@@ -500,10 +500,12 @@ void MmtTlvDemuxer::clear()
     mfuData.clear();
     mapStream.clear();
     mapStreamByStreamIdx.clear();
+    acasCard->clear();
+}
 
-    if (acasCard) {
-        acasCard->clear();
-    }
+void MmtTlvDemuxer::release()
+{
+    smartCard->release();
 }
 
 std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t pid)

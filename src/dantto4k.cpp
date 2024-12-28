@@ -207,6 +207,7 @@ int main(int argc, char* argv[]) {
     outputFs.close();
 
     demuxer.clear();
+    demuxer.release();
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;

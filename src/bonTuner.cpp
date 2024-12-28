@@ -209,5 +209,6 @@ const uint32_t CBonTuner::GetCurChannel(void)
 
 void CBonTuner::Release(void)
 {
+	demuxer.release();
 	return pBonDriver2->Release();
 }
