@@ -4,8 +4,6 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <tsduck.h>
-
 #include "stream.h"
 #include "acascard.h"
 #include "mmt.h"
@@ -17,6 +15,7 @@
 #include "mmtStream.h"
 #include "compressedIPPacket.h"
 #include "mfuDataProcessorBase.h"
+#include "mmtTlvStatistics.h"
 
 namespace MmtTlv {
 
@@ -41,6 +40,7 @@ public:
 	int processPacket(Common::ReadStream& stream);
 	void clear();
 	void release();
+	void printStatistics();
 
 private:
 	bool isVaildTlv(Common::ReadStream& stream) const;
@@ -70,17 +70,13 @@ private:
 
 	std::shared_ptr<Acas::SmartCard> smartCard;
 	std::unique_ptr<Acas::AcasCard> acasCard;
-
 	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
-
 	Tlv tlv;
 	CompressedIPPacket compressedIPPacket;
 	Mmt mmt;
 	Mpu mpu;
-
-	ts::DuckContext duck;
-
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	DemuxerHandler* demuxerHandler = nullptr;
+	mmtTlvStatistics statistics;
 };
 }

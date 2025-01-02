@@ -11,8 +11,8 @@ class MhAudioComponentDescriptor;
 
 class MmtStream final {
 public:
-	MmtStream(uint16_t pid)
-		: pid(pid) {}
+	MmtStream(uint16_t packetId)
+		: packetId(packetId) {}
 
 	MmtStream(const MmtStream&) = delete;
     MmtStream& operator=(const MmtStream&) = delete;
@@ -22,8 +22,8 @@ public:
 
 	std::pair<int64_t, int64_t> getNextPtsDts();
 	uint32_t getAuIndex() const { return auIndex; }
-	uint16_t getMpeg2Pid() const { return componentTag == -1 ? 0x200 + streamIndex : 0x100 + componentTag; }
-	uint16_t getPid() const { return pid; }
+	uint16_t getMpeg2PacketId() const { return componentTag == -1 ? 0x200 + streamIndex : 0x100 + componentTag; }
+	uint16_t getPacketId() const { return packetId; }
 	uint32_t getAssetType() const { return assetType; }
 	uint32_t getStreamIndex() const { return streamIndex; }
 	int32_t getComponentTag() const { return componentTag; }
@@ -46,7 +46,7 @@ private:
 
 	std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> getCurrentTimestamp() const;
 	
-	uint16_t pid = 0;
+	uint16_t packetId = 0;
 	
 	uint32_t assetType = 0;
 	uint32_t lastMpuSequenceNumber = 0;

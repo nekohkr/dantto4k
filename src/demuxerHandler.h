@@ -30,7 +30,7 @@ public:
 	virtual void onMhBit(const std::shared_ptr<MhBit>& mhBit) {}
 	virtual void onMhCdt(const std::shared_ptr<MhCdt>& mhCdt) {}
 	virtual void onMhEit(const std::shared_ptr<MhEit>& mhEit) {}
-	virtual void onMhSdt(const std::shared_ptr<MhSdt>& mhSdt) {}
+	virtual void onMhSdtActual(const std::shared_ptr<MhSdt>& mhSdt) {}
 	virtual void onMhTot(const std::shared_ptr<MhTot>& mhTot) {}
 	virtual void onMpt(const std::shared_ptr<Mpt>& mpt) {}
 	virtual void onPlt(const std::shared_ptr<Plt>& plt) {}

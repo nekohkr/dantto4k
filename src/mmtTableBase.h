@@ -25,7 +25,8 @@ public:
     static constexpr uint8_t MhEitS_14 = 0x99;
     static constexpr uint8_t MhEitS_15 = 0x9A;
     static constexpr uint8_t MhEitS_16 = 0x9B;
-	static constexpr uint8_t MhSdt = 0x9F;
+	static constexpr uint8_t MhSdtActual = 0x9F;
+	static constexpr uint8_t MhSdtOther = 0xA0;
 	static constexpr uint8_t MhTot = 0xA1;
 	static constexpr uint8_t MhCdt = 0xA2;
 	static constexpr uint8_t MhBit = 0x9D;

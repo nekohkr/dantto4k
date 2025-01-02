@@ -98,15 +98,17 @@ static int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
 const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* pdwRemain)
 {
 	std::lock_guard<std::mutex> lock(mutex);
-
-	bool ret = pBonDriver2->GetTsStream(ppDst, pdwSize, pdwRemain);
-	if (ret) {
-		if (fp) {
-			fwrite(*ppDst, 1, *pdwSize, fp);
-		}
+	
+	do {
+		bool ret = pBonDriver2->GetTsStream(ppDst, pdwSize, pdwRemain);
+		if (ret) {
+			if (fp) {
+				fwrite(*ppDst, 1, *pdwSize, fp);
+			}
 		
-		inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
-	}
+			inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
+		}
+	} while(*pdwRemain != 0);
 	
 	MmtTlv::Common::ReadStream input(inputBuffer);
 	while (!input.isEof()) {

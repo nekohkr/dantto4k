@@ -61,7 +61,7 @@ public:
 	void onEcm(const std::shared_ptr<MmtTlv::Ecm>& ecm) override {}
 	void onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) override;
 	void onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) override;
-	void onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) override;
+	void onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) override;
 	void onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) override;
 	void onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) override;
 	void onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) override;

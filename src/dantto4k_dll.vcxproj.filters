@@ -516,6 +516,9 @@
     <ClInclude Include="tsARIBCharset.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
+    <ClInclude Include="mmtTlvStatistics.h">
+      <Filter>mmttlv</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dantto4k">

@@ -74,16 +74,20 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
         return -1;
     }
 
+    statistics.tlvPacketCount++;
+
     Common::ReadStream tlvDataStream(tlv.getData());
 
     switch (tlv.getPacketType()) {
-    case TlvPacketType::TransmissionControlSignalPacket:
+    case TlvPacketType::Ipv4Packet:
     {
-        processTlvTable(tlvDataStream);
+        statistics.tlvIpv4PacketCount++;
         break;
     }
     case TlvPacketType::Ipv6Packet:
     {
+        statistics.tlvIpv6PacketCount++;
+
         IPv6Header ipv6(false);
         if (!ipv6.unpack(tlvDataStream)) {
             break;
@@ -109,11 +113,28 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
     }
     case TlvPacketType::HeaderCompressedIpPacket:
     {
+        statistics.tlvHeaderCompressedIpPacketCount++;
+
         if (!compressedIPPacket.unpack(tlvDataStream)) {
             break;
         }
+        
         if (!mmt.unpack(tlvDataStream)) {
             break;
+        }
+        
+        auto mmtStat = statistics.getMmtStat(mmt.packetId);
+        if (mmtStat->count == 0) {
+            mmtStat->lastPacketSequenceNumber = mmt.packetSequenceNumber;
+            mmtStat->count++;
+        }
+        else {
+            auto mmtStat = statistics.getMmtStat(mmt.packetId);
+            if (mmtStat->lastPacketSequenceNumber + 1 != mmt.packetSequenceNumber) {
+                mmtStat->drop++;
+            }
+            mmtStat->lastPacketSequenceNumber = mmt.packetSequenceNumber;
+            mmtStat->count++;
         }
 
         if (mmt.extensionHeaderScrambling.has_value()) {
@@ -138,6 +159,21 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
             break;
         }
         break;
+    }
+    case TlvPacketType::TransmissionControlSignalPacket:
+    {
+        statistics.tlvTransmissionControlSignalPacketCount++;
+        processTlvTable(tlvDataStream);
+        break;
+    }
+    case TlvPacketType::NullPacket:
+    {
+        statistics.tlvNullPacketCount++;
+        break;
+    }
+    default:
+    {
+        statistics.tlvUndefinedCount++;
     }
     }
 
@@ -179,13 +215,19 @@ void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
 
 void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream)
 {
+    if (stream.leftBytes() < 2) {
+        return;
+    }
+
     uint8_t tableId = stream.peek8U();
     const auto table = TlvTableFactory::create(tableId);
     if (table == nullptr) {
         return;
     }
 
-    table->unpack(stream);
+    if (!table->unpack(stream)) {
+        return;
+    }
 
     switch (tableId) {
     case TlvTableId::Nit:
@@ -252,9 +294,9 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
             demuxerHandler->onMhEit(std::dynamic_pointer_cast<MhEit>(table));
         }
         break;
-    case MmtTableId::MhSdt:
+    case MmtTableId::MhSdtActual:
         if (demuxerHandler) {
-            demuxerHandler->onMhSdt(std::dynamic_pointer_cast<MhSdt>(table));
+            demuxerHandler->onMhSdtActual(std::dynamic_pointer_cast<MhSdt>(table));
         }
         break;
     case MmtTableId::MhTot:
@@ -283,7 +325,7 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
 void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
 {
     // Remove streams that do not exist in the MPT
-    std::map<uint16_t, uint32_t> mapMpt; // pid, assetType
+    std::map<uint16_t, uint32_t> mapMpt; // packetId, assetType
     for (auto& asset : mpt->assets) {
         for (auto& locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
@@ -333,7 +375,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
                     }
 
                     mapStreamByStreamIdx[streamIndex] = mmtStream;
-
+                    statistics.getMmtStat(locationInfo.packetId)->assetType = asset.assetType;
                     ++streamIndex;
                 }
             }
@@ -346,11 +388,15 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
         for (auto& descriptor : asset.descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
             case MpuTimestampDescriptor::kDescriptorTag:
+            {
                 processMpuTimestampDescriptor(std::dynamic_pointer_cast<MpuTimestampDescriptor>(descriptor), mmtStream);
                 break;
+            }
             case MpuExtendedTimestampDescriptor::kDescriptorTag:
+            {
                 processMpuExtendedTimestampDescriptor(std::dynamic_pointer_cast<MpuExtendedTimestampDescriptor>(descriptor), mmtStream);
                 break;
+            }
             case MhStreamIdentificationDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhStreamIdentificationDescriptor>(descriptor);
@@ -361,12 +407,18 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::VideoComponentDescriptor>(descriptor);
                 mmtStream->videoComponentDescriptor = mmtDescriptor;
+
+                statistics.getMmtStat(mmtStream->packetId)->videoResolution = mmtDescriptor->videoResolution;
+                statistics.getMmtStat(mmtStream->packetId)->videoAspectRatio = mmtDescriptor->videoAspectRatio;
                 break;
             }
             case MhAudioComponentDescriptor::kDescriptorTag:
             {
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhAudioComponentDescriptor>(descriptor);
                 mmtStream->mhAudioComponentDescriptor = mmtDescriptor;
+                
+                statistics.getMmtStat(mmtStream->packetId)->audioComponentType = mmtDescriptor->componentType;
+                statistics.getMmtStat(mmtStream->packetId)->audioSamplingRate = mmtDescriptor->samplingRate;
                 break;
             }
             }
@@ -501,6 +553,7 @@ void MmtTlvDemuxer::clear()
     mapStream.clear();
     mapStreamByStreamIdx.clear();
     acasCard->clear();
+    statistics.clear();
 }
 
 void MmtTlvDemuxer::release()
@@ -508,25 +561,30 @@ void MmtTlvDemuxer::release()
     smartCard->release();
 }
 
-std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t pid)
+void MmtTlvDemuxer::printStatistics()
 {
-    if (mapAssembler.find(pid) == mapAssembler.end()) {
+    statistics.print();
+}
+
+std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t packetId)
+{
+    if (mapAssembler.find(packetId) == mapAssembler.end()) {
         auto assembler = std::make_shared<FragmentAssembler>();
-        mapAssembler[pid] = assembler;
+        mapAssembler[packetId] = assembler;
         return assembler;
     }
     else {
-        return mapAssembler[pid];
+        return mapAssembler[packetId];
     }
 }
 
-std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t pid)
+std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t packetId)
 {
-    if (mapStream.find(pid) == mapStream.end()) {
+    if (mapStream.find(packetId) == mapStream.end()) {
         return nullptr;
     }
     else {
-        return mapStream[pid];
+        return mapStream[packetId];
     }
 }
 
@@ -564,9 +622,6 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
         mmtStream->auIndex = 0;
     }
     else if (mpu.mpuSequenceNumber != mmtStream->lastMpuSequenceNumber) {
-#ifndef _DANTTO4K_DLL
-        std::cerr << "drop found (" << mmtStream->lastMpuSequenceNumber << " != " << mpu.mpuSequenceNumber << ")" << std::endl;
-#endif
         assembler->state = FragmentAssembler::State::Init;
         return;
     }

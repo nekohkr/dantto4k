@@ -254,6 +254,7 @@
     <ClInclude Include="mmtDescriptorFactory.h" />
     <ClInclude Include="mmtFragment.h" />
     <ClInclude Include="mmtTableFactory.h" />
+    <ClInclude Include="mmtTlvStatistics.h" />
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
     <ClInclude Include="ntp.h" />
     <ClInclude Include="pesPacket.h" />

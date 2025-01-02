@@ -1,63 +1,66 @@
 ﻿#include "aribUtil.h"
 #include "tsARIBCharset.h"
 
-struct B62Gaiji {
+struct Gaiji {
+    const char8_t* find;
     const char8_t* replacement;
-    union {
-        char8_t utf8[4];
-        uint32_t uint32;
-    };
 };
 
-struct B24Symbol {
-    union {
-        char8_t utf8[4];
-        uint32_t uint32;
-    };
-};
+constexpr Gaiji GaijiTable[] = {
+    // ARIB STD-B62
+    {u8"\U0001F19B", u8"[3D]"},
+    {u8"\U0001F19C", u8"[2nd Scr]"},
+    {u8"\U0001F19D", u8"[2K]"},
+    {u8"\U0001F19E", u8"[4K]"},
+    {u8"\U0001F19F", u8"[8K]"},
+    {u8"\U0001F1A0", u8"[5.1]"},
+    {u8"\U0001F1A1", u8"[7.1]"},
+    {u8"\U0001F1A2", u8"[22.2]"},
+    {u8"\U0001F1A3", u8"[60P]"},
+    {u8"\U0001F1A4", u8"[120P]"},
+    {u8"\U0001F1A5", u8"[ｄ]"},
+    {u8"\U0001F1A6", u8"[HC]"},
+    {u8"\U0001F1A7", u8"[HDR]"},
+    {u8"\U0001F1A8", u8"[Hi-Res]"},
+    {u8"\U0001F1A9", u8"[Lossless]"},
+    {u8"\U0001F1AA", u8"[SHV]"},
+    {u8"\U0001F1AB", u8"[UHD]"},
+    {u8"\U0001F1AC", u8"[VOD]"},
+    {u8"\U0001F23B", u8"[配]"},
+    {u8"\U000032FF", u8"令和"},
 
-constexpr B62Gaiji b62GaijiTable[] = {
-    {u8"[3D]",       {0xF0, 0x9F, 0x86, 0x9B}},
-    {u8"[2nd Scr]",  {0xF0, 0x9F, 0x86, 0x9C}},
-    {u8"[2K]",       {0xF0, 0x9F, 0x86, 0x9D}},
-    {u8"[4K]",       {0xF0, 0x9F, 0x86, 0x9E}},
-    {u8"[8K]",       {0xF0, 0x9F, 0x86, 0x9F}},
-    {u8"[5.1]",      {0xF0, 0x9F, 0x86, 0xA0}},
-    {u8"[7.1]",      {0xF0, 0x9F, 0x86, 0xA1}},
-    {u8"[22.2]",     {0xF0, 0x9F, 0x86, 0xA2}},
-    {u8"[60P]",      {0xF0, 0x9F, 0x86, 0xA3}},
-    {u8"[120P]",     {0xF0, 0x9F, 0x86, 0xA4}},
-    {u8"[ｄ]",        {0xF0, 0x9F, 0x86, 0xA5}},
-    {u8"[HC]",       {0xF0, 0x9F, 0x86, 0xA6}},
-    {u8"[HDR]",      {0xF0, 0x9F, 0x86, 0xA7}},
-    {u8"[Hi-Res]",   {0xF0, 0x9F, 0x86, 0xA8}},
-    {u8"[Lossless]", {0xF0, 0x9F, 0x86, 0xA9}},
-    {u8"[SHV]",      {0xF0, 0x9F, 0x86, 0xAA}},
-    {u8"[UHD]",      {0xF0, 0x9F, 0x86, 0xAB}},
-    {u8"[VOD]",      {0xF0, 0x9F, 0x86, 0xAC}},
-    {u8"[配]",       {0xF0, 0x9F, 0x88, 0xBB}},
-    {u8"令和",       {0xE3, 0x8B, 0xBF, 0}}
+    /*
+    // ARIB STD-B24 (Table 7-11 Addtional Kanji Characters)
+	{u8"仿", u8"彷"},
+	{u8"傜", u8"徭"},
+	{u8"恵", u8"恵"},
+	{u8"泠", u8"冷"},
+	{u8"海", u8"海"},
+	{u8"渚", u8"渚"},
+	{u8"琢", u8"琢"},
+	{u8"畵", u8"畫"},
+	{u8"舘", u8"舘"},
+	{u8"蟬", u8"蝉"},
+	{u8"鷗", u8"鴎"},
+	{u8"麴", u8"麹"},
+	{u8"麵", u8"麺"}
+    */
 };
 
 namespace {
 
-void replaceSequence(std::string& str, const char* sequence, size_t sequencelen, const char* replacement) {
+void replaceSequence(std::string& str, const std::string& sequence, const char* replacement) {
     std::size_t pos = 0;
 
     while ((pos = str.find(sequence, pos)) != std::string::npos) {
-        str.replace(pos, sequencelen, replacement);
+        str.replace(pos, sequence.size(), replacement);
         pos += 1;
     }
 }
     
-void convertB62Gaiji(std::string& str) {
-    for (auto gaiji : b62GaijiTable) {
-        if (gaiji.utf8[3] == 0) {
-            replaceSequence(str, reinterpret_cast<const char*>(gaiji.utf8), 3, reinterpret_cast<const char*>(gaiji.replacement));
-        }
-        else {
-            replaceSequence(str, reinterpret_cast<const char*>(gaiji.utf8), 4, reinterpret_cast<const char*>(gaiji.replacement));
-        }
+void convertGaiji(std::string& str) {
+    for (auto gaiji : GaijiTable) {
+        replaceSequence(str, reinterpret_cast<const char*>(gaiji.find), reinterpret_cast<const char*>(gaiji.replacement));
     }
 }
 
@@ -65,7 +68,7 @@ void convertB62Gaiji(std::string& str) {
 
 const ts::ByteBlock aribEncode(const std::string& input) {
     std::string converted = input;
-    convertB62Gaiji(converted);
+    convertGaiji(converted);
 
     ts::UString text = ts::UString::FromUTF8(converted);
     auto aribBlock = ts::ARIBCharset2::B24.encoded(text);

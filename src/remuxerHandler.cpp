@@ -38,6 +38,7 @@
 #include "logger.h"
 
 namespace {
+
 int convertRunningStatus(int runningStatus) {
     /*
        MMT
@@ -121,7 +122,7 @@ uint8_t convertTableId(uint8_t mmtTableId) {
         return 0x73;
     case MmtTlv::MmtTableId::MhBit:
         return 0xC4;
-    case MmtTlv::MmtTableId::MhSdt:
+    case MmtTlv::MmtTableId::MhSdtActual:
         return 0x42;
     case MmtTlv::MmtTableId::MhCdt:
         return 0xC8;
@@ -191,8 +192,8 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     int i = 0;
     while(payloadLength > 0) {
         ts::TSPacket packet;
-        packet.init(mmtStream->getMpeg2Pid(), mapCC[mmtStream->getMpeg2Pid()] & 0xF, 0);
-        ++mapCC[mmtStream->getMpeg2Pid()];
+        packet.init(mmtStream->getMpeg2PacketId(), mapCC[mmtStream->getMpeg2PacketId()] & 0xF, 0);
+        ++mapCC[mmtStream->getMpeg2PacketId()];
 
         if (i == 0) {
             packet.setPUSI();
@@ -346,7 +347,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
                 startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
         }
         catch(ts::Time::TimeError){
-            return;
+            continue;
         }
 
         tsEvent.duration = std::chrono::seconds(EITConvertDuration(mhEvent->duration));
@@ -450,6 +451,10 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 
         tsEit.events[tsEvent.event_id] = tsEvent;
 	}
+    
+    // EITs table ID range in MMT/TLV:   0x8C ~ 0x9B
+    // EITs table ID range in MPEG-2 TS: 0x50 ~ 0x5F
+    tsEit.last_table_id = mhEit->lastTableId - 0x8C + 0x50;
 
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
@@ -461,8 +466,6 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             section.get()->setTableId(0x4E);
         }
         else {
-            // EITs table ID range in MMT/TLV:   0x8C ~ 0x9B
-            // EITs table ID range in MPEG-2 TS: 0x50 ~ 0x5F
             section.get()->setTableId(mhEit->getTableId() - 0x8C + 0x50);
         }
         section.get()->setSectionNumber(mhEit->sectionNumber);
@@ -480,7 +483,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
     }
 }
 
-void RemuxerHandler::onMhSdt(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
+void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
 {
     if (mhSdt->services.size() == 0) {
         return;
@@ -645,7 +648,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
                     continue;
                 }
 
-                tsPmt.streams[mmtStream->getMpeg2Pid()] = stream;
+                tsPmt.streams[mmtStream->getMpeg2PacketId()] = stream;
                 streamIndex++;
             }
         }

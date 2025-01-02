@@ -10,6 +10,8 @@
 #include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
 #endif
+#include "tsARIBCharset.h"
+#include "aribUtil.h"
 
 MmtTlv::MmtTlvDemuxer demuxer;
 std::vector<uint8_t> output;
@@ -206,11 +208,14 @@ int main(int argc, char* argv[]) {
     inputFs.close();
     outputFs.close();
 
-    demuxer.clear();
-    demuxer.release();
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
+
+    demuxer.printStatistics();
+    demuxer.clear();
+    demuxer.release();
+
     std::cerr << "Elapsed time: " << elapsed_seconds.count() << " seconds\n";
     return 0;
 }
