@@ -99,8 +99,9 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 {
 	std::lock_guard<std::mutex> lock(mutex);
 	
+	bool ret;
 	do {
-		bool ret = pBonDriver2->GetTsStream(ppDst, pdwSize, pdwRemain);
+		ret = pBonDriver2->GetTsStream(ppDst, pdwSize, pdwRemain);
 		if (ret) {
 			if (fp) {
 				fwrite(*ppDst, 1, *pdwSize, fp);
@@ -108,7 +109,7 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 		
 			inputBuffer.insert(inputBuffer.end(), *ppDst, *ppDst + *pdwSize);
 		}
-	} while(*pdwRemain != 0);
+	} while(ret && *pdwRemain != 0);
 	
 	MmtTlv::Common::ReadStream input(inputBuffer);
 	while (!input.isEof()) {

@@ -391,11 +391,26 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
     uint8_t seq[7];
     size_t seq_size = 0;
 
+    if(selectorF == 0x4A /* ascii */) {
+        if(character_size != MSZ) {
+            seq[0] = MSZ;
+            character_size = MSZ;
+            seq_size++;
+        }
+    }
+    else {
+        if(character_size != NSZ) {
+            seq[0] = NSZ;
+            character_size = NSZ;
+            seq_size++;
+        }
+    }
+
     // There is some switching sequence to add only if the charset is neither in GL nor GR.
     if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
         // If the charset is not in G0-G3, we need to load it in one of them.
         if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
-            seq_size = selectG0123(seq, selectorF, byte2);
+            seq_size += selectG0123(seq + seq_size, selectorF, byte2);
         }
         // Route the right Gx in either GL or GR.
         seq_size += selectGLR(seq + seq_size, selectorF);
@@ -426,18 +441,6 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
 size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
 {
     int i = 0;
-    if(F == 0x4A /* ascii */) {
-        if(character_size != MSZ) {
-            seq[i++] = MSZ;
-            character_size = MSZ;
-        }
-    }
-    else {
-        if(character_size != NSZ) {
-            seq[i++] = NSZ;
-            character_size = NSZ;
-        }
-    }
 
     // If GL was last used, use GR and vice versa.
     if (F == _G[0]) {
