@@ -10,8 +10,6 @@
 #include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
 #endif
-#include "tsARIBCharset.h"
-#include "aribUtil.h"
 
 MmtTlv::MmtTlvDemuxer demuxer;
 std::vector<uint8_t> output;

@@ -13,9 +13,10 @@
 namespace MmtTlv {
 
 static const std::unordered_map<uint8_t, std::function<std::shared_ptr<MmtTableBase>()>> mapMmtTableFactory = {
-	{ MmtTableId::Ecm,			[] { return std::make_shared<Ecm>(); } },
+	{ MmtTableId::Ecm_0,		[] { return std::make_shared<Ecm>(); } },
 	{ MmtTableId::MhCdt,		[] { return std::make_shared<MhCdt>(); } },
 	{ MmtTableId::MhEitPf,		[] { return std::make_shared<MhEit>(); } },
+	{ MmtTableId::MhEitS_0,		[] { return std::make_shared<MhEit>(); } },
 	{ MmtTableId::MhEitS_1,		[] { return std::make_shared<MhEit>(); } },
 	{ MmtTableId::MhEitS_2,		[] { return std::make_shared<MhEit>(); } },
 	{ MmtTableId::MhEitS_3,		[] { return std::make_shared<MhEit>(); } },
@@ -31,7 +32,6 @@ static const std::unordered_map<uint8_t, std::function<std::shared_ptr<MmtTableB
 	{ MmtTableId::MhEitS_13,	[] { return std::make_shared<MhEit>(); } },
 	{ MmtTableId::MhEitS_14,	[] { return std::make_shared<MhEit>(); } },
 	{ MmtTableId::MhEitS_15,	[] { return std::make_shared<MhEit>(); } },
-	{ MmtTableId::MhEitS_16,	[] { return std::make_shared<MhEit>(); } },
 	{ MmtTableId::MhSdtActual,	[] { return std::make_shared<MhSdt>(); } },
 	{ MmtTableId::MhTot,		[] { return std::make_shared<MhTot>(); } },
 	{ MmtTableId::Mpt,			[] { return std::make_shared<Mpt>(); } },

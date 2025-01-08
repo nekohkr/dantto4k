@@ -241,6 +241,12 @@
     <ClCompile Include="tsARIBCharsetEncoding.cpp">
       <Filter>dantto4k</Filter>
     </ClCompile>
+    <ClCompile Include="caMessage.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
+    <ClCompile Include="dataTransmissionMessage.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -518,6 +524,12 @@
     </ClInclude>
     <ClInclude Include="mmtTlvStatistics.h">
       <Filter>mmttlv</Filter>
+    </ClInclude>
+    <ClInclude Include="caMessage.h">
+      <Filter>mmttlv\mmt\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="dataTransmissionMessage.h">
+      <Filter>mmttlv\mmt\structs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

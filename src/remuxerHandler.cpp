@@ -101,6 +101,7 @@ uint8_t convertTableId(uint8_t mmtTableId) {
         return 0x00;
     case MmtTlv::MmtTableId::MhEitPf:
         return 0x4E;
+    case MmtTlv::MmtTableId::MhEitS_0:
     case MmtTlv::MmtTableId::MhEitS_1:
     case MmtTlv::MmtTableId::MhEitS_2:
     case MmtTlv::MmtTableId::MhEitS_3:
@@ -116,7 +117,6 @@ uint8_t convertTableId(uint8_t mmtTableId) {
     case MmtTlv::MmtTableId::MhEitS_13:
     case MmtTlv::MmtTableId::MhEitS_14:
     case MmtTlv::MmtTableId::MhEitS_15:
-    case MmtTlv::MmtTableId::MhEitS_16:
         return 0x50;
     case MmtTlv::MmtTableId::MhTot:
         return 0x73;

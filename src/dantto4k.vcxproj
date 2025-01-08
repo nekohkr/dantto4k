@@ -153,9 +153,11 @@
     <ClCompile Include="acascard.cpp" />
     <ClCompile Include="adtsConverter.cpp" />
     <ClCompile Include="bonTuner.cpp" />
+    <ClCompile Include="caMessage.cpp" />
     <ClCompile Include="compressedIPPacket.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="contentCopyControlDescriptor.cpp" />
+    <ClCompile Include="dataTransmissionMessage.cpp" />
     <ClCompile Include="dataUnit.cpp" />
     <ClCompile Include="ecm.cpp" />
     <ClCompile Include="eventPackageDescriptor.cpp" />
@@ -235,10 +237,12 @@
     <ClInclude Include="acascard.h" />
     <ClInclude Include="adtsConverter.h" />
     <ClInclude Include="bonTuner.h" />
+    <ClInclude Include="caMessage.h" />
     <ClInclude Include="compressedIPPacket.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="contentCopyControlDescriptor.h" />
     <ClInclude Include="dantto4k.h" />
+    <ClInclude Include="dataTransmissionMessage.h" />
     <ClInclude Include="dataUnit.h" />
     <ClInclude Include="descriptorConverter.h" />
     <ClInclude Include="ecm.h" />

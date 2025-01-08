@@ -22,7 +22,9 @@ namespace MmtTlv {
 enum class MmtMessageId {
 	PaMessage = 0x0000,
 	M2SectionMessage = 0x8000,
+	CaMessage = 0x8001,
 	M2ShortSectionMessage = 0x8002,
+	DataTransmissionMessage = 0x8003,
 };
 
 class FragmentAssembler;
@@ -51,9 +53,12 @@ private:
 	void processSignalingMessage(Common::ReadStream& stream);
 	void processPaMessage(Common::ReadStream& stream);
 	void processM2SectionMessage(Common::ReadStream& stream);
+	void processCaMessage(Common::ReadStream& stream);
 	void processM2ShortSectionMessage(Common::ReadStream& stream);
+	void processDataTransmissionMessage(Common::ReadStream& stream);
 	void processTlvTable(Common::ReadStream& stream);
 	void processMmtTable(Common::ReadStream& stream);
+	void processMmtTableStatistics(uint8_t tableId);
 	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
 	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
 	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);

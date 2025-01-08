@@ -18,6 +18,7 @@ public:
 	public:
 		MmtStat(uint16_t packetId) : packetId(packetId) {}
 		uint16_t packetId{0};
+		std::string name;
 		uint32_t lastPacketSequenceNumber{0};
 		uint32_t assetType{0};
 		uint64_t count{0};
@@ -26,127 +27,148 @@ public:
 		uint8_t videoAspectRatio{0};
 		uint8_t audioComponentType{0};
 		uint8_t audioSamplingRate{0};
+
+		void setName(const std::string& name) {
+			this->name = name;
+		}
 		
+		std::string getName() const {
+			if (assetType != 0) {
+				switch (assetType) {
+				case AssetType::hev1:
+					return "HEVC";
+				case AssetType::mp4a:
+					return "Audio";
+				case AssetType::stpp:
+					return "Closed Caption";
+				case AssetType::aapp:
+					return "Application";
+				default:
+					return "Unknown";
+				}
+			}
+			else {
+				return name;
+			}
+		}
+
+		std::string getVideoResolution() const {
+			int videoResolutionWidth = 0, videoResolutionHeight = 0;
+			
+			switch (videoResolution) {
+			case 1:
+				videoResolutionHeight = 180;
+				break;
+			case 2:
+				videoResolutionHeight = 240;
+				break;
+			case 3:
+				videoResolutionHeight = 480;
+				break;
+			case 4:
+				videoResolutionHeight = 720;
+				break;
+			case 5:
+				videoResolutionHeight = 1080;
+				break;
+			case 6:
+				videoResolutionHeight = 2160;
+				break;
+			case 7:
+				videoResolutionHeight = 4320;
+				break;
+			}
+				
+			videoResolutionWidth = static_cast<int>(videoResolutionHeight * ((videoAspectRatio == 2 || videoAspectRatio == 3) ? 16.f/9 : 4.f/3));
+			return std::to_string(videoResolutionWidth) + "x" + std::to_string(videoResolutionHeight);;
+		}
+		
+		std::string getAudioMode() const {
+			uint8_t audioMode = audioComponentType & 0b00011111;
+
+			switch (audioMode) {
+			case 0b00001:
+				return "single mono";
+			case 0b00010:
+				return "dual mono";
+			case 0b00011:
+				return "stereo";
+			case 0b00100:
+				return "2/1";
+			case 0b00101:
+				return "3ch";
+			case 0b00110:
+				return "2/2";
+			case 0b00111:
+				return "4ch";
+			case 0b01000:
+				return "5ch";
+			case 0b01001:
+				return "5.1ch";
+			case 0b01010:
+				return "3/3.1";
+			case 0b01011:
+				return "6.1ch";
+			case 0b01100:
+				return "7.1ch";
+			case 0b01101:
+				return "7.1ch";
+			case 0b01110:
+				return "7.1ch";
+			case 0b01111:
+				return "7.1ch";
+			case 0b10000:
+				return "10.2ch";
+			case 0b10001:
+				return "22.2ch";
+			}
+
+			return "Unknown";
+		}
+		
+		std::string getAudioSamplingRate() const {
+			switch (audioSamplingRate) {
+			case 0b001:
+				return "16kHz";
+			case 0b010:
+				return "22.05kHz";
+			case 0b011:
+				return "24kHz";
+			case 0b101:
+				return "32kHz";
+			case 0b110:
+				return "44.1kHz";
+			case 0b111:
+				return "48kHz";
+			default:
+				return "Unknown";
+			}
+		}
+
 		void print() {
+			std::string output;
 			std::ostringstream oss;
+
 			oss << "0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << packetId;
 
-			std::string output;
 			output = " - PacketId: " + oss.str() + ", ";
+			output += "Count: " + std::to_string(count) + ", ";
+			output += "Drop: " + std::to_string(drop);
+
+			std::string name = getName();
+			if(name != "") {
+				output += ", " + getName();
+			}
 
 			if (assetType != 0) {
 				if (assetType == AssetType::hev1) {
-					output += "HEVC";
-					int videoResolutionWidth = 0, videoResolutionHeight = 0;
-
-					if (videoResolution == 1) {
-						videoResolutionHeight = 180;
-					}
-					else if (videoResolution == 2) {
-						videoResolutionHeight = 240;
-					}
-					else if (videoResolution == 3) {
-						videoResolutionHeight = 480;
-					}
-					else if (videoResolution == 4) {
-						videoResolutionHeight = 720;
-					}
-					else if (videoResolution == 5) {
-						videoResolutionHeight = 1080;
-					}
-					else if (videoResolution == 6) {
-						videoResolutionHeight = 2160;
-					}
-					else if (videoResolution == 7) {
-						videoResolutionHeight = 4320;
-					}
-				
-					videoResolutionWidth = static_cast<int>(videoResolutionHeight * ((videoAspectRatio == 2 || videoAspectRatio == 3) ? 16.f/9 : 4.f/3));
-					output += "(" + std::to_string(videoResolutionWidth) + "x" + std::to_string(videoResolutionHeight) + "), ";
+					output += "(" + getVideoResolution() + ")";
 				}
 				else if (assetType == AssetType::mp4a) {
-					output += "Audio";
-					uint8_t audioMode = audioComponentType & 0b00011111;
-					if (audioMode == 0b00001) {
-						output += "(single mono, ";
-					}
-					else if (audioMode == 0b00010) {
-						output += "(dual mono, ";
-					}
-					else if (audioMode == 0b00011) {
-						output += "(stereo, ";
-					}
-					else if (audioMode == 0b00100) {
-						output += "(2/1, ";
-					}
-					else if (audioMode == 0b00101) {
-						output += "(3ch, ";
-					}
-					else if (audioMode == 0b00110) {
-						output += "(2/2, ";
-					}
-					else if (audioMode == 0b00111 ) {
-						output += "(4ch, ";
-					}
-					else if (audioMode == 0b010000) {
-						output += "(5ch, ";
-					}
-					else if (audioMode == 0b01001) {
-						output += "(5.1ch, ";
-					}
-					else if (audioMode == 0b01010) {
-						output += "(3/3.1, ";
-					}
-					else if (audioMode == 0b01011) {
-						output += "(6.1ch, ";
-					}
-					else if (audioMode == 0b01100) {
-						output += "(7.1ch, ";
-					}
-					else if (audioMode == 0b01101) {
-						output += "(7.1ch, ";
-					}
-					else if (audioMode == 0b01110) {
-						output += "(7.1ch, ";
-					}
-					else if (audioMode == 0b01111) {
-						output += "(7.1ch, ";
-					}
-					else if (audioMode == 0b10000) {
-						output += "(10.2ch, ";
-					}
-					else if (audioMode == 0b10001) {
-						output += "(22.2ch, ";
-					}
-
-					if (audioSamplingRate == 0b001) {
-						output += "16kHz), ";
-					}
-					else if (audioSamplingRate == 0b010) {
-						output += "22.05kHz), ";
-					}
-					else if (audioSamplingRate == 0b011) {
-						output += "24kHz), ";
-					}
-					else if (audioSamplingRate == 0b101) {
-						output += "32kHz), ";
-					}
-					else if (audioSamplingRate == 0b110) {
-						output += "44.1kHz), ";
-					}
-					else if (audioSamplingRate == 0b111) {
-						output += "48kHz), ";
-					}
-				}
-				else if (assetType == AssetType::stpp) {
-					output += "Closed Caption, ";
-				}
-				else if (assetType == AssetType::aapp) {
-					output += "Application, ";
+					output += "(" + getAudioMode() + ", " + getAudioSamplingRate() + ")";
 				}
 			}
-			output += "Count: " + std::to_string(count) + ", ";
-			output += "Drop: " + std::to_string(drop);
+
 			std::cerr << output << std::endl;
 		}
 	};
@@ -168,7 +190,7 @@ public:
 	}
 
 	void print() {
-		std::cerr << "TLV Packet: " << std::to_string(tlvPacketCount) << std::endl;
+		std::cerr << "TLV Packet" << std::endl;
 		std::cerr << " - IPv4Packet: " << std::to_string(tlvIpv4PacketCount) << std::endl;
 		std::cerr << " - IPv6Packet: " << std::to_string(tlvIpv6PacketCount) << std::endl;
 		std::cerr << " - HeaderCompressedIpPacket: " << std::to_string(tlvHeaderCompressedIpPacketCount) << std::endl;

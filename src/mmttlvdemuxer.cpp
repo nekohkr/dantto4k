@@ -28,6 +28,8 @@
 #include "mhAudioComponentDescriptor.h"
 #include "ipv6.h"
 #include "ntp.h"
+#include "dataTransmissionMessage.h"
+#include "caMessage.h"
 
 namespace MmtTlv {
 
@@ -203,6 +205,16 @@ void MmtTlvDemuxer::processM2SectionMessage(Common::ReadStream& stream)
     processMmtTable(stream);
 }
 
+void MmtTlvDemuxer::processCaMessage(Common::ReadStream& stream)
+{
+    CaMessage message;
+    if (!message.unpack(stream)) {
+        return;
+    }
+    
+    processMmtTable(stream);
+}
+
 void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
 {
     M2ShortSectionMessage message;
@@ -210,6 +222,16 @@ void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
         return;
     }
 
+    processMmtTable(stream);
+}
+
+void MmtTlvDemuxer::processDataTransmissionMessage(Common::ReadStream& stream)
+{
+    DataTransmissionMessage message;
+    if (!message.unpack(stream)) {
+        return;
+    }
+    
     processMmtTable(stream);
 }
 
@@ -241,6 +263,8 @@ void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream)
 void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
 {
     uint8_t tableId = stream.peek8U();
+    processMmtTableStatistics(tableId);
+
     const auto table = MmtTableFactory::create(tableId);
     if (table == nullptr) {
         stream.skip(stream.leftBytes());
@@ -255,7 +279,7 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
         processMmtPackageTable(std::dynamic_pointer_cast<Mpt>(table));
         break;
     }
-    case MmtTableId::Ecm:
+    case MmtTableId::Ecm_0:
     {
         processEcm(std::dynamic_pointer_cast<Ecm>(table));
         break;
@@ -263,7 +287,7 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
     }
 
     switch (tableId) {
-    case MmtTableId::Ecm:
+    case MmtTableId::Ecm_0:
         if (demuxerHandler) {
             demuxerHandler->onEcm(std::dynamic_pointer_cast<Ecm>(table));
         }
@@ -274,6 +298,7 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
         }
         break;
     case MmtTableId::MhEitPf:
+    case MmtTableId::MhEitS_0:
     case MmtTableId::MhEitS_1:
     case MmtTableId::MhEitS_2:
     case MmtTableId::MhEitS_3:
@@ -289,7 +314,6 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
     case MmtTableId::MhEitS_13:
     case MmtTableId::MhEitS_14:
     case MmtTableId::MhEitS_15:
-    case MmtTableId::MhEitS_16:
         if (demuxerHandler) {
             demuxerHandler->onMhEit(std::dynamic_pointer_cast<MhEit>(table));
         }
@@ -318,6 +342,99 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
         if (demuxerHandler) {
             demuxerHandler->onMhBit(std::dynamic_pointer_cast<MhBit>(table));
         }
+        break;
+    }
+}
+
+void MmtTlvDemuxer::processMmtTableStatistics(uint8_t tableId)
+{
+    switch (tableId) {
+    case MmtTableId::Pat:
+        statistics.getMmtStat(mmt.packetId)->setName("PAT");
+        break;
+    case MmtTableId::Ecm_0:
+        statistics.getMmtStat(mmt.packetId)->setName("ECM");
+        break;
+    case MmtTableId::Ecm_1:
+        statistics.getMmtStat(mmt.packetId)->setName("ECM");
+        break;
+    case MmtTableId::MhCdt:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-CDT");
+        break;
+    case MmtTableId::MhEitPf:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-EIT");
+        break;
+    case MmtTableId::MhEitS_0:
+    case MmtTableId::MhEitS_1:
+    case MmtTableId::MhEitS_2:
+    case MmtTableId::MhEitS_3:
+    case MmtTableId::MhEitS_4:
+    case MmtTableId::MhEitS_5:
+    case MmtTableId::MhEitS_6:
+    case MmtTableId::MhEitS_7:
+    case MmtTableId::MhEitS_8:
+    case MmtTableId::MhEitS_9:
+    case MmtTableId::MhEitS_10:
+    case MmtTableId::MhEitS_11:
+    case MmtTableId::MhEitS_12:
+    case MmtTableId::MhEitS_13:
+    case MmtTableId::MhEitS_14:
+    case MmtTableId::MhEitS_15:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-EIT");
+        break;
+    case MmtTableId::MhSdtActual:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-SDT");
+        break;
+    case MmtTableId::MhSdtOther:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-SDT");
+        break;
+    case MmtTableId::MhTot:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-TOT");
+        break;
+    case MmtTableId::Mpt:
+        statistics.getMmtStat(mmt.packetId)->setName("MPT");
+        break;
+    case MmtTableId::Plt:
+        statistics.getMmtStat(mmt.packetId)->setName("PLT");
+        break;
+    case MmtTableId::MhBit:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-BIT");
+        break;
+    case MmtTableId::Lct:
+        statistics.getMmtStat(mmt.packetId)->setName("LCT");
+        break;
+    case MmtTableId::Emm_0:
+        statistics.getMmtStat(mmt.packetId)->setName("EMM");
+        break;
+    case MmtTableId::Emm_1:
+        statistics.getMmtStat(mmt.packetId)->setName("EMM");
+        break;
+    case MmtTableId::Cat:
+        statistics.getMmtStat(mmt.packetId)->setName("CAT");
+        break;
+    case MmtTableId::Dcm:
+        statistics.getMmtStat(mmt.packetId)->setName("DCM");
+        break;
+    case MmtTableId::Dmm:
+        statistics.getMmtStat(mmt.packetId)->setName("DMM");
+        break;
+    case MmtTableId::MhSdtt:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-SDTT");
+        break;
+    case MmtTableId::MhAit:
+        statistics.getMmtStat(mmt.packetId)->setName("MH-AIT");
+        break;
+    case MmtTableId::Ddmt:
+        statistics.getMmtStat(mmt.packetId)->setName("DDMT");
+        break;
+    case MmtTableId::Damt:
+        statistics.getMmtStat(mmt.packetId)->setName("DAMT");
+        break;
+    case MmtTableId::Dcct:
+        statistics.getMmtStat(mmt.packetId)->setName("DCCT");
+        break;
+    case MmtTableId::Emt:
+        statistics.getMmtStat(mmt.packetId)->setName("EMT");
         break;
     }
 }
@@ -361,7 +478,8 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             if (locationInfo.locationType == 0) {
                 if (asset.assetType == AssetType::hev1 ||
                     asset.assetType == AssetType::mp4a ||
-                    asset.assetType == AssetType::stpp) {
+                    asset.assetType == AssetType::stpp ||
+                    asset.assetType == AssetType::aapp) {
                     mmtStream = getStream(locationInfo.packetId);
                     if (!mmtStream) {
                         mmtStream = std::make_shared<MmtStream>(locationInfo.packetId);
@@ -610,10 +728,6 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
         return;
     }
 
-    if (assembler->state == FragmentAssembler::State::Init && !mmt.rapFlag) {
-        return;
-    }
-
     if (assembler->state == FragmentAssembler::State::Init) {
         mmtStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
     }
@@ -759,9 +873,12 @@ void MmtTlvDemuxer::processSignalingMessage(Common::ReadStream& stream)
         return processPaMessage(stream);
     case MmtMessageId::M2SectionMessage:
         return processM2SectionMessage(stream);
+    case MmtMessageId::CaMessage:
+        return processCaMessage(stream);
     case MmtMessageId::M2ShortSectionMessage:
         return processM2ShortSectionMessage(stream);
-        break;
+    case MmtMessageId::DataTransmissionMessage:
+        return processDataTransmissionMessage(stream);
     }
 }
 

@@ -40,6 +40,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
                 ptsDts = mmtStream->getNextPtsDts();
             }
             catch (const std::out_of_range&) {
+                pendingData.clear();
                 return std::nullopt;
             }
 
@@ -69,6 +70,7 @@ void VideoMfuDataProcessor::appendPendingData(Common::ReadStream& stream, int si
 {
     uint32_t nalStartCode = 0x1000000;
     size_t oldSize = pendingData.size();
+
     pendingData.resize(oldSize + 4 + size);
 
     memcpy(pendingData.data() + oldSize, &nalStartCode, 4);
