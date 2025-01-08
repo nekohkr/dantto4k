@@ -264,6 +264,7 @@
     <ClInclude Include="eventPackageDescriptor.h" />
     <ClInclude Include="extensionHeaderScrambling.h" />
     <ClInclude Include="demuxerHandler.h" />
+    <ClInclude Include="hashUtil.h" />
     <ClInclude Include="ipv6.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="mhBIt.h" />

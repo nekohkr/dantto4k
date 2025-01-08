@@ -2,6 +2,7 @@
 #include "stream.h"
 
 namespace {
+
 	void writePts(MmtTlv::Common::WriteStream &stream, int fourbits, int64_t pts)
 	{
 		int val;
@@ -15,6 +16,7 @@ namespace {
 		stream.put8U(val >> 8);
 		stream.put8U(val);
 	}
+
 }
 
 bool PESPacket::pack(std::vector<uint8_t>& output)

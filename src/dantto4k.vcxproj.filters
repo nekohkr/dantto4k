@@ -531,6 +531,9 @@
     <ClInclude Include="dataTransmissionMessage.h">
       <Filter>mmttlv\mmt\structs</Filter>
     </ClInclude>
+    <ClInclude Include="hashUtil.h">
+      <Filter>mmttlv\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dantto4k">

@@ -74,9 +74,7 @@ const ts::ByteBlock aribEncode(const std::string& input) {
     convertGaiji(converted);
 
     ts::UString text = ts::UString::FromUTF8(converted);
-    auto aribBlock = ts::ARIBCharset2::B24.encoded(text);
-    
-    return aribBlock;
+    return ts::ARIBCharset2::B24.encoded(text);
 }
 
 const ts::ByteBlock aribEncode(const char* input, size_t size) {

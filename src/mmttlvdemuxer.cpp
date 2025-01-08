@@ -142,7 +142,7 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
         if (mmt.extensionHeaderScrambling.has_value()) {
             if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
                 mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-                if (!acasCard->ready) {
+                if (!acasCard->isReady()) {
                     return 1;
                 }
                 else {

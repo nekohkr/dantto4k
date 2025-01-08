@@ -73,31 +73,16 @@ bool Mmt::unpack(Common::ReadStream& stream)
 
 bool Mmt::decryptPayload(Acas::DecryptedEcm* decryptedEcm)
 {
-	if (packetCounterFlag) {
-		//throw std::runtime_error("Has packet counter flag");
-	}
-
 	if (!extensionHeaderScrambling) {
 		return false;
 	}
 
-	std::vector<uint8_t> key(16);
+	std::span<uint8_t> key;
 	if (extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD) {
-		memcpy(key.data(), decryptedEcm->odd, 16);
+		key = decryptedEcm->odd;
 	}
 	else if (extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-		memcpy(key.data(), decryptedEcm->even, 16);
-	}
-	else {
-		//throw std::runtime_error("Encryption flag reserved");
-	}
-
-	if (extensionHeaderScrambling->messageAuthenticationControl > 0) {
-		//throw std::runtime_error("SICV not implemented");
-	}
-
-	if (extensionHeaderScrambling->messageAuthenticationControl > 0) {
-		//throw std::runtime_error("MAC not implemented");
+		key = decryptedEcm->even;
 	}
 
 	std::vector<uint8_t> iv;

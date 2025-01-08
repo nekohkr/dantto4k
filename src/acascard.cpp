@@ -16,7 +16,7 @@ void AcasCard::init()
     smartCard->transmit(apdu.case2short(0x00));
 }
 
-std::vector<uint8_t> AcasCard::getA0AuthKcl()
+Common::sha256_t AcasCard::getA0AuthKcl() const
 {
     std::default_random_engine engine(std::random_device{}());
     std::uniform_int_distribution<int> distrib(0, 255);
@@ -40,38 +40,20 @@ std::vector<uint8_t> AcasCard::getA0AuthKcl()
     std::vector<uint8_t> a0response(a0data.begin() + 0x06, a0data.begin() + 0x06 + 0x08);
     std::vector<uint8_t> a0hash(a0data.begin() + 0x0e, a0data.end());
 
-    std::vector<uint8_t> painKcl;
-    painKcl.insert(painKcl.end(), std::begin(masterKey), std::end(masterKey));
-    painKcl.insert(painKcl.end(), a0init.begin(), a0init.end());
-    painKcl.insert(painKcl.end(), a0response.begin(), a0response.end());
+    std::vector<uint8_t> plainKcl;
+    plainKcl.insert(plainKcl.end(), std::begin(masterKey), std::end(masterKey));
+    plainKcl.insert(plainKcl.end(), a0init.begin(), a0init.end());
+    plainKcl.insert(plainKcl.end(), a0response.begin(), a0response.end());
 
-    std::vector<uint8_t> kcl(32);
-    {
-        EVP_MD_CTX* mdctx;
-        unsigned int digest_len = (unsigned int)kcl.size();
-        mdctx = EVP_MD_CTX_new();
-        EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
-        EVP_DigestUpdate(mdctx, painKcl.data(), painKcl.size());
-        EVP_DigestFinal_ex(mdctx, kcl.data(), &digest_len);
-        EVP_MD_CTX_free(mdctx);
-    }
+    Common::sha256_t kcl = Common::sha256(plainKcl);
 
     std::vector<uint8_t> plainData;
     plainData.insert(plainData.end(), kcl.begin(), kcl.end());
     plainData.insert(plainData.end(), a0init.begin(), a0init.end());
 
-    std::vector<uint8_t> hash(32);
-    {
-        EVP_MD_CTX* mdctx;
-        unsigned int digest_len = (unsigned int)kcl.size();
-        mdctx = EVP_MD_CTX_new();
-        EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
-        EVP_DigestUpdate(mdctx, plainData.data(), plainData.size());
-        EVP_DigestFinal_ex(mdctx, hash.data(), &digest_len);
-        EVP_MD_CTX_free(mdctx);
-    }
-
-    if (hash != a0hash) {
+    Common::sha256_t hash = Common::sha256(plainData);
+    
+    if (!std::equal(hash.begin(), hash.end(), a0hash.begin())) {
         throw std::runtime_error("A0 hash did not match");
     }
 
@@ -84,7 +66,7 @@ DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
         return decryptedEcmMap[ecm];
     }
 
-    auto kcl = getA0AuthKcl();
+    Common::sha256_t kcl = getA0AuthKcl();
 
     ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
     auto response = smartCard->transmit(apdu.case4short(ecm, 0x00));
@@ -101,24 +83,15 @@ DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
     plainData.insert(plainData.end(), kcl.begin(), kcl.end());
     plainData.insert(plainData.end(), ecmInit.begin(), ecmInit.end());
 
-    std::vector<uint8_t> hash(32);
-    {
-        EVP_MD_CTX* mdctx;
-        unsigned int digest_len = (unsigned int)kcl.size();
-        mdctx = EVP_MD_CTX_new();
-        EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
-        EVP_DigestUpdate(mdctx, plainData.data(), plainData.size());
-        EVP_DigestFinal_ex(mdctx, hash.data(), &digest_len);
-        EVP_MD_CTX_free(mdctx);
-    }
+    Common::sha256_t hash = Common::sha256(plainData);
 
     for (int i = 0; i < hash.size(); i++) {
-        hash.data()[i] ^= ecmResponse[i];
+        hash[i] ^= ecmResponse[i];
     }
 
-    DecryptedEcm decryptedEcm;
-    memcpy(decryptedEcm.odd, hash.data(), 0x10);
-    memcpy(decryptedEcm.even, hash.data() + 0x10, 0x10);
+    DecryptedEcm decryptedEcm{};
+    std::copy(hash.begin(), hash.begin() + 0x10, decryptedEcm.odd.begin());
+    std::copy(hash.begin() + 0x10, hash.begin() + 0x20, decryptedEcm.even.begin());
 
     decryptedEcmMap[ecm] = decryptedEcm;
     lastDecryptedEcm = decryptedEcm;
