@@ -6,6 +6,7 @@ class Config {
 public:
     std::string bondriverPath{};
     std::string mmtsDumpPath{};
+    std::string smartCardReaderName{};
     bool disableADTSConversion{false};
 };
 

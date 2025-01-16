@@ -145,7 +145,7 @@ public:
 			}
 		}
 
-		void print() {
+		void print() const {
 			std::string output;
 			std::ostringstream oss;
 
@@ -189,7 +189,7 @@ public:
 		mapMmtStat.clear();
 	}
 
-	void print() {
+	void print() const {
 		std::cerr << "TLV Packet" << std::endl;
 		std::cerr << " - IPv4Packet: " << std::to_string(tlvIpv4PacketCount) << std::endl;
 		std::cerr << " - IPv6Packet: " << std::to_string(tlvIpv6PacketCount) << std::endl;

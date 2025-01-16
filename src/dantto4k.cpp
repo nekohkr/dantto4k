@@ -24,9 +24,10 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
     try {
         std::string path = getConfigFilePath(hDantto4kModule);
         config = loadConfig(path);
-
-        demuxer.init();
+        
         demuxer.setDemuxerHandler(handler);
+        demuxer.setSmartCardReaderName(config.smartCardReaderName);
+        demuxer.init();
 
         bonTuner.init();
     }
@@ -44,8 +45,6 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
         hDantto4kModule = hModule;
         break;
     }
-    case DLL_PROCESS_DETACH:
-        break;
     }
 
     return true;
@@ -104,7 +103,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-static int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
+int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
 	__try {
 		return demuxer.processPacket(input);
 	}
@@ -116,37 +115,83 @@ static int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
 
 #endif
 
-namespace {
-    size_t getLeftBytes(std::ifstream& file) {
-        std::streampos currentPos = file.tellg();
+size_t getLeftBytes(std::ifstream& file) {
+    std::streampos currentPos = file.tellg();
 
-        file.seekg(0, std::ios::end);
-        std::streampos fileSize = file.tellg();
+    file.seekg(0, std::ios::end);
+    std::streampos fileSize = file.tellg();
 
-        file.seekg(currentPos);
+    file.seekg(currentPos);
 
-        return static_cast<size_t>(fileSize - currentPos);
+    return static_cast<size_t>(fileSize - currentPos);
+}
+
+void printReaderList() {
+    SCARDCONTEXT hContext;
+    LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
+
+    DWORD readersSize = 0;
+    SCardListReadersA(hContext, nullptr, nullptr, &readersSize);
+    if (result != SCARD_S_SUCCESS) {
+        std::cerr << "Failed to get size of reader list. (result: " << result << ")" << std::endl;
+        return;
     }
+
+    std::vector<char> readersBuffer(readersSize);
+    result = SCardListReadersA(hContext, nullptr, readersBuffer.data(), &readersSize);
+    if (result != SCARD_S_SUCCESS) {
+        std::cerr << "Failed to get size of reader list. (result: " << result << ")" << std::endl;
+        return;
+    }
+
+    const char* reader = readersBuffer.data();
+    while (*reader != L'\0') {
+        std::cerr << " - " << reader << std::endl;
+        reader += strlen(reader) + 1;
+    }
+
+	SCardReleaseContext(hContext);
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        std::cerr << "dantto4k.exe <input.mmts> <output.ts> [options]" << std::endl;
-        std::cerr << "options:" << std::endl;
-        std::cerr << "\t--disableADTSConversion: Uses the raw LATM format without converting to ADTS." << std::endl;
-        return 1;
-    }
-    
     auto start = std::chrono::high_resolution_clock::now();
 
     std::string inputPath, outputPath;
-    inputPath = argv[1];
-    outputPath = argv[2];
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
 
-    for (int i = 3; i < argc; ++i) {
-        if (std::string(argv[i]) == "--disableADTSConversion") {
+        if (arg  == "--disableADTSConversion") {
             config.disableADTSConversion = true;
         }
+        else if (arg.find("--smartCardReaderName=") == 0) {
+            config.smartCardReaderName = arg.substr(std::string("--smartCardReaderName=").length());
+        }
+        else if (arg  == "--listSmartCardReader") {
+            printReaderList();
+            return 1;
+        }
+        else {
+            if (inputPath == "") {
+                inputPath = arg;
+            }
+            else if (outputPath == "") {
+                outputPath = arg;
+            }
+        }
+    }
+
+    if (inputPath == "" || outputPath == "") {
+        std::cerr << "dantto4k.exe <input.mmts> <output.ts> [options]" << std::endl;
+        std::cerr << "options:" << std::endl;
+        std::cerr << "\t--disableADTSConversion: Uses the raw LATM format without converting to ADTS." << std::endl;
+        std::cerr << "\t--listSmartCardReader: Lists the available smart card readers." << std::endl;
+        std::cerr << "\t--smartCardReaderName=<name>: Sets the smart card reader to use." << std::endl;
+        return 1;
+    }
+
+    if (inputPath == outputPath) {
+        std::cerr << "Input and output paths cannot be the same." << std::endl;
+        return 1;
     }
 
     std::ifstream inputFs(inputPath, std::ios::binary);
@@ -161,8 +206,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    demuxer.init();
     demuxer.setDemuxerHandler(handler);
+    demuxer.setSmartCardReaderName(config.smartCardReaderName);
+    demuxer.init();
 
     const size_t chunkSize = 1024 * 1024 * 20;
     std::vector<uint8_t> buffer;

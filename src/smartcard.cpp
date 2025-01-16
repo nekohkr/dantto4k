@@ -7,7 +7,7 @@ bool SmartCard::init() {
     return result == SCARD_S_SUCCESS;
 }
 
-bool SmartCard::isConnected()
+bool SmartCard::isConnected() const
 {
     if (hCard) {
         return true;
@@ -19,19 +19,25 @@ bool SmartCard::isConnected()
 void SmartCard::connect() {
     LONG result;
     DWORD readersSize = SCARD_AUTOALLOCATE;
-    LPTSTR readers = nullptr;
-
+    std::string readerName;
     disconnect();
 
-    result = SCardListReaders(hContext, nullptr, (LPTSTR)&readers, &readersSize);
-    if (result != SCARD_S_SUCCESS) {
-        throw std::runtime_error("Failed to list smart card readers. (result: " + std::to_string(result) + ")");
+    if(smartCardReaderName == "") {
+        char* readers = nullptr;
+        result = SCardListReadersA(hContext, nullptr, (LPSTR)&readers, &readersSize);
+        if (result != SCARD_S_SUCCESS) {
+            throw std::runtime_error("Failed to list smart card readers. (result: " + std::to_string(result) + ")");
+        }
+
+        readerName = readers;
+        SCardFreeMemory(hContext, readers);
+    }
+    else {
+        readerName = smartCardReaderName;
     }
 
-    std::wstring readerName(readers);
-    SCardFreeMemory(hContext, readers);
 
-    result = SCardConnect(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
+    result = SCardConnectA(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
     if (result != SCARD_S_SUCCESS) {
         throw std::runtime_error("Failed to connect to smart card. (result: " + std::to_string(result) + ")");
     }

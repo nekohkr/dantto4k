@@ -7,17 +7,11 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
 {
     Common::ReadStream stream(data);
     if (stream.leftBytes() < 4) {
-#ifndef _DANTTO4K_DLL
-        std::cerr << "MFU data appears to be corrupted." << std::endl;
-#endif
         return std::nullopt;
     }
 
     uint32_t size = stream.getBe32U();
     if (size != stream.leftBytes()) {
-#ifndef _DANTTO4K_DLL
-        std::cerr << "MFU data appears to be corrupted." << std::endl;
-#endif
         return std::nullopt;
     }
 

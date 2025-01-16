@@ -72,8 +72,11 @@ private:
 
 class SmartCard {
 public:
+    void setSmartCardReaderName(const std::string& smartCardReaderName) {
+        this->smartCardReaderName = smartCardReaderName;
+    }
     bool init();
-    bool isConnected();
+    bool isConnected() const;
     void connect();
     ApduResponse transmit(const std::vector<BYTE>& sendData);
     void disconnect();
@@ -83,6 +86,7 @@ private:
     SCARDCONTEXT hContext = NULL;
     SCARDHANDLE hCard = NULL;
     DWORD dwActiveProtocol = 0;
+    std::string smartCardReaderName;
 };
 
 }

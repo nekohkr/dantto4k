@@ -57,6 +57,11 @@ void MmtTlvDemuxer::setDemuxerHandler(DemuxerHandler& demuxerHandler)
     this->demuxerHandler = &demuxerHandler;
 }
 
+void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderName) {
+    
+    smartCard->setSmartCardReaderName(smartCardReaderName);
+}
+
 int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
 {
     if (stream.leftBytes() < 4) {
@@ -679,7 +684,7 @@ void MmtTlvDemuxer::release()
     smartCard->release();
 }
 
-void MmtTlvDemuxer::printStatistics()
+void MmtTlvDemuxer::printStatistics() const
 {
     statistics.print();
 }

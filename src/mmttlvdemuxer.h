@@ -39,10 +39,11 @@ public:
 	MmtTlvDemuxer();
 	bool init();
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
+	void setSmartCardReaderName(const std::string& smartCardReaderName);
 	int processPacket(Common::ReadStream& stream);
 	void clear();
 	void release();
-	void printStatistics();
+	void printStatistics() const;
 
 private:
 	bool isVaildTlv(Common::ReadStream& stream) const;
