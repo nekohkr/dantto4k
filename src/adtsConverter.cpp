@@ -45,7 +45,7 @@ bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& o
 
     output.resize(frameLength);
 
-    // adts header
+    // ADTS Header
     output.data()[0] = (0xFFF >> 4) & 0xFF;
     output.data()[1] = ((0xFFF & 0b111100000000) >> 8) << 4 |
                         0 << 3 | // mpeg version

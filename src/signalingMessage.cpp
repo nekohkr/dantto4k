@@ -1,5 +1,4 @@
 #include "signalingMessage.h"
-#include "fragmentAssembler.h"
 
 namespace MmtTlv {
 

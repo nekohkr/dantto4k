@@ -140,6 +140,12 @@ void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
 
 void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
+    // ADTS conversion for 22.2ch is not implemented.
+    if (mmtStream->Is22_2chAudio()) {
+        writeStream(mmtStream, mfuData, mfuData->data);
+        return;
+    }
+
     if (config.disableADTSConversion) {
         writeStream(mmtStream, mfuData, mfuData->data);
         return;
@@ -616,9 +622,22 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
     for (auto& asset : mpt->assets) {
         for (int i = 0; i < asset.locationCount; i++) {
             if (asset.locationInfos[i].locationType == 0) {
+                const auto& mmtStream = demuxer.mapStreamByStreamIdx[streamIndex];
+                if (mmtStream->getComponentTag() == -1) {
+                    streamIndex++;
+                    continue;
+                }
+
                 int streamType = assetType2streamType(asset.assetType);
                 if (streamType == 0) {
                     continue;
+                }
+
+                if (streamType == STREAM_TYPE_AUDIO_AAC) {
+                    // ADTS conversion for 22.2ch is not implemented.
+                    if (mmtStream->Is22_2chAudio()) {
+                        streamType = STREAM_TYPE_AUDIO_AAC_LATM;
+                    }
                 }
 
                 ts::PMT::Stream stream(&tsPmt, streamType);
@@ -640,12 +659,6 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
                         break;
                     }
                     }
-                }
-
-                const auto& mmtStream = demuxer.mapStreamByStreamIdx[streamIndex];
-                if (mmtStream->getComponentTag() == -1) {
-                    streamIndex++;
-                    continue;
                 }
 
                 tsPmt.streams[mmtStream->getMpeg2PacketId()] = stream;

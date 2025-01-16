@@ -22,7 +22,6 @@ HINSTANCE hDantto4kModule = nullptr;
 extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
 {
     try {
-            
         std::string path = getConfigFilePath(hDantto4kModule);
         config = loadConfig(path);
 
@@ -30,7 +29,6 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
         demuxer.setDemuxerHandler(handler);
 
         bonTuner.init();
-
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;

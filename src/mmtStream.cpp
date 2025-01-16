@@ -66,6 +66,15 @@ bool MmtStream::Is8KVideo() const
     return videoComponentDescriptor->Is8KVideo();
 }
 
+bool MmtStream::Is22_2chAudio() const
+{
+    if (!mhAudioComponentDescriptor) {
+        return false;
+    }
+
+    return mhAudioComponentDescriptor->Is22_2chAudio();
+}
+
 uint32_t MmtStream::getSamplingRate() const
 {
     if (!mhAudioComponentDescriptor) {

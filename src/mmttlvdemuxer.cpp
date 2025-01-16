@@ -795,28 +795,22 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream)
         if (it == mapStream.end()) {
             return;
         }
-
-        switch (mmtStream->assetType) {
-        case AssetType::hev1:
-            if(demuxerHandler) {
+        
+        if(demuxerHandler) {
+            switch (mmtStream->assetType) {
+            case AssetType::hev1:
                 demuxerHandler->onVideoData(it->second, std::make_shared<MfuData>(mfuData));
-            }
-            break;
-        case AssetType::mp4a:
-            if(demuxerHandler) {
+                break;
+            case AssetType::mp4a:
                 demuxerHandler->onAudioData(it->second, std::make_shared<MfuData>(mfuData));
-            }
-            break;
-        case AssetType::stpp:
-            if(demuxerHandler) {
+                break;
+            case AssetType::stpp:
                 demuxerHandler->onSubtitleData(it->second, std::make_shared<MfuData>(mfuData));
-            }
-            break;
-        case AssetType::aapp:
-            if(demuxerHandler) {
+                break;
+            case AssetType::aapp:
                 demuxerHandler->onApplicationData(it->second, std::make_shared<MfuData>(mfuData));
+                break;
             }
-            break;
         }
     }
 }

@@ -29,6 +29,7 @@ public:
 	int32_t getComponentTag() const { return componentTag; }
 	bool GetRapFlag() const { return rapFlag; }
 	bool Is8KVideo() const;
+	bool Is22_2chAudio() const;
 	uint32_t getSamplingRate() const;
 
 	const std::shared_ptr<VideoComponentDescriptor>& getVideoComponentDescriptor() const { return videoComponentDescriptor; }
