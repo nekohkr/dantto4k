@@ -1,13 +1,6 @@
-//----------------------------------------------------------------------------
-//
-// TSDuck - The MPEG Transport Stream Toolkit
-// Copyright (c) 2005-2024, Thierry Lelegard
-// BSD-2-Clause license, see LICENSE.txt file or https://tsduck.io/license
-//
-//----------------------------------------------------------------------------
 // Automatically generated file, do not modify.
 // See tscharset --generate-arib-b24-encoding-table
-// Generated 2024/12/28
+// Generated 2025/02/23
 
 #include "tsARIBCharset.h"
 

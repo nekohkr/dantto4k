@@ -5,36 +5,33 @@
 
 namespace MmtTlv {
 
-// MH-Broadcaster Information Table
-class MhBit : public MmtTableBase {
+// MH-Application Information Table
+class MhAit : public MmtTableBase {
 public:
     bool unpack(Common::ReadStream& stream);
 
-    class Broadcaster {
+    class ApplicationIdentifier {
     public:
         bool unpack(Common::ReadStream& stream);
-
-        uint8_t broadcasterId;
-        uint16_t broadcasterDescriptorsLength;
+        uint8_t applicationControlCode;
+        uint16_t applicationDescriptorLoopLength;
         MmtDescriptors descriptors;
     };
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
 
-    uint16_t originalNetworkId;
+    uint16_t applicationType;
     uint8_t versionNumber;
     bool currentNextIndicator;
     uint8_t sectionNumber;
     uint8_t lastSectionNumber;
 
-    bool broadcastViewPropriety;
-    uint16_t firstDescriptorsLength;
-
+    uint16_t commonDescriptorLength;
     MmtDescriptors descriptors;
+    uint16_t applicationLoopLength;
 
-
-    std::vector<Broadcaster> broadcasters;
+    std::list<ApplicationIdentifier> applicationIdentifiers;
     uint32_t crc32;
 };
 

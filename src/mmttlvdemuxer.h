@@ -19,6 +19,13 @@
 
 namespace MmtTlv {
 
+class FragmentAssembler;
+class TableBase;
+class Plt;
+class Ecm;
+class TlvTableBase;
+class DemuxerHandler;
+
 enum class MmtMessageId {
 	PaMessage = 0x0000,
 	M2SectionMessage = 0x8000,
@@ -27,12 +34,13 @@ enum class MmtMessageId {
 	DataTransmissionMessage = 0x8003,
 };
 
-class FragmentAssembler;
-class TableBase;
-class Plt;
-class Ecm;
-class TlvTableBase;
-class DemuxerHandler;
+enum class DemuxStatus {
+	Ok = 0x0000,
+	NotEnoughBuffer = 0x1000,
+	NotValidTlv = 0x1001,
+	WattingForEcm = 0x1002,
+	Error = 0x2000,
+};
 
 class MmtTlvDemuxer {
 public:
@@ -40,7 +48,7 @@ public:
 	bool init();
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
 	void setSmartCardReaderName(const std::string& smartCardReaderName);
-	int processPacket(Common::ReadStream& stream);
+	DemuxStatus demux(Common::ReadStream& stream);
 	void clear();
 	void release();
 	void printStatistics() const;

@@ -8,8 +8,8 @@
 #include "logger.h"
 #ifdef _WIN32
 #include <dbghelp.h>
-#pragma comment(lib, "dbghelp.lib")
 #endif
+#include "aribUtil.h"
 
 MmtTlv::MmtTlvDemuxer demuxer;
 std::vector<uint8_t> output;
@@ -19,8 +19,7 @@ CBonTuner bonTuner;
 #ifdef _WIN32
 HINSTANCE hDantto4kModule = nullptr;
 
-extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
-{
+extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
     try {
         std::string path = getConfigFilePath(hDantto4kModule);
         config = loadConfig(path);
@@ -37,8 +36,7 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver()
     return &bonTuner;
 }
 
-BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved)
-{
+BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID lpReserved) {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
     {
@@ -103,16 +101,6 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
-	__try {
-		return demuxer.processPacket(input);
-	}
-	__except (ExceptionHandler(GetExceptionInformation())) {
-	}
-
-	return 0;
-}
-
 #endif
 
 size_t getLeftBytes(std::ifstream& file) {
@@ -153,7 +141,18 @@ void printReaderList() {
 	SCardReleaseContext(hContext);
 }
 
+static MmtTlv::DemuxStatus demuxWithHandler(MmtTlv::Common::ReadStream& input) {
+    __try {
+        return demuxer.demux(input);
+    }
+    __except (ExceptionHandler(GetExceptionInformation())) {
+    }
+
+    return MmtTlv::DemuxStatus::Error;
+}
+
 int main(int argc, char* argv[]) {
+    constexpr size_t CHUNK_SIZE = 1024 * 1024 * 20; // 20MB
     auto start = std::chrono::high_resolution_clock::now();
 
     std::string inputPath, outputPath;
@@ -210,12 +209,11 @@ int main(int argc, char* argv[]) {
     demuxer.setSmartCardReaderName(config.smartCardReaderName);
     demuxer.init();
 
-    const size_t chunkSize = 1024 * 1024 * 20;
     std::vector<uint8_t> buffer;
 
     while (!inputFs.eof()) {
-        if (buffer.size() < chunkSize) {
-            size_t readSize = std::min(chunkSize, getLeftBytes(inputFs));
+        if (buffer.size() < CHUNK_SIZE) {
+            size_t readSize = std::min(CHUNK_SIZE, getLeftBytes(inputFs));
             if (readSize == 0) {
                 break;
             }
@@ -226,17 +224,15 @@ int main(int argc, char* argv[]) {
 
 		MmtTlv::Common::ReadStream stream(buffer);
 		while (!stream.isEof()) {
-			size_t cur = stream.getCur();
-			int n = processPacketWithHandler(stream);
+            MmtTlv::DemuxStatus status;
 
-			// not valid tlv
-			if (n == -2) {
-				continue;
-			}
+#ifdef _WIN32
+            status = demuxWithHandler(stream);
+#else
+            status = demuxer.demux(stream);
+#endif
 
-			// not enough buffer for tlv payload
-			if (n == -1) {
-				stream.setCur(cur);
+			if (status == MmtTlv::DemuxStatus::NotEnoughBuffer) {
 				break;
 			}
 		}

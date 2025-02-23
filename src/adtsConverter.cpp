@@ -13,9 +13,9 @@ static inline int convertAdtsAudioObjectType(int aot)
 
 bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& output)
 {
-	if (size < 3) {
-		return false;
-	}
+    if (size < 3) {
+        return false;
+    }
 
     uint16_t syncWord = (input[0] << 3) | (input[1] & 0b11100000) >> 5;
     if (syncWord != 0x2b7) {
@@ -23,9 +23,9 @@ bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& o
     }
 
     uint16_t audioMuxLengthBytes = ((input[1] & 0b00011111) << 8 | input[2]) + 3;
-	if (size != audioMuxLengthBytes) {
-		return false;
-	}
+    if (size != audioMuxLengthBytes) {
+        return false;
+    }
 
     if (!unpackStreamMuxConfig(input + 3, size - 3)) {
         return false;
@@ -48,24 +48,24 @@ bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& o
     // ADTS Header
     output.data()[0] = (0xFFF >> 4) & 0xFF;
     output.data()[1] = ((0xFFF & 0b111100000000) >> 8) << 4 |
-                        0 << 3 | // mpeg version
-                        0 << 1 | // layer
-                        1; // protection absent
+        0 << 3 | // mpeg version
+        0 << 1 | // layer
+        1; // protection absent
     output.data()[2] = (convertAdtsAudioObjectType(audioObjectType) & 0b11) << 6 |
-                        sampleRate << 2 |
-                        1 << 1 | // private bit
-                        (channelConfiguration & 0b100) >> 2;
+        sampleRate << 2 |
+        1 << 1 | // private bit
+        (channelConfiguration & 0b100) >> 2;
     output.data()[3] = (channelConfiguration & 0b011) << 6 |
-                        1 << 5 | // original
-                        1 << 4 | // copy
-                        1 << 3 | // cib
-                        1 << 2 | // cis
-                        (frameLength & 0b1100000000000) >> 11;
+        1 << 5 | // original
+        1 << 4 | // copy
+        1 << 3 | // cib
+        1 << 2 | // cis
+        (frameLength & 0b1100000000000) >> 11;
     output.data()[4] = (frameLength & 0b0011111111000) >> 3;
     output.data()[5] = (frameLength & 0b0000000000111) << 5 |
-                        (bufferFullness & 0b11111000000) >> 6;
+        (bufferFullness & 0b11111000000) >> 6;
     output.data()[6] = (bufferFullness & 0b00000111111) << 2 |
-                        0/* rdb in frame */;
+        0/* rdb in frame */;
 
     for (int i2 = 0; i2 < slotLength; i2++) {
         output.data()[7 + i2] = (input[i + i2] & 0b00000111) << 5 | (input[i + i2 + 1] & 0b11111000) >> 3;

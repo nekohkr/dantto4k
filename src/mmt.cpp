@@ -71,22 +71,17 @@ bool Mmt::unpack(Common::ReadStream& stream)
 	return true;
 }
 
-bool Mmt::decryptPayload(Acas::DecryptedEcm* decryptedEcm)
+bool Mmt::decryptPayload(const Acas::DecryptedEcm& decryptedEcm)
 {
 	if (!extensionHeaderScrambling) {
 		return false;
 	}
 
-	std::span<uint8_t> key;
-	if (extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD) {
-		key = decryptedEcm->odd;
-	}
-	else if (extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-		key = decryptedEcm->even;
-	}
+	const std::array<uint8_t, 16>& key = (extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD)
+		? decryptedEcm.odd
+		: decryptedEcm.even;
 
-	std::vector<uint8_t> iv;
-	iv.assign(16, 0);
+	std::vector<uint8_t> iv(16, 0);
 
 	uint16_t swappedPacketId = Common::swapEndian16(packetId);
 	uint32_t swappedPacketSequenceNumber = Common::swapEndian32(packetSequenceNumber);

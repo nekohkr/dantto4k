@@ -63,4 +63,5 @@ bool ContentCopyControlDescriptor::Component::unpack(Common::ReadStream& stream)
 
     return true;
 }
+
 }

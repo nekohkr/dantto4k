@@ -4,6 +4,7 @@
 #include <map>
 #include <array>
 #include "hashUtil.h"
+#include <optional>
 
 namespace MmtTlv::Acas {
 
@@ -23,16 +24,19 @@ struct DecryptedEcm {
 class AcasCard {
 public:
     AcasCard(std::shared_ptr<SmartCard> smartCard);
+
     void init();
-    Common::sha256_t getA0AuthKcl() const;
-    DecryptedEcm decryptEcm(std::vector<uint8_t>& ecm);
     void clear();
-    bool isReady() const { return ready; }
-    
-    DecryptedEcm lastDecryptedEcm;
+    void processEcm(const std::vector<uint8_t>& ecm);
+    std::optional<DecryptedEcm> getLastEcm() const;
 
 private:
-    std::map<std::vector<uint8_t>, DecryptedEcm> decryptedEcmMap;
+    Common::sha256_t getA0AuthKcl() const;
+    void addEcmCache(const std::vector<uint8_t>& key, const DecryptedEcm& ecm);
+
+    using EcmCache = std::list<std::pair<std::vector<uint8_t>, DecryptedEcm>>;
+    EcmCache::iterator findEcmCache(const std::vector<uint8_t>& key);
+    EcmCache ecmCache;
     std::shared_ptr<SmartCard> smartCard;
     bool ready{false};
 };

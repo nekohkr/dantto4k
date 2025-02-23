@@ -152,8 +152,8 @@ public:
 			oss << "0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << packetId;
 
 			output = " - PacketId: " + oss.str() + ", ";
-			output += "Count: " + std::to_string(count) + ", ";
-			output += "Drop: " + std::to_string(drop);
+			output += "Drop: " + std::to_string(drop) + ", ";
+			output += "Count: " + std::to_string(count);
 
 			std::string name = getName();
 			if(name != "") {

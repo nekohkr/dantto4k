@@ -1,7 +1,5 @@
 #include "acascard.h"
 #include <random>
-#include <openssl/evp.h>
-#pragma comment(lib, "Winscard.lib")
 
 namespace MmtTlv::Acas {
 
@@ -60,10 +58,23 @@ Common::sha256_t AcasCard::getA0AuthKcl() const
     return kcl;
 }
 
-DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
+void AcasCard::addEcmCache(const std::vector<uint8_t>& key, const DecryptedEcm& ecm) {
+    ecmCache.push_back({ key, ecm });
+    if (ecmCache.size() > 100) {
+        ecmCache.pop_front();
+    }
+}
+
+AcasCard::EcmCache::iterator AcasCard::findEcmCache(const std::vector<uint8_t>& key) {
+    return std::find_if(ecmCache.begin(), ecmCache.end(),
+        [&key](const auto& pair) { return pair.first == key; });
+}
+
+void AcasCard::processEcm(const std::vector<uint8_t>& ecm)
 {
-    if (decryptedEcmMap.find(ecm) != decryptedEcmMap.end()) {
-        return decryptedEcmMap[ecm];
+    const auto& cache = findEcmCache(ecm);
+    if (cache != ecmCache.end()) {
+        return;
     }
 
     Common::sha256_t kcl = getA0AuthKcl();
@@ -93,17 +104,19 @@ DecryptedEcm AcasCard::decryptEcm(std::vector<uint8_t>& ecm)
     std::copy(hash.begin(), hash.begin() + 0x10, decryptedEcm.odd.begin());
     std::copy(hash.begin() + 0x10, hash.begin() + 0x20, decryptedEcm.even.begin());
 
-    decryptedEcmMap[ecm] = decryptedEcm;
-    lastDecryptedEcm = decryptedEcm;
-    ready = true;
-
-    return decryptedEcm;
+    addEcmCache(ecm, decryptedEcm);
 }
 
 void AcasCard::clear()
 {
-    ready = false;
-    decryptedEcmMap.clear();
+    ecmCache.clear();
+}
+
+std::optional<DecryptedEcm> AcasCard::getLastEcm() const {
+    if (!ecmCache.empty()) {
+        return ecmCache.back().second;
+    }
+    return std::nullopt;
 }
 
 }

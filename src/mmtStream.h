@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <memory>
 #include "mpuExtendedTimestampDescriptor.h"
 #include "mpuTimestampDescriptor.h"
 
@@ -11,7 +12,7 @@ class MhAudioComponentDescriptor;
 
 class MmtStream final {
 public:
-	MmtStream(uint16_t packetId)
+	explicit MmtStream(uint16_t packetId)
 		: packetId(packetId) {}
 
 	MmtStream(const MmtStream&) = delete;
@@ -48,20 +49,16 @@ private:
 	std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> getCurrentTimestamp() const;
 	
 	uint16_t packetId = 0;
-	
 	uint32_t assetType = 0;
 	uint32_t lastMpuSequenceNumber = 0;
 	uint32_t auIndex = 0;
 	uint32_t streamIndex = 0;
-
 	int16_t componentTag = -1;
-
 	bool rapFlag = false;
 
 	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
 	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
 	std::shared_ptr<MfuDataProcessorBase> mfuDataProcessor;
-	
 	std::shared_ptr<VideoComponentDescriptor> videoComponentDescriptor;
 	std::shared_ptr<MhAudioComponentDescriptor> mhAudioComponentDescriptor;
 };

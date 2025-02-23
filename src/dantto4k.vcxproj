@@ -152,6 +152,8 @@
     <ClCompile Include="audioMfuDataProcessor.cpp" />
     <ClCompile Include="acascard.cpp" />
     <ClCompile Include="adtsConverter.cpp" />
+    <ClCompile Include="b24Color.cpp" />
+    <ClCompile Include="b24SubtitleConvertor.cpp" />
     <ClCompile Include="bonTuner.cpp" />
     <ClCompile Include="caMessage.cpp" />
     <ClCompile Include="compressedIPPacket.cpp" />
@@ -172,6 +174,7 @@
     <ClCompile Include="multimediaServiceInformationDescriptor.cpp" />
     <ClCompile Include="ntp.cpp" />
     <ClCompile Include="pesPacket.cpp" />
+    <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="relatedBroadcasterDescriptor.cpp" />
     <ClCompile Include="systemManagementDescriptor.cpp" />
     <ClCompile Include="timebase.cpp" />
@@ -181,6 +184,7 @@
     <ClCompile Include="tsARIBCharset.cpp" />
     <ClCompile Include="tsARIBCharsetData.cpp" />
     <ClCompile Include="tsARIBCharsetEncoding.cpp" />
+    <ClCompile Include="ttml.cpp" />
     <ClCompile Include="videoMfuDataProcessor.cpp" />
     <ClCompile Include="m2SectionMessage.cpp" />
     <ClCompile Include="m2ShortSectionMessage.cpp" />
@@ -236,6 +240,9 @@
     <ClInclude Include="audioMfuDataProcessor.h" />
     <ClInclude Include="acascard.h" />
     <ClInclude Include="adtsConverter.h" />
+    <ClInclude Include="b24Color.h" />
+    <ClInclude Include="b24ControlSet.h" />
+    <ClInclude Include="b24SubtitleConvertor.h" />
     <ClInclude Include="bonTuner.h" />
     <ClInclude Include="caMessage.h" />
     <ClInclude Include="compressedIPPacket.h" />
@@ -263,6 +270,8 @@
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
     <ClInclude Include="ntp.h" />
     <ClInclude Include="pesPacket.h" />
+    <ClInclude Include="pugiconfig.hpp" />
+    <ClInclude Include="pugixml.hpp" />
     <ClInclude Include="relatedBroadcasterDescriptor.h" />
     <ClInclude Include="systemManagementDescriptor.h" />
     <ClInclude Include="timebase.h" />
@@ -270,6 +279,7 @@
     <ClInclude Include="tlvDescriptorFactory.h" />
     <ClInclude Include="tlvTableFactory.h" />
     <ClInclude Include="tsARIBCharset.h" />
+    <ClInclude Include="ttml.h" />
     <ClInclude Include="videoMfuDataProcessor.h" />
     <ClInclude Include="IBonDriver.h" />
     <ClInclude Include="ip.h" />

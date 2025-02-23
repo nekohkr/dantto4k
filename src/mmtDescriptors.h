@@ -1,6 +1,7 @@
 #pragma once
 #include "mmtDescriptorBase.h"
 #include <list>
+#include <memory>
 
 namespace MmtTlv {
 

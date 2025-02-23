@@ -20,8 +20,9 @@ enum class PayloadType
 class Mmt {
 public:
 	bool unpack(Common::ReadStream& stream);
-	bool decryptPayload(Acas::DecryptedEcm* decryptedEcm);
+	bool decryptPayload(const Acas::DecryptedEcm& decryptedEcm);
 
+public:
 	uint8_t version;
 	bool packetCounterFlag;
 	uint8_t fecType;

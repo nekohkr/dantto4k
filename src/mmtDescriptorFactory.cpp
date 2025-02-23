@@ -26,6 +26,7 @@
 #include "relatedBroadcasterDescriptor.h"
 #include "mhBroadcasterNameDescriptor.h"
 #include "mhServiceListDescriptor.h"
+#include <memory>
 
 namespace MmtTlv {
 	
@@ -54,8 +55,6 @@ static const std::unordered_map<uint16_t, std::function<std::shared_ptr<MmtDescr
 	{ RelatedBroadcasterDescriptor::kDescriptorTag,				[] { return std::make_shared<RelatedBroadcasterDescriptor>(); } },
 	{ MhBroadcasterNameDescriptor::kDescriptorTag,				[] { return std::make_shared<MhBroadcasterNameDescriptor>(); } },
 	{ MhServiceListDescriptor::kDescriptorTag,					[] { return std::make_shared<MhServiceListDescriptor>(); } },
-	
-	
 };
 
 std::shared_ptr<MmtDescriptorBase> MmtDescriptorFactory::create(uint16_t tag) {

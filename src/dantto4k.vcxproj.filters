@@ -247,6 +247,18 @@
     <ClCompile Include="dataTransmissionMessage.cpp">
       <Filter>mmttlv\mmt\structs</Filter>
     </ClCompile>
+    <ClCompile Include="pugixml.cpp">
+      <Filter>dantto4k\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="b24Color.cpp">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClCompile>
+    <ClCompile Include="b24SubtitleConvertor.cpp">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClCompile>
+    <ClCompile Include="ttml.cpp">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -534,6 +546,24 @@
     <ClInclude Include="hashUtil.h">
       <Filter>mmttlv\common</Filter>
     </ClInclude>
+    <ClInclude Include="pugiconfig.hpp">
+      <Filter>dantto4k\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="pugixml.hpp">
+      <Filter>dantto4k\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="b24Color.h">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
+    <ClInclude Include="b24ControlSet.h">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
+    <ClInclude Include="b24SubtitleConvertor.h">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
+    <ClInclude Include="ttml.h">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dantto4k">
@@ -583,6 +613,12 @@
     </Filter>
     <Filter Include="dantto4k\config">
       <UniqueIdentifier>{0392b5d1-6a98-4ab7-bab9-4649b64a3cef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dantto4k\xml">
+      <UniqueIdentifier>{9290d7d2-7f6d-4353-bdad-ca80f4d189fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dantto4k\subtitle">
+      <UniqueIdentifier>{c229bfa9-4900-4d31-831b-d770f27872d9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 #pragma once
 #include "tlvDescriptorBase.h"
+#include <memory>
 
 namespace MmtTlv {
 

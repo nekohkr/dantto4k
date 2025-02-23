@@ -8,6 +8,7 @@
 #include "mhSdt.h"
 #include "mhTot.h"
 #include "mhBit.h"
+#include "mhAit.h"
 #include "mmtStream.h"
 #include "MmtTlvDemuxer.h"
 #include "mpt.h"
@@ -62,23 +63,27 @@ void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderNam
     smartCard->setSmartCardReaderName(smartCardReaderName);
 }
 
-int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
+DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
 {
+    size_t cur = stream.getCur();
+
     if (stream.leftBytes() < 4) {
-        return -1;
+        return DemuxStatus::NotEnoughBuffer;
     }
 
     if (!isVaildTlv(stream)) {
         stream.skip(1);
-        return -2;
+        return DemuxStatus::NotValidTlv;
     }
 
     if (!tlv.unpack(stream)) {
-        return -1;
+        stream.setCur(cur);
+        return DemuxStatus::NotEnoughBuffer;
     }
 
     if (stream.leftBytes() < tlv.getDataLength()) {
-        return -1;
+        stream.setCur(cur);
+        return DemuxStatus::NotEnoughBuffer;
     }
 
     statistics.tlvPacketCount++;
@@ -147,12 +152,12 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
         if (mmt.extensionHeaderScrambling.has_value()) {
             if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
                 mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-                if (!acasCard->isReady()) {
-                    return 1;
+                auto lastEcm = acasCard->getLastEcm();
+                if (!lastEcm) {
+                    return DemuxStatus::WattingForEcm;
                 }
-                else {
-                    mmt.decryptPayload(&acasCard->lastDecryptedEcm);
-                }
+                
+                mmt.decryptPayload(*lastEcm);
             }
         }
 
@@ -184,7 +189,7 @@ int MmtTlvDemuxer::processPacket(Common::ReadStream& stream)
     }
     }
 
-    return 1;
+    return DemuxStatus::Ok;
 }
 
 void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream)
@@ -290,64 +295,53 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
         break;
     }
     }
-
-    switch (tableId) {
-    case MmtTableId::Ecm_0:
-        if (demuxerHandler) {
+    
+    if (demuxerHandler) {
+        switch (tableId) {
+        case MmtTableId::Ecm_0:
             demuxerHandler->onEcm(std::dynamic_pointer_cast<Ecm>(table));
-        }
-        break;
-    case MmtTableId::MhCdt:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::MhCdt:
             demuxerHandler->onMhCdt(std::dynamic_pointer_cast<MhCdt>(table));
-        }
-        break;
-    case MmtTableId::MhEitPf:
-    case MmtTableId::MhEitS_0:
-    case MmtTableId::MhEitS_1:
-    case MmtTableId::MhEitS_2:
-    case MmtTableId::MhEitS_3:
-    case MmtTableId::MhEitS_4:
-    case MmtTableId::MhEitS_5:
-    case MmtTableId::MhEitS_6:
-    case MmtTableId::MhEitS_7:
-    case MmtTableId::MhEitS_8:
-    case MmtTableId::MhEitS_9:
-    case MmtTableId::MhEitS_10:
-    case MmtTableId::MhEitS_11:
-    case MmtTableId::MhEitS_12:
-    case MmtTableId::MhEitS_13:
-    case MmtTableId::MhEitS_14:
-    case MmtTableId::MhEitS_15:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::MhEitPf:
+        case MmtTableId::MhEitS_0:
+        case MmtTableId::MhEitS_1:
+        case MmtTableId::MhEitS_2:
+        case MmtTableId::MhEitS_3:
+        case MmtTableId::MhEitS_4:
+        case MmtTableId::MhEitS_5:
+        case MmtTableId::MhEitS_6:
+        case MmtTableId::MhEitS_7:
+        case MmtTableId::MhEitS_8:
+        case MmtTableId::MhEitS_9:
+        case MmtTableId::MhEitS_10:
+        case MmtTableId::MhEitS_11:
+        case MmtTableId::MhEitS_12:
+        case MmtTableId::MhEitS_13:
+        case MmtTableId::MhEitS_14:
+        case MmtTableId::MhEitS_15:
             demuxerHandler->onMhEit(std::dynamic_pointer_cast<MhEit>(table));
-        }
-        break;
-    case MmtTableId::MhSdtActual:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::MhSdtActual:
             demuxerHandler->onMhSdtActual(std::dynamic_pointer_cast<MhSdt>(table));
-        }
-        break;
-    case MmtTableId::MhTot:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::MhTot:
             demuxerHandler->onMhTot(std::dynamic_pointer_cast<MhTot>(table));
-        }
-        break;
-    case MmtTableId::Mpt:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::Mpt:
             demuxerHandler->onMpt(std::dynamic_pointer_cast<Mpt>(table));
-        }
-        break;
-    case MmtTableId::Plt:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::Plt:
             demuxerHandler->onPlt(std::dynamic_pointer_cast<Plt>(table));
-        }
-        break;
-    case MmtTableId::MhBit:
-        if (demuxerHandler) {
+            break;
+        case MmtTableId::MhBit:
             demuxerHandler->onMhBit(std::dynamic_pointer_cast<MhBit>(table));
+            break;
+        case MmtTableId::MhAit:
+            demuxerHandler->onMhAit(std::dynamic_pointer_cast<MhAit>(table));
+            break;
         }
-        break;
     }
 }
 
@@ -662,7 +656,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
 void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm)
 {
     try {
-        acasCard->decryptEcm(ecm->ecmData);
+        acasCard->processEcm(ecm->ecmData);
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;

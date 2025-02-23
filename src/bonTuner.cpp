@@ -82,18 +82,16 @@ const bool CBonTuner::GetTsStream(uint8_t* pDst, uint32_t* pdwSize, uint32_t* pd
 	return ret;
 }
 
-#ifdef _WIN32
-static int processPacketWithHandler(MmtTlv::Common::ReadStream& input) {
+static MmtTlv::DemuxStatus demuxWithHandler(MmtTlv::Common::ReadStream& input) {
 	__try {
-		return demuxer.processPacket(input);
+		return demuxer.demux(input);
 	}
 	__except (ExceptionHandler(GetExceptionInformation())) {
 		inputBuffer.clear();
 	}
 
-	return 0;
+	return MmtTlv::DemuxStatus::Error;
 }
-#endif
 
 const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* pdwRemain)
 {
@@ -113,23 +111,9 @@ const bool CBonTuner::GetTsStream(uint8_t** ppDst, uint32_t* pdwSize, uint32_t* 
 	
 	MmtTlv::Common::ReadStream input(inputBuffer);
 	while (!input.isEof()) {
-		size_t cur = input.getCur();
-		int n = 0;
-		
-		#ifdef _WIN32
-		n = processPacketWithHandler(input);
-		#else
-		n = demuxer.processPacket(input);
-		#endif
+		MmtTlv::DemuxStatus status = demuxWithHandler(input);
 
-		// not valid tlv
-		if (n == -2) {
-			continue;
-		}
-
-		// not enough buffer for tlv payload
-		if (n == -1) {
-			input.setCur(cur);
+		if (status == MmtTlv::DemuxStatus::NotEnoughBuffer) {
 			break;
 		}
 	}

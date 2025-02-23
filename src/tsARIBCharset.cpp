@@ -207,6 +207,7 @@ size_t ts::ARIBCharset2::encode(uint8_t*& buffer, size_t& size, const UString& s
         const UChar* in = initial;
         size_t in_count = count >= len || start + count >= len ? (len - start) : count;
         Encoder enc(buffer, size, in, in_count);
+
         return in - initial;
     }
 }
@@ -220,11 +221,11 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
     _G{KANJI_STANDARD_MAP.selector1,   // Same initial state as decoding engine
        ALPHANUMERIC_MAP.selector1,
        HIRAGANA_MAP.selector1,
-       KATAKANA_MAP.selector1},
+       JIS_X0201_KATAKANA_MAP.selector1},
     _byte2{KANJI_STANDARD_MAP.byte2,   // Same order as _G
            ALPHANUMERIC_MAP.byte2,
            HIRAGANA_MAP.byte2,
-           KATAKANA_MAP.byte2},
+           JIS_X0201_KATAKANA_MAP.byte2},
     _GL(0),             // G0 -> GL
     _GR(2),             // G2 -> GR
     _GL_last(false),    // First charset switch will use GL
@@ -257,40 +258,46 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
             }
         }
 
-        // Find the entry for this code point in the encoding table.
-        const size_t index = FindEncoderEntry(cp, prev_index);
-        if (index != NPOS) {
-            // This character is encodable.
-            assert(index < ENCODING_COUNT);
-            const EncoderEntry& enc(ENCODING_TABLE[index]);
-            prev_index = index;
-
-            // Make sure the right character set is selected.
-            // Insert the corresponding escape sequence if necessary.
-            // Also make sure that the encoded sequence will fit in output buffer.
-            if (!selectCharSet(out, out_size, enc.selectorF(), enc.byte2())) {
-                // Cannot insert the right sequence. Do not attempt to encode the code point.
-                return;
-            }
-
-            // Insert the encoded code point (1 or 2 bytes).
-            assert(cp >= enc.code_point);
-            assert(cp < enc.code_point + enc.count());
-            assert(cp - enc.code_point + enc.index() <= GL_LAST);
-            const uint8_t mask = enc.selectorF() == _G[_GR] ? 0x80 : 0x00;
-            if (enc.byte2()) {
-                // 2-byte character set, insert row first.
-                assert(out_size >= 2);
-                *out++ = enc.row() | mask;
-                --out_size;
-            }
-            assert(out_size >= 1);
-            *out++ = uint8_t(cp - enc.code_point + enc.index()) | mask;
+        if (cp == NULL) {
+            *out++ = '\0';
             --out_size;
         }
-        else if ((cp == SPACE || cp == IDEOGRAPHIC_SPACE) && !encodeSpace(out, out_size, cp == IDEOGRAPHIC_SPACE)) {
-            // Tried to encode a space but failed.
-            return;
+        else {
+            // Find the entry for this code point in the encoding table.
+            const size_t index = FindEncoderEntry(cp, prev_index);
+            if (index != NPOS) {
+                // This character is encodable.
+                assert(index < ENCODING_COUNT);
+                const EncoderEntry& enc(ENCODING_TABLE[index]);
+                prev_index = index;
+
+                // Make sure the right character set is selected.
+                // Insert the corresponding escape sequence if necessary.
+                // Also make sure that the encoded sequence will fit in output buffer.
+                if (!selectCharSet(out, out_size, enc.selectorF(), enc.byte2())) {
+                    // Cannot insert the right sequence. Do not attempt to encode the code point.
+                    return;
+                }
+
+                // Insert the encoded code point (1 or 2 bytes).
+                assert(cp >= enc.code_point);
+                assert(cp < enc.code_point + enc.count());
+                assert(cp - enc.code_point + enc.index() <= GL_LAST);
+                const uint8_t mask = enc.selectorF() == _G[_GR] ? 0x80 : 0x00;
+                if (enc.byte2()) {
+                    // 2-byte character set, insert row first.
+                    assert(out_size >= 2);
+                    *out++ = enc.row() | mask;
+                    --out_size;
+                }
+                assert(out_size >= 1);
+                *out++ = uint8_t(cp - enc.code_point + enc.index()) | mask;
+                --out_size;
+            }
+            else if ((cp == SPACE || cp == IDEOGRAPHIC_SPACE) && !encodeSpace(out, out_size, cp == IDEOGRAPHIC_SPACE)) {
+                // Tried to encode a space but failed.
+                return;
+            }
         }
 
         // Now, the character has been successfully encoded (or ignored if not encodable).

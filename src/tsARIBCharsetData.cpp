@@ -17,8 +17,8 @@ const ts::ARIBCharset2::CharMap* const ts::ARIBCharset2::ALL_MAPS[] = {
     &KANJI_ADDITIONAL_MAP,     // initial G0 and GL
     &HIRAGANA_MAP,             // initial G2 and GR
     &ALPHANUMERIC_MAP,         // initial G1
-    &KATAKANA_MAP,             // initial G3
-    &JIS_X0201_KATAKANA_MAP,
+    &JIS_X0201_KATAKANA_MAP,   // initial G3
+    &KATAKANA_MAP,
     &KANJI_STANDARD_MAP,
     nullptr
 };

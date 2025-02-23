@@ -1,5 +1,6 @@
 #include "mhSdt.h"
 #include "mhServiceDescriptor.h"
+#include <memory>
 
 namespace MmtTlv {
 
