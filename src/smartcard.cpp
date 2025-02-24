@@ -1,4 +1,4 @@
-#include "SmartCard.h"
+#include "smartcard.h"
 
 namespace MmtTlv::Acas {
 
@@ -24,7 +24,7 @@ void SmartCard::connect() {
 
     if(smartCardReaderName == "") {
         char* readers = nullptr;
-        result = SCardListReadersA(hContext, nullptr, (LPSTR)&readers, &readersSize);
+        result = SCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
         if (result != SCARD_S_SUCCESS) {
             throw std::runtime_error("Failed to list smart card readers. (result: " + std::to_string(result) + ")");
         }
@@ -37,7 +37,7 @@ void SmartCard::connect() {
     }
 
 
-    result = SCardConnectA(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
+    result = SCardConnect(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
     if (result != SCARD_S_SUCCESS) {
         throw std::runtime_error("Failed to connect to smart card. (result: " + std::to_string(result) + ")");
     }
@@ -48,7 +48,7 @@ ApduResponse SmartCard::transmit(const std::vector<uint8_t>& sendData) {
     std::vector<uint8_t> recvBuffer(recvLength);
     int retryCount = 0;
 
-    LONG result = SCardTransmit(hCard, SCARD_PCI_T1, sendData.data(), sendData.size(), nullptr, recvBuffer.data(), &recvLength);
+    LONG result = SCardTransmit(hCard, SCARD_PCI_T1, sendData.data(), static_cast<uint32_t>(sendData.size()), nullptr, recvBuffer.data(), &recvLength);
     while (result != SCARD_S_SUCCESS && retryCount < 10) {
         retryCount++;
         try {
@@ -59,7 +59,7 @@ ApduResponse SmartCard::transmit(const std::vector<uint8_t>& sendData) {
             continue;
         }
 
-        result = SCardTransmit(hCard, SCARD_PCI_T1, sendData.data(), sendData.size(), nullptr, recvBuffer.data(), &recvLength);
+        result = SCardTransmit(hCard, SCARD_PCI_T1, sendData.data(), static_cast<uint32_t>(sendData.size()), nullptr, recvBuffer.data(), &recvLength);
     }
 
     if (result != SCARD_S_SUCCESS) {
@@ -74,9 +74,9 @@ ApduResponse SmartCard::transmit(const std::vector<uint8_t>& sendData) {
 }
 
 void SmartCard::disconnect() {
-    if (hCard != NULL) {
+    if (hCard != 0) {
         SCardDisconnect(hCard, SCARD_LEAVE_CARD);
-        hCard = NULL;
+        hCard = 0;
     }
 }
 
@@ -84,9 +84,9 @@ void SmartCard::release()
 {
     disconnect();
 
-    if (hContext != NULL) {
+    if (hContext != 0) {
 		SCardReleaseContext(hContext);
-        hContext = NULL;
+        hContext = 0;
     }
 }
 

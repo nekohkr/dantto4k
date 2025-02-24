@@ -3,10 +3,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#ifdef _WIN32
 #define _WINSOCKAPI_
 #include <Windows.h>
+#endif
 #include <winscard.h>
-#pragma comment(lib, "Winscard.lib")
 
 namespace MmtTlv::Acas {
 
@@ -83,8 +84,8 @@ public:
     void release();
 
 private:
-    SCARDCONTEXT hContext = NULL;
-    SCARDHANDLE hCard = NULL;
+    SCARDCONTEXT hContext = 0;
+    SCARDHANDLE hCard = 0;
     DWORD dwActiveProtocol = 0;
     std::string smartCardReaderName;
 };

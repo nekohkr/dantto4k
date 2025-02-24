@@ -14,7 +14,6 @@ namespace Common {
     {
         std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
 
-        unsigned int digest_len = 0x20;
         EVP_DigestInit_ex(ctx.get(), EVP_sha256(), nullptr);
         EVP_DigestUpdate(ctx.get(), input.data(), input.size());
 

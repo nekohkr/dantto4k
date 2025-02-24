@@ -1,6 +1,4 @@
 #pragma once
-#define _WINSOCKAPI_
-#include <windows.h>
 #include <vector>
 #include <map>
 #include <list>

@@ -10,7 +10,7 @@
 #include "mhBit.h"
 #include "mhAit.h"
 #include "mmtStream.h"
-#include "MmtTlvDemuxer.h"
+#include "mmtTlvDemuxer.h"
 #include "mpt.h"
 #include "fragmentAssembler.h"
 #include "mfuDataProcessorFactory.h"
@@ -168,6 +168,8 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
             break;
         case PayloadType::ContainsOneOrMoreControlMessage:
             processSignalingMessages(mmtpPayloadStream);
+            break;
+        default:
             break;
         }
         break;
@@ -547,7 +549,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimes
 {
     for (auto& ts : descriptor->entries) {
         bool find = false;
-        for (int i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
+        for (size_t i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
             if (mmtStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
                 mmtStream->mpuTimestamps[i].mpuPresentationTime = ts.mpuPresentationTime;
                 find = true;
@@ -558,7 +560,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimes
             continue;
         }
 
-        for (int i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
+        for (size_t i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
             if (mmtStream->mpuTimestamps[i].mpuSequenceNumber < mmtStream->lastMpuSequenceNumber) {
                 mmtStream->mpuTimestamps[i].mpuSequenceNumber = ts.mpuSequenceNumber;
                 mmtStream->mpuTimestamps[i].mpuPresentationTime = ts.mpuPresentationTime;
@@ -572,17 +574,15 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimes
         }
 
         if (mmtStream->mpuTimestamps.size() >= 100) {
-            int minIndex = 0;
-            uint32_t minMpuSequenceNumber = 0xFFFFFFFF;
-            for (int i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
-                if (minMpuSequenceNumber > mmtStream->mpuTimestamps[i].mpuSequenceNumber) {
-                    minIndex = i;
-                    minMpuSequenceNumber = mmtStream->mpuTimestamps[i].mpuSequenceNumber;
-                }
-            }
+            auto minElement = std::min_element(mmtStream->mpuTimestamps.begin(), mmtStream->mpuTimestamps.end(), 
+                [](const auto& lhs, const auto& rhs) {
+                    return lhs.mpuSequenceNumber < rhs.mpuSequenceNumber;
+                });
 
-            mmtStream->mpuTimestamps[minIndex].mpuSequenceNumber = ts.mpuSequenceNumber;
-            mmtStream->mpuTimestamps[minIndex].mpuPresentationTime = ts.mpuPresentationTime;
+            if (minElement != mmtStream->mpuTimestamps.end()) {
+                minElement->mpuSequenceNumber = ts.mpuSequenceNumber;
+                minElement->mpuPresentationTime = ts.mpuPresentationTime;
+            }
         }
         else {
             mmtStream->mpuTimestamps.push_back(ts);
@@ -602,7 +602,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
             continue;
 
         bool find = false;
-        for (int i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
+        for (size_t i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
             if (mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
                 mmtStream->mpuExtendedTimestamps[i].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
                 mmtStream->mpuExtendedTimestamps[i].numOfAu = ts.numOfAu;
@@ -616,7 +616,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
             continue;
         }
 
-        for (int i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
+        for (size_t i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
             if (mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber < mmtStream->lastMpuSequenceNumber) {
                 mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber = ts.mpuSequenceNumber;
                 mmtStream->mpuExtendedTimestamps[i].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
@@ -632,20 +632,18 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
         }
 
         if (mmtStream->mpuExtendedTimestamps.size() >= 100) {
-            int minIndex = 0;
-            uint32_t minMpuSequenceNumber = 0xFFFFFFFF;
-            for (int i = 0; i < mmtStream->mpuExtendedTimestamps.size(); i++) {
-                if (minMpuSequenceNumber > mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber) {
-                    minIndex = i;
-                    minMpuSequenceNumber = mmtStream->mpuExtendedTimestamps[i].mpuSequenceNumber;
-                }
-            }
+            auto minElement = std::min_element(mmtStream->mpuExtendedTimestamps.begin(), mmtStream->mpuExtendedTimestamps.end(),
+                [](const auto& lhs, const auto& rhs) {
+                    return lhs.mpuSequenceNumber < rhs.mpuSequenceNumber;
+                });
 
-            mmtStream->mpuExtendedTimestamps[minIndex].mpuSequenceNumber = ts.mpuSequenceNumber;
-            mmtStream->mpuExtendedTimestamps[minIndex].mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
-            mmtStream->mpuExtendedTimestamps[minIndex].numOfAu = ts.numOfAu;
-            mmtStream->mpuExtendedTimestamps[minIndex].ptsOffsets = ts.ptsOffsets;
-            mmtStream->mpuExtendedTimestamps[minIndex].dtsPtsOffsets = ts.dtsPtsOffsets;
+            if (minElement != mmtStream->mpuExtendedTimestamps.end()) {
+                minElement->mpuSequenceNumber = ts.mpuSequenceNumber;
+                minElement->mpuDecodingTimeOffset = ts.mpuDecodingTimeOffset;
+                minElement->numOfAu = ts.numOfAu;
+                minElement->ptsOffsets = ts.ptsOffsets;
+                minElement->dtsPtsOffsets = ts.dtsPtsOffsets;
+            }
         }
         else {
             mmtStream->mpuExtendedTimestamps.push_back(ts);
@@ -817,7 +815,6 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream)
 void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream)
 {
     SignalingMessage signalingMessage;
-
     if (!signalingMessage.unpack(stream)) {
         return;
     }
@@ -840,13 +837,16 @@ void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream)
         Common::ReadStream nstream(signalingMessage.payload);
         while (nstream.isEof()) {
             uint32_t length;
-
             if (signalingMessage.lengthExtensionFlag)
                 length = nstream.getBe32U();
             else
                 length = nstream.getBe16U();
 
-            if (assembler->assemble(signalingMessage.payload, signalingMessage.fragmentationIndicator, mmt.packetSequenceNumber)) {
+            std::vector<uint8_t> message;
+            message.resize(length);
+            stream.read(message.data(), length);
+
+            if (assembler->assemble(message, signalingMessage.fragmentationIndicator, mmt.packetSequenceNumber)) {
                 Common::ReadStream messageStream(assembler->data);
                 processSignalingMessage(messageStream);
                 assembler->clear();

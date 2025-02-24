@@ -22,7 +22,8 @@ namespace B24 {
 
     class DataUnit {
     public:
-        DataUnit(std::vector<uint8_t> dataUnit, DataUnitParameter dataUnitParameter = DataUnitParameter::StatementBody) : dataUnit(dataUnit), dataUnitParameter(dataUnitParameter) {
+        DataUnit(const std::vector<uint8_t>& dataUnit, DataUnitParameter dataUnitParameter = DataUnitParameter::StatementBody)
+            : dataUnit(dataUnit), dataUnitParameter(dataUnitParameter) {
         }
 
         void setDataUnitParameter(DataUnitParameter dataUnitParameter) {
@@ -41,9 +42,10 @@ namespace B24 {
             output.insert(output.end(), dataUnit.begin(), dataUnit.end());
             return true;
         }
+
     private:
-        DataUnitParameter dataUnitParameter{ DataUnitParameter::StatementBody };
         std::vector<uint8_t> dataUnit;
+        DataUnitParameter dataUnitParameter{ DataUnitParameter::StatementBody };
     };
 
     class CaptionStatementData {
@@ -63,7 +65,7 @@ namespace B24 {
                 output.push_back(static_cast<uint8_t>(stm >> 20));
                 output.push_back(static_cast<uint8_t>(stm >> 16));
                 output.push_back(static_cast<uint8_t>(stm >> 8));
-                output.push_back(static_cast<uint8_t>(stm & 0b1111 | 0b1111));
+                output.push_back(static_cast<uint8_t>((stm & 0b1111) | 0b1111));
             }
 
             std::vector<uint8_t> packedDataUnit;
@@ -118,7 +120,7 @@ namespace B24 {
                 output.push_back(static_cast<uint8_t>(otm >> 20));
                 output.push_back(static_cast<uint8_t>(otm >> 16));
                 output.push_back(static_cast<uint8_t>(otm >> 8));
-                output.push_back(static_cast<uint8_t>(otm & 0b1111 | 0b1111));
+                output.push_back(static_cast<uint8_t>((otm & 0b1111) | 0b1111));
             }
             output.push_back(static_cast<uint8_t>(langages.size()));
 

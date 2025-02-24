@@ -50,6 +50,9 @@ TTML TTMLPaser::parse(const std::vector<uint8_t>& input)
     TTML output;
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_buffer(input.data(), input.size());
+    if (result.status != pugi::status_ok) {
+        return {};
+    }
 
     for (pugi::xml_node p : doc.child("tt").child("head").child("layout").children("region")) {
         TTMLRegion region;

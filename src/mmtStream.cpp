@@ -30,32 +30,18 @@ std::pair<int64_t, int64_t> MmtStream::getNextPtsDts()
 
 std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> MmtStream::getCurrentTimestamp() const
 {
-    int mpuTimestampIndex = -1;
-    int extendedTimestampIndex = -1;
+    auto mpuTimestampIt = std::find_if(mpuTimestamps.begin(), mpuTimestamps.end(),
+        [this](const auto& entry) { return entry.mpuSequenceNumber == lastMpuSequenceNumber; });
 
-    for (int i = 0; i < mpuTimestamps.size(); ++i) {
-        if (mpuTimestamps[i].mpuSequenceNumber ==
-            lastMpuSequenceNumber) {
-            mpuTimestampIndex = i;
-            break;
-        }
-    }
+    auto extendedTimestampIt = std::find_if(mpuExtendedTimestamps.begin(), mpuExtendedTimestamps.end(),
+        [this](const auto& entry) { return entry.mpuSequenceNumber == lastMpuSequenceNumber; });
 
-    for (int i = 0; i < mpuExtendedTimestamps.size(); ++i) {
-        if (mpuExtendedTimestamps[i].mpuSequenceNumber ==
-            lastMpuSequenceNumber) {
-            extendedTimestampIndex = i;
-            break;
-        }
-    }
-
-    if (mpuTimestampIndex == -1 || extendedTimestampIndex == -1) {
+    if (mpuTimestampIt == mpuTimestamps.end() || extendedTimestampIt == mpuExtendedTimestamps.end()) {
         return {};
     }
 
-    return { mpuTimestamps[mpuTimestampIndex], mpuExtendedTimestamps[extendedTimestampIndex] };
+    return { *mpuTimestampIt, *extendedTimestampIt };
 }
-
 
 bool MmtStream::Is8KVideo() const
 {

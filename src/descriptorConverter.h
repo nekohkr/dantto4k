@@ -76,7 +76,7 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
     static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhShortEventDescriptor& mmtDescriptor) {
         const ts::ByteBlock eventNameBlock = aribEncode(mmtDescriptor.eventName);
         ts::ByteBlock textBlock = aribEncode(mmtDescriptor.text);
-       
+
         if (eventNameBlock.size() > 257) {
             return std::nullopt;
         }
@@ -113,12 +113,12 @@ struct DescriptorConverter<MmtTlv::MhShortEventDescriptor> {
         memcpy(&tsDescriptor[2], mmtDescriptor.language, 3); // language
 
         tsDescriptor[5] = static_cast<uint8_t>(eventNameBlock.size()); // event_name_length
-        if(eventNameBlock.size()) {
+        if (eventNameBlock.size()) {
             memcpy(&tsDescriptor[6], eventNameBlock.data(), eventNameBlock.size()); // event_name
         }
 
         tsDescriptor[6 + eventNameBlock.size()] = static_cast<uint8_t>(textBlock.size()); // text_length
-        if(textBlock.size()) {
+        if (textBlock.size()) {
             memcpy(&tsDescriptor[6 + eventNameBlock.size() + 1], textBlock.data(), textBlock.size()); // text
         }
 
@@ -130,7 +130,7 @@ template <>
 struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
     static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhExtendedEventDescriptor& mmtDescriptor) {
         const ts::ByteBlock textBlock = aribEncode(mmtDescriptor.textChar);
-        
+
         if (textBlock.size() > 255) {
             return std::nullopt;
         }
@@ -143,12 +143,12 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
             + 1 // descriptorNumber | lastDescriptorNumber
             + 3 // language
             + 1; // length_of_items
-                   
+
         size_t itemsLength = 0;
-        for (auto& item : mmtDescriptor.entries) {
+        for (const auto& item : mmtDescriptor.entries) {
             const ts::ByteBlock itemDescriptionCharBlock = aribEncode(item.itemDescriptionChar);
             const ts::ByteBlock itemCharBlock = aribEncode(item.itemChar);
-            
+
             if (itemDescriptionCharBlock.size() > 255) {
                 return std::nullopt;
             }
@@ -174,7 +174,7 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
         if (descriptorLength > 255) {
             return std::nullopt;
         }
-                
+
         std::vector<uint8_t> tsDescriptor(descriptorLength);
         tsDescriptor[0] = 0x4E;
         tsDescriptor[1] = static_cast<uint8_t>(descriptorLength) - 2;
@@ -183,13 +183,12 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
 
         tsDescriptor[6] = static_cast<uint8_t>(itemsLength);
 
-        int i = 0;
         size_t pos = 0;
-        for (auto& item : mmtDescriptor.entries) {
+        for (size_t i = 0; i < mmtDescriptor.entries.size(); ++i) {
             tsDescriptor[7 + pos] = static_cast<uint8_t>(aribItemDescriptionChars[i].size());
             pos++;
 
-            if(aribItemDescriptionChars[i].size()) {
+            if (aribItemDescriptionChars[i].size()) {
                 memcpy(&tsDescriptor[7 + pos], aribItemDescriptionChars[i].data(), aribItemDescriptionChars[i].size());
                 pos += aribItemDescriptionChars[i].size();
             }
@@ -197,7 +196,7 @@ struct DescriptorConverter<MmtTlv::MhExtendedEventDescriptor> {
             tsDescriptor[7 + pos] = static_cast<uint8_t>(aribItemChars[i].size());
             pos++;
 
-            if(aribItemChars[i].size()) {
+            if (aribItemChars[i].size()) {
                 memcpy(&tsDescriptor[7 + pos], aribItemChars[i].data(), aribItemChars[i].size());
                 pos += aribItemChars[i].size();
             }
@@ -339,14 +338,14 @@ struct DescriptorConverter<MmtTlv::MhSeriesDescriptor> {
             try {
                 tsDescriptor.expire_date = ts::Time(tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0);
             }
-            catch (ts::Time::TimeError) {
+            catch (const ts::Time::TimeError&) {
                 return {};
             }
         }
 
         tsDescriptor.episode_number = mmtDescriptor.episodeNumber;
         tsDescriptor.last_episode_number = mmtDescriptor.lastEpisodeNumber;
-                
+
         const ts::ByteBlock seriesNameBlock = aribEncode(mmtDescriptor.seriesNameChar);
         tsDescriptor.series_name = ts::UString::FromUTF8(reinterpret_cast<const char*>(seriesNameBlock.data()), seriesNameBlock.size());
 
@@ -393,7 +392,7 @@ struct DescriptorConverter<MmtTlv::MultimediaServiceInformationDescriptor> {
         }
 
         tsDescriptor.selector_bytes.resize(mmtDescriptor.selectorByte.size());
-        if(mmtDescriptor.selectorByte.size()) {
+        if (mmtDescriptor.selectorByte.size()) {
             memcpy(tsDescriptor.selector_bytes.data(), mmtDescriptor.selectorByte.data(), mmtDescriptor.selectorByte.size());
         }
 
@@ -404,9 +403,9 @@ struct DescriptorConverter<MmtTlv::MultimediaServiceInformationDescriptor> {
 template <>
 struct DescriptorConverter<MmtTlv::MhServiceDescriptor> {
     static ts::ServiceDescriptor convert(const MmtTlv::MhServiceDescriptor& mmtDescriptor) {
-         const ts::ByteBlock serviceProviderName = aribEncode(mmtDescriptor.serviceProviderName);
+        const ts::ByteBlock serviceProviderName = aribEncode(mmtDescriptor.serviceProviderName);
         const ts::ByteBlock serviceName(ts::ARIBCharset::B24.encoded(
-            ts::UString::FromUTF8(mmtDescriptor.serviceName)));
+            ts::UString::FromUTF8(mmtDescriptor.serviceName.data(), mmtDescriptor.serviceName.size())));
 
         ts::ServiceDescriptor tsDescriptor(1,
             ts::UString::FromUTF8((char*)serviceProviderName.data(), serviceProviderName.size()),
@@ -424,7 +423,8 @@ struct DescriptorConverter<MmtTlv::MhLogoTransmissionDescriptor> {
             tsDescriptor.logo_id = mmtDescriptor.logoId;
             tsDescriptor.logo_version = mmtDescriptor.logoVersion;
             tsDescriptor.download_data_id = mmtDescriptor.downloadDataId;
-        } else if (mmtDescriptor.logoTransmissionType == 0x02) {
+        }
+        else if (mmtDescriptor.logoTransmissionType == 0x02) {
             tsDescriptor.logo_id = mmtDescriptor.logoId;
         }
         else if (mmtDescriptor.logoTransmissionType == 0x03) {
@@ -451,7 +451,7 @@ struct DescriptorConverter<MmtTlv::AccessControlDescriptor> {
         tsDescriptor.pid = 0x200; // Not implemented
 
         tsDescriptor.private_data.resize(mmtDescriptor.privateData.size());
-        if(mmtDescriptor.privateData.size()) {
+        if (mmtDescriptor.privateData.size()) {
             memcpy(tsDescriptor.private_data.data(), mmtDescriptor.privateData.data(), mmtDescriptor.privateData.size());
         }
 

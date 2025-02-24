@@ -1,5 +1,6 @@
 #include "acascard.h"
 #include <random>
+#include <algorithm>
 
 namespace MmtTlv::Acas {
 
@@ -96,7 +97,7 @@ void AcasCard::processEcm(const std::vector<uint8_t>& ecm)
 
     Common::sha256_t hash = Common::sha256(plainData);
 
-    for (int i = 0; i < hash.size(); i++) {
+    for (size_t i = 0; i < hash.size(); i++) {
         hash[i] ^= ecmResponse[i];
     }
 

@@ -18,8 +18,6 @@ bool DataUnit::unpack(Common::ReadStream& stream, bool timedFlag, bool aggregate
 			}
 			else {
 				dataUnitLength = stream.getBe16U();
-
-				size_t leftBytes = stream.leftBytes();
 				dataUnitLength = std::min(dataUnitLength, static_cast<uint16_t>(stream.leftBytes()));
 
 				movieFragmentSequenceNumber = stream.getBe32U();

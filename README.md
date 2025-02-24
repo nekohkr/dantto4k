@@ -6,9 +6,11 @@
 mmtsから復号化およびMPEG-2 TSへの変換を行います。
 ```
 dantto4k.exe <input.mmts> <output.ts> [options]
-
+        '-' can be used instead of a file path to enable piping via stdin or stdout.
 options:
-	--disableADTSConversion: Uses the raw LATM format without converting to ADTS.
+        --disableADTSConversion: Uses the raw LATM format without converting to ADTS.
+        --listSmartCardReader: Lists the available smart card readers.
+        --smartCardReaderName=<name>: Sets the smart card reader to use.
 ```
 
 ### BonDriver_dantto4k.dll

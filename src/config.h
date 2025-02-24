@@ -10,7 +10,6 @@ public:
     bool disableADTSConversion{false};
 };
 
-std::string getConfigFilePath(void* hModule);
 Config loadConfig(const std::string& filename);
 
 extern Config config;

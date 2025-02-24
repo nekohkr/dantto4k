@@ -1,8 +1,9 @@
 #pragma once
 #include <stdexcept>
 #include <vector>
-#include "swap.h"
 #include <span>
+#include <cstring>
+#include "swap.h"
 
 namespace MmtTlv {
     
@@ -40,15 +41,15 @@ public:
     }
 
     size_t read(void* dst, size_t size) {
-        size_t ret = peek(dst, size);
-        cur += size;
-        return size;
+        size_t readBytes = peek(dst, size);
+        cur += readBytes;
+        return readBytes;
     }
 
     size_t read(std::span<uint8_t> data) {
-        size_t ret = peek(data);
-        cur += data.size();
-        return data.size();
+        size_t readBytes = peek(data);
+        cur += readBytes;
+        return readBytes;
     }
 
     size_t peek(void* dst, size_t size) {

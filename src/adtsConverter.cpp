@@ -83,7 +83,7 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, size_t size)
         return false;
     }
 
-    int allStreamSameTimeFraming = (input[0] & 0b01000000) >> 5;
+    //int allStreamSameTimeFraming = (input[0] & 0b01000000) >> 5;
     // restricted to 0
     int numSubFrames = (input[0] & 0b00011111) << 1 | (input[1] & 0b10000000);
     // restricted to 0
@@ -105,9 +105,9 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, size_t size)
         return false;
     }
 
-    int a = (input[4] & 0b00011111) << 3 | (input[5] & 0b11100000) >> 5;
-    int b = (input[5] & 0b00010000) >> 4;
-    if (b) {
+    //int latmBufferFullness = (input[4] & 0b00011111) << 3 | (input[5] & 0b11100000) >> 5;
+    int otherDataPresent = (input[5] & 0b00010000) >> 4;
+    if (otherDataPresent) {
         return false;
     }
 
@@ -116,7 +116,7 @@ bool ADTSConverter::unpackStreamMuxConfig(uint8_t* input, size_t size)
         return false;
     }
 
-    int crc = (input[5] & 0b00000111) << 3 | (input[6] & 0b11111000) >> 3;
+    //int crc = (input[5] & 0b00000111) << 3 | (input[6] & 0b11111000) >> 3;
 
     return true;
 }

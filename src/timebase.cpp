@@ -31,12 +31,12 @@ int64_t av_rescale_rnd(int64_t a, int64_t b, int64_t c, enum AVRounding rnd) {
         }
     }
     else {
-        uint64_t a0 = a & 0xFFFFFFFF;
-        uint64_t a1 = a >> 32;
-        uint64_t b0 = b & 0xFFFFFFFF;
-        uint64_t b1 = b >> 32;
-        uint64_t t1 = a0 * b1 + a1 * b0;
-        uint64_t t1a = t1 << 32;
+        int64_t a0 = a & 0xFFFFFFFF;
+        int64_t a1 = a >> 32;
+        int64_t b0 = b & 0xFFFFFFFF;
+        int64_t b1 = b >> 32;
+        int64_t t1 = a0 * b1 + a1 * b0;
+        int64_t t1a = t1 << 32;
         int i;
 
         a0 = a0 * b0 + t1a;

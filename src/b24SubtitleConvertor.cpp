@@ -42,7 +42,6 @@ namespace {
 
 }
 
-
 bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B24SubtiteOutput>& output) {
     TTML ttml = TTMLPaser::parse(input);
 

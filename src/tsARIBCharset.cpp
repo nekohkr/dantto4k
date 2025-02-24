@@ -258,7 +258,7 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
             }
         }
 
-        if (cp == NULL) {
+        if (cp == '\0') {
             *out++ = '\0';
             --out_size;
         }

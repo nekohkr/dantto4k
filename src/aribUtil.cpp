@@ -30,24 +30,24 @@ constexpr Gaiji GaijiTable[] = {
     {u8"\U000032FF", u8"令和"},
 
     // ARIB STD-B24 (Table 7-11 Addtional Kanji Characters)
-	{u8"仿", u8"彷"},
-	{u8"傜", u8"徭"},
-	{u8"恵", u8"恵"},
-	{u8"泠", u8"冷"},
-	{u8"琢", u8"琢"},
-	{u8"畵", u8"畫"},
-	{u8"舘", u8"舘"},
-	{u8"蟬", u8"蝉"},
-	{u8"鷗", u8"鴎"},
-	{u8"麴", u8"麹"},
-	{u8"麵", u8"麺"},
-	{u8"髙", u8"高"},
-	{u8"塚", u8"塚"},
-	{u8"﨑", u8"埼"},
-	{u8"海", u8"海"},
-	{u8"渚", u8"渚"},
-	{u8"禮", u8"禮"},
-	{u8"⾓", u8"角"},
+    {u8"仿", u8"彷"},
+    {u8"傜", u8"徭"},
+    {u8"恵", u8"恵"},
+    {u8"泠", u8"冷"},
+    {u8"琢", u8"琢"},
+    {u8"畵", u8"畫"},
+    {u8"舘", u8"舘"},
+    {u8"蟬", u8"蝉"},
+    {u8"鷗", u8"鴎"},
+    {u8"麴", u8"麹"},
+    {u8"麵", u8"麺"},
+    {u8"髙", u8"高"},
+    {u8"塚", u8"塚"},
+    {u8"﨑", u8"埼"},
+    {u8"海", u8"海"},
+    {u8"渚", u8"渚"},
+    {u8"禮", u8"禮"},
+    {u8"⾓", u8"角"},
 };
 
 namespace {
@@ -60,7 +60,7 @@ void replaceSequence(std::string& str, const std::string& sequence, const char* 
         pos += 1;
     }
 }
-    
+
 void convertGaiji(std::string& str) {
     for (auto gaiji : GaijiTable) {
         replaceSequence(str, reinterpret_cast<const char*>(gaiji.find), reinterpret_cast<const char*>(gaiji.replacement));
@@ -73,9 +73,10 @@ const ts::ByteBlock aribEncode(const std::string& input) {
     std::string converted = input;
     convertGaiji(converted);
 
-    ts::UString text = ts::UString::FromUTF8(converted);
+    ts::UString text = ts::UString::FromUTF8(converted.data(), converted.size());
     return ts::ARIBCharset2::B24.encoded(text);
 }
+
 
 const ts::ByteBlock aribEncode(const char* input, size_t size) {
     return aribEncode(std::string{ input, size });
