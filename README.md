@@ -25,11 +25,26 @@ mirakurunのソースコードを修正してtimeoutを30秒以上に変更す�
 https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13-L175C55
 
 ## ビルド
+### Windows
 /thirdpartyフォルダにopenssl 3, tsduckを準備します。
 下記のURLからbinaryをダウンロードすることができます。
 
 - https://slproweb.com/products/Win32OpenSSL.html
 - https://github.com/tsduck/tsduck/
+### Ubuntu
+
+```bash
+sudo apt install make g++ libssl-dev libedit-dev libedit-dev zlib1g-dev libusb-1.0-0-dev libpcsclite-dev
+git clone https://github.com/tsduck/tsduck.git
+cd tsduck
+make
+make install
+
+git clone https://github.com/nekohkr/dantto4k.git
+cd dantto4k
+make
+make install
+```
 
 ## References
 - ARIB STD-B32
