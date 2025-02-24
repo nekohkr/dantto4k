@@ -259,6 +259,12 @@
     <ClCompile Include="ttml.cpp">
       <Filter>dantto4k\subtitle</Filter>
     </ClCompile>
+    <ClCompile Include="mhAit.cpp">
+      <Filter>mmttlv\mmt\tables</Filter>
+    </ClCompile>
+    <ClCompile Include="mhApplicationDescriptor.cpp">
+      <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -563,6 +569,12 @@
     </ClInclude>
     <ClInclude Include="ttml.h">
       <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
+    <ClInclude Include="mhAit.h">
+      <Filter>mmttlv\mmt\tables</Filter>
+    </ClInclude>
+    <ClInclude Include="mhApplicationDescriptor.h">
+      <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
