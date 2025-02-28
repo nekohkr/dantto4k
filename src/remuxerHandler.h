@@ -75,7 +75,6 @@ public:
 private:
 	void writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& data);
 	void writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const B24SubtiteOutput& subtitle);
-	void writePcr(uint64_t pcr);
 
 	MmtTlv::MmtTlvDemuxer& demuxer;
 	std::vector<uint8_t>& output;
@@ -83,6 +82,8 @@ private:
 	std::unordered_map<uint16_t, uint8_t> mapCC;
 	int tsid{-1};
 	int streamCount{};
-	int64_t lastVideoPts{-1};
+
+	uint64_t eitPresentStartTime{};
+
 	ts::DuckContext duck;
 };

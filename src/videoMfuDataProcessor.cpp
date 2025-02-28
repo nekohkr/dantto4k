@@ -3,6 +3,9 @@
 
 namespace MmtTlv {
 
+constexpr uint8_t CRA_NUT = 0x15;
+constexpr uint8_t NAL_AUD = 0x23;
+
 std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
 {
     Common::ReadStream stream(data);
@@ -16,9 +19,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
     }
 
     uint8_t uint8 = stream.peek8U();
-    
     int forbiddenZeroBit = uint8 >> 7;
-
     if (forbiddenZeroBit != 0) {
         return std::nullopt;
     }
@@ -44,7 +45,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
             mfuData.dts = ptsDts.second;
             mfuData.streamIndex = mmtStream->getStreamIndex();
             
-            if (nalUnitType == 0x15 /* CRA_NUT */) {
+            if (nalUnitType == CRA_NUT) {
                 mfuData.keyframe = true;
             }
 
@@ -53,7 +54,7 @@ std::optional<MfuData> VideoMfuDataProcessor::process(const std::shared_ptr<MmtS
         sliceSegmentCount++;
     }
 
-    if (nalUnitType == 0x23 /* NAL_AUD */) {
+    if (nalUnitType == NAL_AUD){
         sliceSegmentCount = 0;
     }
 

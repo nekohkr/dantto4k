@@ -135,18 +135,6 @@ namespace {
 
 } // anonymous namespace
 
-void RemuxerHandler::writePcr(uint64_t pcr)
-{
-
-    ts::TSPacket packet;
-    packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
-    mapCC[PCR_PID]++;
-
-    packet.setPCR(pcr, true);
-
-    output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
-}
-
 void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
     writeStream(mmtStream, mfuData, mfuData->data);
@@ -176,6 +164,13 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
 
 void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
+    std::list<B24SubtiteOutput> output;
+    B24SubtiteConvertor::convert(mfuData->data, output);
+
+    if (output.empty()) {
+        return;
+    }
+
     {
         B24::CaptionManagementData captionManagementData;
         B24::CaptionManagementData::Langage langage;
@@ -191,18 +186,15 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmt
         B24::PESData pesData(dataGroup);
         pesData.SetPESType(B24::PESData::PESType::Synchronized);
 
-        std::vector<uint8_t> output;
-        pesData.pack(output);
+        std::vector<uint8_t> packedPesData;
+        pesData.pack(packedPesData);
 
         B24SubtiteOutput subtitleOutput;
-        subtitleOutput.pesData = output;
-        subtitleOutput.begin = 0;
+        subtitleOutput.pesData = packedPesData;
+        subtitleOutput.begin = output.begin()->begin;
         subtitleOutput.end = 0;
         writeSubtitle(mmtStream, subtitleOutput);
     }
-
-    std::list<B24SubtiteOutput> output;
-    B24SubtiteConvertor::convert(mfuData->data, output);
 
     for (const auto& pesData : output) {
         writeSubtitle(mmtStream, pesData);
@@ -224,11 +216,6 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     if ((mfuData->pts != MmtTlv::NOPTS_VALUE && mfuData->dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
         tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
         tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
-    }
-
-    if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1) {
-        writePcr(tsDts * 300);
-        lastVideoPts = tsPts;
     }
 
     std::vector<uint8_t> pesOutput;
@@ -267,21 +254,12 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     }
 }
 
-
 void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const B24SubtiteOutput& subtitle)
 {
-    if (lastVideoPts == -1) {
-        return;
-    }
-
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
-    pes.setPts(lastVideoPts);
+    pes.setPts(subtitle.calcPts(eitPresentStartTime));
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
-    if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
-        mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
-        pes.setDataAlignmentIndicator(true);
-    }
     pes.setPayload(&subtitle.pesData);
     pes.pack(pesOutput);
 
@@ -436,6 +414,11 @@ void RemuxerHandler::onMhAit(const std::shared_ptr<MmtTlv::MhAit>& mhAit)
 void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 {
     tsid = mhEit->tlvStreamId;
+
+    if (mhEit->isPf() && mhEit->sectionNumber == 0 && mhEit->events.size() > 0) {
+        struct tm startTime = EITConvertStartTime(mhEit->events.begin()->get()->startTime);
+        eitPresentStartTime = mktime(&startTime);
+    }
 
     ts::EIT tsEit(true, mhEit->isPf(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
     for (auto& mhEvent : mhEit->events) {
@@ -924,13 +907,11 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
 
 void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
 {
-    /*
     ts::TSPacket packet;
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
     mapCC[PCR_PID]++;
-    packet.setPCR(ntp->transmit_timestamp.toPCRValue(), true);
+    packet.setPCR(ntp->transmit_timestamp.toPcrValue(), true);
     output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
-    */
 }
 
 void RemuxerHandler::clear()

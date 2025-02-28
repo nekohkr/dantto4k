@@ -7,7 +7,7 @@ namespace MmtTlv {
 	class NtpTimestamp {
 	public:
 		bool unpack(Common::ReadStream& stream);
-		int64_t toPCRValue() const {
+		int64_t toPcrValue() const {
 			const uint32_t NTP_1970 = 2208988800U;
 			int64_t unixTimestamp = static_cast<int64_t>(((seconds - NTP_1970) * 1000.0) + ((fraction / 4294967296.0) * 1000.0));
 
