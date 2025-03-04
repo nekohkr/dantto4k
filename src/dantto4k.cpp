@@ -256,7 +256,6 @@ int main(int argc, char* argv[]) {
         MmtTlv::Common::ReadStream stream(buffer);
         while (!stream.isEof()) {
             MmtTlv::DemuxStatus status;
-
 #ifdef _WIN32
             status = demuxWithHandler(stream);
 #else

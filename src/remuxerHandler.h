@@ -84,6 +84,7 @@ private:
 	int streamCount{};
 
 	uint64_t eitPresentStartTime{};
+	uint64_t lastPcr{};
 
 	ts::DuckContext duck;
 };

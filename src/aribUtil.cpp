@@ -62,7 +62,7 @@ void replaceSequence(std::string& str, const std::string& sequence, const char* 
 }
 
 void convertGaiji(std::string& str) {
-    for (auto gaiji : GaijiTable) {
+    for (const auto& gaiji : GaijiTable) {
         replaceSequence(str, reinterpret_cast<const char*>(gaiji.find), reinterpret_cast<const char*>(gaiji.replacement));
     }
 }

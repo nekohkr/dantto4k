@@ -169,28 +169,3 @@ std::pair<uint8_t, uint8_t> findClosestColor(const ColorRGBA& color) {
     }
 	return { palette, index };
 }
-
-std::pair<uint8_t, uint8_t> findClosestFontColor(const ColorRGBA& color) {
-    uint8_t palette = 0;
-    uint8_t index = 0;
-    uint32_t distance = 0xFFFFFFFF;
-    for (uint8_t p = 0; p < 8; p++) {
-        for (uint8_t i = (p == 0 ? 8 : 0); i < 16; i++) {
-            uint8_t r = color.r - kB24ColorCLUT[p][i].r;
-            uint8_t g = color.g - kB24ColorCLUT[p][i].g;
-            uint8_t b = color.b - kB24ColorCLUT[p][i].b;
-            uint8_t a = color.a - kB24ColorCLUT[p][i].a;
-            uint32_t d = r * r + g * g + b * b + a * a;
-            if (d < distance) {
-                distance = d;
-                palette = p;
-                index = i;
-            }
-
-            if (d == 0) {
-                return { palette, index };
-            }
-        }
-    }
-    return { palette, index };
-}

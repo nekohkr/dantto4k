@@ -474,7 +474,7 @@ template <>
 struct DescriptorConverter<MmtTlv::ServiceListDescriptor> {
     static ts::ServiceListDescriptor convert(const MmtTlv::ServiceListDescriptor& mmtDescriptor) {
         ts::ServiceListDescriptor tsDescriptor;
-        for (auto service : mmtDescriptor.services) {
+        for (auto const& service : mmtDescriptor.services) {
             tsDescriptor.addService(service.serviceId, service.serviceType);
         }
         return tsDescriptor;

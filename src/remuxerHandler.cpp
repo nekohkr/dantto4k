@@ -170,7 +170,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmt
     if (output.empty()) {
         return;
     }
-
+    
     {
         B24::CaptionManagementData captionManagementData;
         B24::CaptionManagementData::Langage langage;
@@ -195,6 +195,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmt
         subtitleOutput.end = 0;
         writeSubtitle(mmtStream, subtitleOutput);
     }
+    
 
     for (const auto& pesData : output) {
         writeSubtitle(mmtStream, pesData);
@@ -258,7 +259,7 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtS
 {
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
-    pes.setPts(subtitle.calcPts(eitPresentStartTime));
+    pes.setPts(lastPcr / 300);
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     pes.setPayload(&subtitle.pesData);
     pes.pack(pesOutput);
@@ -282,6 +283,9 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtS
         output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         ++i;
     }
+
+
+
 }
 
 void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
@@ -337,7 +341,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
                 tsDescriptor.broadcaster_type = 1;
                 tsDescriptor.terrestrial_broadcaster_id = mhBit->originalNetworkId;
 
-                for (auto affiliationId : mmtDescriptor->affiliationIds) {
+                for (const auto affiliationId : mmtDescriptor->affiliationIds) {
                     tsDescriptor.affiliation_ids.emplace_back(affiliationId);
                 }
 
@@ -421,7 +425,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
     }
 
     ts::EIT tsEit(true, mhEit->isPf(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
-    for (auto& mhEvent : mhEit->events) {
+    for (const auto& mhEvent : mhEit->events) {
         ts::EIT::Event tsEvent(&tsEit);
 
         struct tm startTime = EITConvertStartTime(mhEvent->startTime);
@@ -575,14 +579,14 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
     tsid = mhSdt->tlvStreamId;
 
     ts::SDT tsSdt(true, mhSdt->versionNumber, mhSdt->currentNextIndicator, mhSdt->tlvStreamId, mhSdt->originalNetworkId);
-    for (auto& service : mhSdt->services) {
+    for (const auto& service : mhSdt->services) {
         ts::SDT::ServiceEntry tsService(&tsSdt);
         tsService.EITs_present = service->eitScheduleFlag;
         tsService.EITpf_present = service->eitPresentFollowingFlag;
         tsService.running_status = convertRunningStatus(service->runningStatus);
         tsService.CA_controlled = service->freeCaMode;
 
-        for (auto& descriptor : service->descriptors.list) {
+        for (const auto& descriptor : service->descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
             case MmtTlv::MhServiceDescriptor::kDescriptorTag:
             {
@@ -910,8 +914,12 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
     ts::TSPacket packet;
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
     mapCC[PCR_PID]++;
-    packet.setPCR(ntp->transmit_timestamp.toPcrValue(), true);
+
+    // Add 0.1 seconds to resolve the playback issue in VLC
+    packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
     output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+
+    lastPcr = ntp->transmit_timestamp.toPcrValue();
 }
 
 void RemuxerHandler::clear()
