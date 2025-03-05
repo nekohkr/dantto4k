@@ -12,50 +12,47 @@
 
 class TTMLCssValueLength {
 public:
+    TTMLCssValueLength(float v, const std::string& u) : value(v), unit(u) {}
+
     float value;
     std::string unit;
 
-    TTMLCssValueLength(float v, const std::string& u) : value(v), unit(u) {}
-
-    void print() const {
-        std::cout << "Length: " << value << unit << std::endl;
-    }
 };
 
 class TTMLCssValueColor {
 public:
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
-
     TTMLCssValueColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
     TTMLCssValueColor(const std::string& hex) {
         if (hex.size() != 9 || hex[0] != '#') {
             throw std::invalid_argument("Invalid color format. Expected format: #RRGGBBAA");
         }
-        // std::stoul·Î ÆÄ½Ì (16Áø¼ö)
+
         unsigned long value = std::stoul(hex.substr(1), nullptr, 16);
         r = static_cast<uint8_t>((value >> 24) & 0xFF);
         g = static_cast<uint8_t>((value >> 16) & 0xFF);
         b = static_cast<uint8_t>((value >> 8) & 0xFF);
         a = static_cast<uint8_t>(value & 0xFF);
     }
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
 };
 
 class TTMLCssValueKeyword {
 public:
-    std::string keyword;
-
     TTMLCssValueKeyword(const std::string& k) : keyword(k) {}
+
+    std::string keyword;
 };
 
 class TTMLCssValueNumber {
 public:
-    float number;
-
     TTMLCssValueNumber(float n) : number(n) {}
+
+    float number;
 };
 
 class TTMLCssValue {

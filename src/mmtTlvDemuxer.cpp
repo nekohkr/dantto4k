@@ -472,10 +472,10 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
     mapStreamByStreamIdx.clear();
 
     int streamIndex = 0;
-    for (auto& asset : mpt->assets) {
+    for (const auto& asset : mpt->assets) {
         std::shared_ptr<MmtStream> mmtStream;
 
-        for (auto& locationInfo : asset.locationInfos) {
+        for (const auto& locationInfo : asset.locationInfos) {
             if (locationInfo.locationType == 0) {
                 if (asset.assetType == AssetType::hev1 ||
                     asset.assetType == AssetType::mp4a ||
@@ -504,7 +504,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             continue;
         }
 
-        for (auto& descriptor : asset.descriptors.list) {
+        for (const auto& descriptor : asset.descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
             case MpuTimestampDescriptor::kDescriptorTag:
             {
@@ -547,7 +547,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
 
 void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream)
 {
-    for (auto& ts : descriptor->entries) {
+    for (const auto& ts : descriptor->entries) {
         bool find = false;
         for (size_t i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
             if (mmtStream->mpuTimestamps[i].mpuSequenceNumber == ts.mpuSequenceNumber) {
@@ -597,7 +597,7 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
         mmtStream->timeBase.den = descriptor->timescale;
     }
 
-    for (auto& ts : descriptor->entries) {
+    for (const auto& ts : descriptor->entries) {
         if (mmtStream->lastMpuSequenceNumber > ts.mpuSequenceNumber)
             continue;
 

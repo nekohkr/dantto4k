@@ -22,8 +22,13 @@ namespace B24ControlSet {
     static constexpr uint8_t RS = 0x1E;
     static constexpr uint8_t US = 0x1F;
     static constexpr uint8_t SP = 0x20;
+    static constexpr uint8_t SWF = 0x53;
     static constexpr uint8_t SDF = 0x56;
+    static constexpr uint8_t SSM = 0x57;
+    static constexpr uint8_t SHS = 0x58;
+    static constexpr uint8_t SVS = 0x59;
     static constexpr uint8_t SDP = 0x5F;
+    static constexpr uint8_t ORN = 0x63;
     static constexpr uint8_t DEL = 0x7F;
     static constexpr uint8_t BKF = 0x80;
     static constexpr uint8_t RDF = 0x81;
