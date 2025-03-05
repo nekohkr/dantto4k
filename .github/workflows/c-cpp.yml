@@ -21,7 +21,8 @@ jobs:
       run: |
         git clone https://github.com/tsduck/tsduck.git
         cd tsduck
-        make
+        scripts/install-prerequisites.sh
+        make -j10
         sudo make install
     - name: make
       run: make
