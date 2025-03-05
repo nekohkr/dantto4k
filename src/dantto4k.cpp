@@ -165,7 +165,7 @@ void printReaderList() {
 }
 
 int main(int argc, char* argv[]) {
-    constexpr size_t chunkSize = 1024 * 1024 * 20; // 20MB
+    constexpr size_t chunkSize = 1024 * 1024 * 5; // 5MB
     auto start = std::chrono::high_resolution_clock::now();
 
     std::string inputPath, outputPath;
@@ -242,15 +242,14 @@ int main(int argc, char* argv[]) {
     demuxer.init();
 
     std::vector<uint8_t> inputBuffer;
+    inputBuffer.reserve(chunkSize * 2);
     while (true) {
-        if (!useStdin) {
-            if (inputStream->eof()) {
-                break;
-            }
+        if (!useStdin && inputStream->eof()) {
+            break;
         }
 
         if (inputBuffer.size() < chunkSize) {
-            int oldSize = inputBuffer.size();
+            size_t oldSize = inputBuffer.size();
             inputBuffer.resize(oldSize + chunkSize);
             inputStream->read(reinterpret_cast<char*>(inputBuffer.data() + oldSize), chunkSize);
             inputBuffer.resize(oldSize + inputStream->gcount());
