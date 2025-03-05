@@ -1,0 +1,27 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y make g++ libssl-dev libedit-dev zlib1g-dev libusb-1.0-0-dev libpcsclite-dev
+    - name: Install tsduck
+      run: |
+        git clone https://github.com/tsduck/tsduck.git
+        cd tsduck
+        make
+        sudo make install
+    - name: make
+      run: make
