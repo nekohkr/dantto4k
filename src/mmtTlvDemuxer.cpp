@@ -31,6 +31,7 @@
 #include "ntp.h"
 #include "dataTransmissionMessage.h"
 #include "caMessage.h"
+#include <algorithm>
 
 namespace MmtTlv {
 

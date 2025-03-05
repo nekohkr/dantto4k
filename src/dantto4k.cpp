@@ -20,7 +20,7 @@ HINSTANCE hDantto4kModule = nullptr;
 
 std::string getConfigFilePath(void* hModule) {
     char g_IniFilePath[_MAX_FNAME];
-    GetModuleFileNameA((HMODULE)hModule, g_IniFilePath, MAX_PATH);
+    GetModuleFileNameA((HMODULE)hModule, g_IniFilePath, _MAX_FNAME);
 
     char drive[_MAX_DRIVE];
     char dir[_MAX_DIR];

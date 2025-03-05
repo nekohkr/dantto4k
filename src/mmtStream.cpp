@@ -2,6 +2,7 @@
 #include "videoComponentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
 #include "timebase.h"
+#include <algorithm>
 
 namespace MmtTlv {
 

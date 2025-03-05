@@ -34,10 +34,11 @@ https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13
 ### Ubuntu
 
 ```bash
-sudo apt install make g++ libssl-dev libedit-dev libedit-dev zlib1g-dev libusb-1.0-0-dev libpcsclite-dev
+sudo apt install make g++ libssl-dev libpcsclite-dev pscsd pkgconf
 git clone https://github.com/tsduck/tsduck.git
 cd tsduck
-make
+scripts/install-prerequisites.sh
+make -j10
 make install
 
 git clone https://github.com/nekohkr/dantto4k.git
