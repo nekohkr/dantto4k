@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install make g++ libssl-dev libpcsclite-dev pscsd pkgconf
+        sudo apt install -y make g++ libssl-dev libpcsclite-dev pscsd pkgconf
     - name: Install tsduck
       run: |
         git clone https://github.com/tsduck/tsduck.git
