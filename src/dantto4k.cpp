@@ -214,23 +214,23 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::istream *inputStream = nullptr;
-    std::ifstream *inputFs = nullptr;
+    std::unique_ptr<std::istream> inputStream;
+    std::unique_ptr<std::ifstream> inputFs;
     if (useStdin) {
-        inputStream = &std::cin;
+        inputStream.reset(&std::cin);
     }
     else {
-        inputFs = new std::ifstream(inputPath, std::ios::binary);
+        inputFs = std::make_unique<std::ifstream>(inputPath, std::ios::binary);
         if (!inputFs->is_open()) {
             std::cerr << "Unable to open input file: " << inputPath << std::endl;
             return 1;
         }
-        inputStream = inputFs;
+        inputStream = std::move(inputFs);
     }
 
-    std::ofstream* outputFs = nullptr;
+    std::unique_ptr<std::ofstream> outputFs;
     if (!useStdout) {
-        outputFs = new std::ofstream(outputPath, std::ios::binary);
+        outputFs = std::make_unique<std::ofstream>(outputPath, std::ios::binary);
         if (!outputFs->is_open()) {
             std::cerr << "Unable to open output file: " << inputPath << std::endl;
             return 1;
@@ -241,19 +241,22 @@ int main(int argc, char* argv[]) {
     demuxer.setSmartCardReaderName(config.smartCardReaderName);
     demuxer.init();
 
-    std::vector<uint8_t> buffer;
-    while (!inputStream->eof()) {
-        if (buffer.size() < chunkSize) {
-            size_t readSize = std::min(chunkSize, getLeftBytes(inputStream));
-            if (readSize == 0) {
+    std::vector<uint8_t> inputBuffer;
+    while (true) {
+        if (!useStdin) {
+            if (inputStream->eof()) {
                 break;
             }
-
-            buffer.resize(buffer.size() + readSize);
-            inputStream->read(reinterpret_cast<char*>(buffer.data() + buffer.size() - readSize), readSize);
         }
 
-        MmtTlv::Common::ReadStream stream(buffer);
+        if (inputBuffer.size() < chunkSize) {
+            int oldSize = inputBuffer.size();
+            inputBuffer.resize(oldSize + chunkSize);
+            inputStream->read(reinterpret_cast<char*>(inputBuffer.data() + oldSize), chunkSize);
+            inputBuffer.resize(oldSize + inputStream->gcount());
+        }
+
+        MmtTlv::Common::ReadStream stream(inputBuffer);
         while (!stream.isEof()) {
             MmtTlv::DemuxStatus status;
 #ifdef _WIN32
@@ -267,7 +270,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        buffer.erase(buffer.begin(), buffer.begin() + (buffer.size() - stream.leftBytes()));
+        inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - stream.leftBytes()));
 
         if (useStdout) {
             std::cout.write(reinterpret_cast<const char*>(output.data()), output.size());
@@ -277,15 +280,6 @@ int main(int argc, char* argv[]) {
         }
         
         output.clear();
-    }
-
-    if (inputFs) {
-        inputFs->close();
-        delete inputFs;
-    }
-    if (outputFs) {
-        outputFs->close();
-        delete outputFs;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
