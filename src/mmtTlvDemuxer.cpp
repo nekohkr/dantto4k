@@ -66,7 +66,7 @@ void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderNam
 
 DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
 {
-    size_t cur = stream.getCur();
+    size_t cur = stream.getPos();
 
     if (stream.leftBytes() < 4) {
         return DemuxStatus::NotEnoughBuffer;
@@ -78,12 +78,12 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
     }
 
     if (!tlv.unpack(stream)) {
-        stream.setCur(cur);
+        stream.seek(cur);
         return DemuxStatus::NotEnoughBuffer;
     }
 
     if (stream.leftBytes() < tlv.getDataLength()) {
-        stream.setCur(cur);
+        stream.seek(cur);
         return DemuxStatus::NotEnoughBuffer;
     }
 
