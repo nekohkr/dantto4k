@@ -203,9 +203,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "dantto4k.exe <input.mmts> <output.ts> [options]" << std::endl;
         std::cerr << "\t'-' can be used instead of a file path to enable piping via stdin or stdout." << std::endl;
         std::cerr << "options:" << std::endl;
-        std::cerr << "\t--disableADTSConversion: Uses the raw LATM format without converting to ADTS." << std::endl;
-        std::cerr << "\t--listSmartCardReader: Lists the available smart card readers." << std::endl;
-        std::cerr << "\t--smartCardReaderName=<name>: Sets the smart card reader to use." << std::endl;
+        std::cerr << "\t--disableADTSConversion: Use the raw LATM format without converting to ADTS." << std::endl;
+        std::cerr << "\t--listSmartCardReader: List the available smart card readers." << std::endl;
+        std::cerr << "\t--smartCardReaderName=<name>: Set the smart card reader to use." << std::endl;
         return 1;
     }
 
@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
     if (!useStdout) {
         outputFs = std::make_unique<std::ofstream>(outputPath, std::ios::binary);
         if (!outputFs->is_open()) {
-            std::cerr << "Unable to open output file: " << inputPath << std::endl;
+            std::cerr << "Unable to open output file: " << outputPath << std::endl;
             return 1;
         }
     }

@@ -41,97 +41,97 @@
 
 namespace {
 
-    int convertRunningStatus(int runningStatus) {
-        /*
-           MMT
-           0 undefined
-           1 In non-operation
-           2 It will start within several seconds
-            (ex: video recording use)
-           3 Out of operation
-           4 In operation
-           5 – 7 Reserved for use in the future
+int convertRunningStatus(int runningStatus) {
+    /*
+        MMT
+        0 undefined
+        1 In non-operation
+        2 It will start within several seconds
+        (ex: video recording use)
+        3 Out of operation
+        4 In operation
+        5 – 7 Reserved for use in the future
 
-           MPEG2 TS
-           GST_MPEGTS_RUNNING_STATUS_UNDEFINED (0)
-           GST_MPEGTS_RUNNING_STATUS_NOT_RUNNING (1)
-           GST_MPEGTS_RUNNING_STATUS_STARTS_IN_FEW_SECONDS (2)
-           GST_MPEGTS_RUNNING_STATUS_PAUSING (3)
-           GST_MPEGTS_RUNNING_STATUS_RUNNING (4)
-           GST_MPEGTS_RUNNING_STATUS_OFF_AIR (5)
-       */
+        MPEG2 TS
+        GST_MPEGTS_RUNNING_STATUS_UNDEFINED (0)
+        GST_MPEGTS_RUNNING_STATUS_NOT_RUNNING (1)
+        GST_MPEGTS_RUNNING_STATUS_STARTS_IN_FEW_SECONDS (2)
+        GST_MPEGTS_RUNNING_STATUS_PAUSING (3)
+        GST_MPEGTS_RUNNING_STATUS_RUNNING (4)
+        GST_MPEGTS_RUNNING_STATUS_OFF_AIR (5)
+    */
 
-        switch (runningStatus) {
-        case 0:
-            return 0;
-        case 1:
-            return 1;
-        case 2:
-            return 2;
-        case 3:
-            return 5;
-        case 4:
-            return 4;
-        default:
-            return 0;
-        }
+    switch (runningStatus) {
+    case 0:
+        return 0;
+    case 1:
+        return 1;
+    case 2:
+        return 2;
+    case 3:
+        return 5;
+    case 4:
+        return 4;
+    default:
+        return 0;
+    }
+}
+
+int assetType2streamType(uint32_t assetType)
+{
+    int stream_type = 0;
+    switch (assetType) {
+    case MmtTlv::AssetType::hev1:
+        stream_type = StreamType::VIDEO_HEVC;
+        break;
+    case MmtTlv::AssetType::mp4a:
+        stream_type = config.disableADTSConversion ? StreamType::AUDIO_AAC_LATM : StreamType::AUDIO_AAC;
+        break;
+    case MmtTlv::AssetType::stpp:
+        stream_type = StreamType::PRIVATE_DATA;
+        break;
     }
 
-    int assetType2streamType(uint32_t assetType)
-    {
-        int stream_type = 0;
-        switch (assetType) {
-        case MmtTlv::AssetType::hev1:
-            stream_type = StreamType::VIDEO_HEVC;
-            break;
-        case MmtTlv::AssetType::mp4a:
-            stream_type = config.disableADTSConversion ? StreamType::AUDIO_AAC_LATM : StreamType::AUDIO_AAC;
-            break;
-        case MmtTlv::AssetType::stpp:
-            stream_type = StreamType::PRIVATE_DATA;
-            break;
-        }
+    return stream_type;
+}
 
-        return stream_type;
+uint8_t convertTableId(uint8_t mmtTableId) {
+    switch (mmtTableId) {
+    case MmtTlv::MmtTableId::Mpt:
+        return 0x02;
+    case MmtTlv::MmtTableId::Plt:
+        return 0x00;
+    case MmtTlv::MmtTableId::MhEitPf:
+        return 0x4E;
+    case MmtTlv::MmtTableId::MhEitS_0:
+    case MmtTlv::MmtTableId::MhEitS_1:
+    case MmtTlv::MmtTableId::MhEitS_2:
+    case MmtTlv::MmtTableId::MhEitS_3:
+    case MmtTlv::MmtTableId::MhEitS_4:
+    case MmtTlv::MmtTableId::MhEitS_5:
+    case MmtTlv::MmtTableId::MhEitS_6:
+    case MmtTlv::MmtTableId::MhEitS_7:
+    case MmtTlv::MmtTableId::MhEitS_8:
+    case MmtTlv::MmtTableId::MhEitS_9:
+    case MmtTlv::MmtTableId::MhEitS_10:
+    case MmtTlv::MmtTableId::MhEitS_11:
+    case MmtTlv::MmtTableId::MhEitS_12:
+    case MmtTlv::MmtTableId::MhEitS_13:
+    case MmtTlv::MmtTableId::MhEitS_14:
+    case MmtTlv::MmtTableId::MhEitS_15:
+        return 0x50;
+    case MmtTlv::MmtTableId::MhTot:
+        return 0x73;
+    case MmtTlv::MmtTableId::MhBit:
+        return 0xC4;
+    case MmtTlv::MmtTableId::MhSdtActual:
+        return 0x42;
+    case MmtTlv::MmtTableId::MhCdt:
+        return 0xC8;
     }
 
-    uint8_t convertTableId(uint8_t mmtTableId) {
-        switch (mmtTableId) {
-        case MmtTlv::MmtTableId::Mpt:
-            return 0x02;
-        case MmtTlv::MmtTableId::Plt:
-            return 0x00;
-        case MmtTlv::MmtTableId::MhEitPf:
-            return 0x4E;
-        case MmtTlv::MmtTableId::MhEitS_0:
-        case MmtTlv::MmtTableId::MhEitS_1:
-        case MmtTlv::MmtTableId::MhEitS_2:
-        case MmtTlv::MmtTableId::MhEitS_3:
-        case MmtTlv::MmtTableId::MhEitS_4:
-        case MmtTlv::MmtTableId::MhEitS_5:
-        case MmtTlv::MmtTableId::MhEitS_6:
-        case MmtTlv::MmtTableId::MhEitS_7:
-        case MmtTlv::MmtTableId::MhEitS_8:
-        case MmtTlv::MmtTableId::MhEitS_9:
-        case MmtTlv::MmtTableId::MhEitS_10:
-        case MmtTlv::MmtTableId::MhEitS_11:
-        case MmtTlv::MmtTableId::MhEitS_12:
-        case MmtTlv::MmtTableId::MhEitS_13:
-        case MmtTlv::MmtTableId::MhEitS_14:
-        case MmtTlv::MmtTableId::MhEitS_15:
-            return 0x50;
-        case MmtTlv::MmtTableId::MhTot:
-            return 0x73;
-        case MmtTlv::MmtTableId::MhBit:
-            return 0xC4;
-        case MmtTlv::MmtTableId::MhSdtActual:
-            return 0x42;
-        case MmtTlv::MmtTableId::MhCdt:
-            return 0xC8;
-        }
-
-        return 0xFF;
-    }
+    return 0xFF;
+}
 
 } // anonymous namespace
 
@@ -704,6 +704,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
         for (int i = 0; i < asset.locationCount; i++) {
             if (asset.locationInfos[i].locationType == 0) {
                 const auto& mmtStream = demuxer.mapStreamByStreamIdx[streamIndex];
+
                 if (mmtStream->getComponentTag() == -1) {
                     streamIndex++;
                     continue;
@@ -728,8 +729,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
                     descriptor.format_identifier = 0x48455643; // HEVC
                     stream.descs.add(duck, descriptor);
                 }
-
-                if (asset.assetType == MmtTlv::AssetType::stpp) {
+                else if (asset.assetType == MmtTlv::AssetType::stpp) {
                     ts::DataComponentDescriptor descriptor;
                     descriptor.data_component_id = 0x0008;
                     descriptor.additional_data_component_info.push_back(0x3D);

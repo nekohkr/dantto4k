@@ -13,6 +13,7 @@ namespace MmtTlv::Acas {
 
 class ApduResponse {
 public:
+    ApduResponse() {}
     ApduResponse(uint8_t sw1, uint8_t sw2, const std::vector<uint8_t>& data = {})
         : sw1(sw1), sw2(sw2), data(data) {}
 
@@ -77,10 +78,10 @@ public:
         this->smartCardReaderName = smartCardReaderName;
     }
     bool init();
-    bool isConnected() const;
-    void connect();
-    ApduResponse transmit(const std::vector<BYTE>& sendData);
+    bool connect();
     void disconnect();
+    uint32_t transmit(const std::vector<uint8_t>& message, ApduResponse& response);
+    bool isConnected() const;
     void release();
 
 private:

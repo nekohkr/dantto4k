@@ -14,6 +14,7 @@
 #include "compressedIPPacket.h"
 #include "mfuDataProcessorBase.h"
 #include "mmtTlvStatistics.h"
+#include "ecmProcessor.h"
 
 namespace MmtTlv {
 
@@ -80,8 +81,10 @@ public:
 private:
 	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
 
-	std::shared_ptr<Acas::SmartCard> smartCard;
-	std::unique_ptr<Acas::AcasCard> acasCard;
+	Acas::SmartCard smartCard;
+	Acas::AcasCard acasCard;
+	EcmProcessor ecmProcessor;
+
 	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
 	Tlv tlv;
 	CompressedIPPacket compressedIPPacket;

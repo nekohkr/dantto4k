@@ -265,6 +265,9 @@
     <ClCompile Include="mhApplicationDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
+    <ClCompile Include="ecmProcessor.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -575,6 +578,9 @@
     </ClInclude>
     <ClInclude Include="mhApplicationDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="ecmProcessor.h">
+      <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
