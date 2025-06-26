@@ -94,8 +94,11 @@ void EcmProcessor::worker()
             std::unique_lock<std::mutex> lock(queueMutex);
             queueCv.wait(lock, [&]() {
                 return !queue.empty() || stop;
-                });
+            });
 
+            if (stop) {
+                break;
+            }
 
             current = std::move(queue.front());
         }
@@ -124,10 +127,6 @@ void EcmProcessor::worker()
 
             if (queue.empty()) {
                 queueCv.notify_all();
-
-                if (stop) {
-                    break;
-                }
             }
         }
     }

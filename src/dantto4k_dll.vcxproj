@@ -177,6 +177,7 @@
     <ClCompile Include="dataTransmissionMessage.cpp" />
     <ClCompile Include="dataUnit.cpp" />
     <ClCompile Include="ecm.cpp" />
+    <ClCompile Include="ecmProcessor.cpp" />
     <ClCompile Include="eventPackageDescriptor.cpp" />
     <ClCompile Include="extensionHeaderScrambling.cpp" />
     <ClCompile Include="ipv6.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="dataUnit.h" />
     <ClInclude Include="descriptorConverter.h" />
     <ClInclude Include="ecm.h" />
+    <ClInclude Include="ecmProcessor.h" />
     <ClInclude Include="eventPackageDescriptor.h" />
     <ClInclude Include="extensionHeaderScrambling.h" />
     <ClInclude Include="demuxerHandler.h" />

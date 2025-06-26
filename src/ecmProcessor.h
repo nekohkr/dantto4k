@@ -20,7 +20,9 @@ public:
             stop = true;
         }
         queueCv.notify_all();
-        if (workerThread.joinable()) workerThread.join();
+        if (workerThread.joinable()) {
+            workerThread.join();
+        }
     }
 
     bool init(bool reset = false);
@@ -32,7 +34,6 @@ private:
     void worker();
 
 private:
-    MmtTlv::EncryptionFlag lastUpdatedKeyType{ MmtTlv::EncryptionFlag::UNSCRAMBLED };
     MmtTlv::EncryptionFlag lastPayloadKeyType{ MmtTlv::EncryptionFlag::UNSCRAMBLED };
     std::queue<ECM> queue;
     std::condition_variable queueCv;

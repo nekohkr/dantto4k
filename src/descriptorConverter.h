@@ -404,8 +404,7 @@ template <>
 struct DescriptorConverter<MmtTlv::MhServiceDescriptor> {
     static ts::ServiceDescriptor convert(const MmtTlv::MhServiceDescriptor& mmtDescriptor) {
         const ts::ByteBlock serviceProviderName = aribEncode(mmtDescriptor.serviceProviderName);
-        const ts::ByteBlock serviceName(ts::ARIBCharset::B24.encoded(
-            ts::UString::FromUTF8(mmtDescriptor.serviceName.data(), mmtDescriptor.serviceName.size())));
+        const ts::ByteBlock serviceName = aribEncode(mmtDescriptor.serviceName);
 
         ts::ServiceDescriptor tsDescriptor(1,
             ts::UString::FromUTF8((char*)serviceProviderName.data(), serviceProviderName.size()),

@@ -66,7 +66,7 @@ public:
             throw std::out_of_range("Access out of bounds");
         }
 
-        std::copy(buffer.begin() + pos, buffer.begin() + pos + buffer.size(), data.begin());
+        std::copy(buffer.begin() + pos, buffer.begin() + pos + data.size(), data.begin());
         return size;
     }
 

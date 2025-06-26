@@ -34,7 +34,7 @@ https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13
 ### Ubuntu
 
 ```bash
-sudo apt install make g++ libssl-dev libpcsclite-dev pscsd pkgconf
+sudo apt install make g++ libssl-dev libpcsclite-dev pcscd pkgconf
 git clone https://github.com/tsduck/tsduck.git
 cd tsduck
 scripts/install-prerequisites.sh
