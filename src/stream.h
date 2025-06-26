@@ -6,7 +6,7 @@
 #include "swap.h"
 
 namespace MmtTlv {
-    
+
 namespace Common {
 
 class ReadStream final {
@@ -22,51 +22,51 @@ public:
     ReadStream(ReadStream&&) = default;
     ReadStream& operator=(ReadStream&&) = default;
 
-    bool isEof() const { return size == cur; }
-    size_t leftBytes() const { return size - cur; }
-    size_t getCur() const { return cur; }
+    bool isEof() const { return size == pos; }
+    size_t leftBytes() const { return size - pos; }
+    size_t getPos() const { return pos; }
 
-    void setCur(size_t cur) {
-        if (size < cur) {
+    void seek(size_t pos) {
+        if (size < pos) {
             throw std::out_of_range("Access out of bounds");
         }
-        this->cur = cur;
+        this->pos = pos;
     }
 
     void skip(uint64_t pos) {
-        if (size < cur + pos) {
+        if (size < this->pos + pos) {
             throw std::out_of_range("Access out of bounds");
         }
-        cur += pos;
+        this->pos += pos;
     }
 
     size_t read(void* dst, size_t size) {
         size_t readBytes = peek(dst, size);
-        cur += readBytes;
+        pos += readBytes;
         return readBytes;
     }
 
     size_t read(std::span<uint8_t> data) {
         size_t readBytes = peek(data);
-        cur += readBytes;
+        pos += readBytes;
         return readBytes;
     }
 
     size_t peek(void* dst, size_t size) {
-        if (this->size < cur + size) {
+        if (this->size < pos + size) {
             throw std::out_of_range("Access out of bounds");
         }
 
-        memcpy(dst, buffer.data() + cur, size);
+        memcpy(dst, buffer.data() + pos, size);
         return size;
     }
 
     size_t peek(std::span<uint8_t> data) {
-        if (this->size < cur + size) {
+        if (size < pos + data.size()) {
             throw std::out_of_range("Access out of bounds");
         }
 
-        std::copy(buffer.begin() + cur, buffer.begin() + cur + buffer.size(), data.begin());
+        std::copy(buffer.begin() + pos, buffer.begin() + pos + data.size(), data.begin());
         return size;
     }
 
@@ -122,7 +122,7 @@ private:
     const std::vector<uint8_t>& buffer;
     bool hasSize = false;
     mutable size_t size = 0;
-    mutable size_t cur = 0;
+    mutable size_t pos = 0;
 };
 
 
@@ -147,7 +147,7 @@ public:
         buffer.insert(buffer.end(), data.begin(), data.end());
         return data.size();
     }
-    
+
     size_t write(std::initializer_list<uint8_t> data) {
         buffer.insert(buffer.end(), data.begin(), data.end());
         return data.size();
@@ -168,7 +168,7 @@ public:
     size_t put64U(uint64_t value) {
         return writeObject(value);
     }
-    
+
     size_t putBe16U(uint16_t value) {
         return writeObject(swapEndian16(value));
     }

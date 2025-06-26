@@ -71,15 +71,11 @@ bool Mmt::unpack(Common::ReadStream& stream)
 	return true;
 }
 
-bool Mmt::decryptPayload(const Acas::DecryptedEcm& decryptedEcm)
+bool Mmt::decryptPayload(const std::array<uint8_t, 16>& key)
 {
 	if (!extensionHeaderScrambling) {
 		return false;
 	}
-
-	const std::array<uint8_t, 16>& key = (extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD)
-		? decryptedEcm.odd
-		: decryptedEcm.even;
 
 	std::vector<uint8_t> iv(16, 0);
 

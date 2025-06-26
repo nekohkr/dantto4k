@@ -20,7 +20,7 @@ enum class PayloadType
 class Mmt {
 public:
 	bool unpack(Common::ReadStream& stream);
-	bool decryptPayload(const Acas::DecryptedEcm& decryptedEcm);
+	bool decryptPayload(const std::array<uint8_t, 16>& key);
 
 public:
 	uint8_t version;

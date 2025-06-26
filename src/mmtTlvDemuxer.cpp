@@ -1,4 +1,4 @@
-#include "acascard.h"
+﻿#include "acascard.h"
 #include "dataUnit.h"
 #include "ecm.h"
 #include "m2SectionMessage.h"
@@ -36,20 +36,27 @@
 namespace MmtTlv {
 
 MmtTlvDemuxer::MmtTlvDemuxer()
+    : smartCard(),
+    acasCard(smartCard),
+    ecmProcessor(acasCard)
 {
-    smartCard = std::make_shared<Acas::SmartCard>();
-    acasCard = std::make_unique<Acas::AcasCard>(smartCard);
 }
 
 bool MmtTlvDemuxer::init()
 {
     try {
-        smartCard->init();
-        smartCard->connect();
+        smartCard.init();
+
+        if (!smartCard.connect()) {
+            return false;
+        }
+
+        ecmProcessor.init();
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
     }
+
 
     return true;
 }
@@ -61,12 +68,12 @@ void MmtTlvDemuxer::setDemuxerHandler(DemuxerHandler& demuxerHandler)
 
 void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderName) {
     
-    smartCard->setSmartCardReaderName(smartCardReaderName);
+    smartCard.setSmartCardReaderName(smartCardReaderName);
 }
 
 DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
 {
-    size_t cur = stream.getCur();
+    size_t cur = stream.getPos();
 
     if (stream.leftBytes() < 4) {
         return DemuxStatus::NotEnoughBuffer;
@@ -78,12 +85,12 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
     }
 
     if (!tlv.unpack(stream)) {
-        stream.setCur(cur);
+        stream.seek(cur);
         return DemuxStatus::NotEnoughBuffer;
     }
 
     if (stream.leftBytes() < tlv.getDataLength()) {
-        stream.setCur(cur);
+        stream.seek(cur);
         return DemuxStatus::NotEnoughBuffer;
     }
 
@@ -153,12 +160,12 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
         if (mmt.extensionHeaderScrambling.has_value()) {
             if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
                 mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-                auto lastEcm = acasCard->getLastEcm();
-                if (!lastEcm) {
+                auto key = ecmProcessor.getDecryptionKey(mmt.extensionHeaderScrambling->encryptionFlag);
+                if (!key) {
                     return DemuxStatus::WattingForEcm;
                 }
                 
-                mmt.decryptPayload(*lastEcm);
+                mmt.decryptPayload(*key);
             }
         }
 
@@ -294,6 +301,7 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
     }
     case MmtTableId::Ecm_0:
     {
+
         processEcm(std::dynamic_pointer_cast<Ecm>(table));
         break;
     }
@@ -654,13 +662,9 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
 
 void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm)
 {
-    try {
-        acasCard->processEcm(ecm->ecmData);
-    }
-    catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-    }
+    ecmProcessor.onEcm(ecm->ecmData);
 }
+
 
 void MmtTlvDemuxer::clear()
 {
@@ -668,13 +672,12 @@ void MmtTlvDemuxer::clear()
     mfuData.clear();
     mapStream.clear();
     mapStreamByStreamIdx.clear();
-    acasCard->clear();
     statistics.clear();
 }
 
 void MmtTlvDemuxer::release()
 {
-    smartCard->release();
+    smartCard.release();
 }
 
 void MmtTlvDemuxer::printStatistics() const
@@ -789,11 +792,11 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream)
     const auto ret = mmtStream->mfuDataProcessor->process(mmtStream, data);
     if (ret.has_value()) {
         const auto& mfuData = ret.value();
-        auto it = std::next(mapStream.begin(), mfuData.streamIndex);
-        if (it == mapStream.end()) {
+        auto it = mapStreamByStreamIdx.find(mfuData.streamIndex);
+        if (it == mapStreamByStreamIdx.end()) {
             return;
         }
-        
+
         if(demuxerHandler) {
             switch (mmtStream->assetType) {
             case AssetType::hev1:

@@ -25,13 +25,13 @@ ReadStream::ReadStream(const std::vector<uint8_t>& buffer, uint32_t size)
 ReadStream::ReadStream(ReadStream& stream, uint32_t size)
     : buffer(stream.buffer)
 {
-    if (stream.buffer.size() < stream.cur + size) {
+    if (stream.buffer.size() < stream.pos + size) {
         throw std::out_of_range("Access out of bounds");
     }
 
-    this->cur = stream.cur;
+    this->pos = stream.pos;
     this->hasSize = true;
-    this->size = stream.cur + size;
+    this->size = stream.pos + size;
 }
 
 ReadStream::ReadStream(ReadStream& stream)
@@ -39,7 +39,7 @@ ReadStream::ReadStream(ReadStream& stream)
 {
     this->hasSize = stream.hasSize;
     this->size = stream.size;
-    this->cur = stream.cur;
+    this->pos = stream.pos;
 }
 
 }
