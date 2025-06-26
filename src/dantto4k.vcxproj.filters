@@ -582,6 +582,9 @@
     <ClInclude Include="ecmProcessor.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
+    <ClInclude Include="namedLock.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dantto4k">
