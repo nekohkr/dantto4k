@@ -50,8 +50,6 @@ bool MmtTlvDemuxer::init()
         if (!smartCard.connect()) {
             return false;
         }
-
-        ecmProcessor.init();
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;

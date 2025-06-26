@@ -5,6 +5,7 @@
 #include <future>
 #include <queue>
 #include "acascard.h"
+#include "namedLock.h"
 
 class EcmProcessor {
 public:
@@ -25,15 +26,14 @@ public:
         }
     }
 
-    bool init(bool reset = false);
     void onEcm(const std::vector<uint8_t>& ecm);
     std::optional<std::array<uint8_t, 16>> getDecryptionKey(MmtTlv::EncryptionFlag keyType);
     
 private:
-    using ECM = std::vector<uint8_t>;
     void worker();
 
 private:
+    using ECM = std::vector<uint8_t>;
     MmtTlv::EncryptionFlag lastPayloadKeyType{ MmtTlv::EncryptionFlag::UNSCRAMBLED };
     std::queue<ECM> queue;
     std::condition_variable queueCv;
@@ -42,15 +42,9 @@ private:
     std::mutex keyMutex;
     bool ecmReady{ false };
     struct MmtTlv::Acas::DecryptedEcm key;
-    MmtTlv::Common::sha256_t kcl;
     MmtTlv::Acas::AcasCard& acasCard;
     bool stop{ false };
     std::thread workerThread;
-
-#ifdef _WIN32
-    void* mapView = nullptr;
-    void* fileMapping = nullptr;
-    void* ipcMutex = nullptr;
-#endif
+    NamedLock ipcLock{ "dantto4k_acas" };
 
 };

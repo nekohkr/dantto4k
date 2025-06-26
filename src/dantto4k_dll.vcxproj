@@ -289,6 +289,7 @@
     <ClInclude Include="mmtTableFactory.h" />
     <ClInclude Include="mmtTlvStatistics.h" />
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
+    <ClInclude Include="namedLock.h" />
     <ClInclude Include="ntp.h" />
     <ClInclude Include="pesPacket.h" />
     <ClInclude Include="pugiconfig.hpp" />
