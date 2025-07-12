@@ -61,6 +61,9 @@ Config loadConfig(const std::string& filename)
                  if (key == "smartCardReaderName") {
                      config.smartCardReaderName = value;
                  }
+                 if (key == "acasServerUrl") {
+                     config.acasServerUrl = value;
+                 }
              }
          }
          if (currentSection == "audio") {

@@ -110,7 +110,9 @@ TTML TTMLPaser::parse(const std::vector<uint8_t>& input)
 
             TTMLPTag pTag;
             pTag.id = p.attribute("xml:id").value();
-            pTag.region = *region;
+            if (region != output.regions.end()) {
+                pTag.region = *region;
+            }
 
             for (pugi::xml_node span : p.children("span")) {
                 TTMLSpanTag spanTag;
