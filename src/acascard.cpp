@@ -57,21 +57,29 @@ namespace MmtTlv::Acas {
         return true;
     }
 
-    DecryptEcmResult AcasCard::decryptEcm(const Common::sha256_t& kcl, const std::vector<uint8_t>& ecm, DecryptedEcm& output)
+    DecryptEcmResult AcasCard::decryptEcm(const std::vector<uint8_t>& ecm, DecryptedEcm& output)
     {
-        ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
         ApduResponse response;
-        uint32_t ret = smartCard.transmit(apdu.case4short(ecm, 0x00), response);
-        if (ret != SCARD_S_SUCCESS) {
-            if (ret == SCARD_W_RESET_CARD) {
-                return DecryptEcmResult::CardResetError;
+        Common::sha256_t kcl;
+
+        {
+            auto scope = smartCard.scopedTransaction();
+
+            getA0AuthKcl(kcl);
+
+            ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
+            uint32_t ret = smartCard.transmit(apdu.case4short(ecm, 0x00), response);
+            if (ret != SCARD_S_SUCCESS) {
+                if (ret == SCARD_W_RESET_CARD) {
+                    return DecryptEcmResult::CardResetError;
+                }
+
+                return DecryptEcmResult::OtherError;
             }
 
-            return DecryptEcmResult::OtherError;
-        }
-
-        if (!response.isSuccess()) {
-            return DecryptEcmResult::OtherError;
+            if (!response.isSuccess()) {
+                return DecryptEcmResult::OtherError;
+            }
         }
 
         auto ecmData = response.getData();

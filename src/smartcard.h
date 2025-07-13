@@ -77,18 +77,41 @@ public:
     void setSmartCardReaderName(const std::string& smartCardReaderName) {
         this->smartCardReaderName = smartCardReaderName;
     }
+
     bool init();
-    bool connect();
+    void connect();
     void disconnect();
     uint32_t transmit(const std::vector<uint8_t>& message, ApduResponse& response);
     bool isConnected() const;
     void release();
+    void startTransaction();
+    void endTransaction();
+
+    class Transaction {
+    public:
+        Transaction(SmartCard& card)
+            : card(card) {
+            card.startTransaction();
+        }
+
+        ~Transaction() {
+            card.endTransaction();
+        }
+    private:
+        SmartCard& card;
+    };
+
+    [[nodiscard]] Transaction scopedTransaction() {
+        return Transaction{ *this };
+    }
 
 private:
     SCARDCONTEXT hContext = 0;
     SCARDHANDLE hCard = 0;
     DWORD dwActiveProtocol = 0;
     std::string smartCardReaderName;
+
+    friend class Transaction;
 };
 
 }

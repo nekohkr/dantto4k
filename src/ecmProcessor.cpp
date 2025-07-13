@@ -95,21 +95,20 @@ void EcmProcessor::worker()
             current = std::move(queue.front());
         }
 
-        MmtTlv::Common::sha256_t kcl;
         MmtTlv::Acas::DecryptedEcm key = {};
         MmtTlv::Acas::DecryptEcmResult ret;
 
         if (acasServerUrl.empty()) {
-            {
-                std::lock_guard<NamedLock> lock(ipcLock);
-                acasCard.getA0AuthKcl(kcl);
-                ret = acasCard.decryptEcm(kcl, current, key);
-            }
+            try {
+                ret = acasCard.decryptEcm(current, key);
 
-            if (ret == MmtTlv::Acas::DecryptEcmResult::CardResetError) {
-                std::lock_guard<NamedLock> lock(ipcLock);
-                acasCard.getA0AuthKcl(kcl);
-                acasCard.decryptEcm(kcl, current, key);
+                if (ret == MmtTlv::Acas::DecryptEcmResult::CardResetError) {
+                    acasCard.decryptEcm(current, key);
+                }
+            }
+            catch (const std::runtime_error& e) {
+                std::cerr << "Error decrypting ECM: " << e.what() << std::endl;
+                continue;
             }
         }
         else {
@@ -141,7 +140,7 @@ void EcmProcessor::worker()
                 }
 
                 if (res->status != 200) {
-                    std::cerr << "ACAS server returned error: " << res->status << " - " << res->body << std::endl;
+                    std::cerr << "ACAS server returned error: " << res->status << std::endl;
                     break;
                 }
 

@@ -5,7 +5,6 @@
 #include <future>
 #include <queue>
 #include "acascard.h"
-#include "namedLock.h"
 
 class EcmProcessor {
 public:
@@ -48,6 +47,5 @@ private:
     MmtTlv::Acas::AcasCard& acasCard;
     bool stop{ false };
     std::thread workerThread;
-    NamedLock ipcLock{ "dantto4k_acas" };
     std::string acasServerUrl;
 };

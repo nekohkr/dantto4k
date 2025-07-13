@@ -47,16 +47,12 @@ bool MmtTlvDemuxer::init()
     try {
         if (acasServerUrl.empty()) {
             smartCard.init();
-
-            if (!smartCard.connect()) {
-                return false;
-            }
+            smartCard.connect();
         }
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
     }
-
 
     return true;
 }
@@ -72,7 +68,7 @@ void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderNam
 }
 
 void MmtTlvDemuxer::setAcasServerUrl(const std::string& acasServerUrl) {
-
+    this->acasServerUrl = acasServerUrl;
     ecmProcessor.setAcasServerUrl(acasServerUrl);
 }
 

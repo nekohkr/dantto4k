@@ -31,7 +31,7 @@ class AcasCard {
 public:
     AcasCard(SmartCard& smartCard);
 
-    DecryptEcmResult decryptEcm(const Common::sha256_t& kcl, const std::vector<uint8_t>& ecm, DecryptedEcm& output);
+    DecryptEcmResult decryptEcm(const std::vector<uint8_t>& ecm, DecryptedEcm& output);
     bool getA0AuthKcl(Common::sha256_t& output);
 
 private:
