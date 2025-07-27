@@ -5,7 +5,6 @@
 #include <future>
 #include <queue>
 #include "acascard.h"
-#include "namedLock.h"
 
 class EcmProcessor {
 public:
@@ -27,6 +26,9 @@ public:
     }
 
     void onEcm(const std::vector<uint8_t>& ecm);
+    void setAcasServerUrl(const std::string& url) {
+        acasServerUrl = url;
+    }
     std::optional<std::array<uint8_t, 16>> getDecryptionKey(MmtTlv::EncryptionFlag keyType);
     
 private:
@@ -45,6 +47,5 @@ private:
     MmtTlv::Acas::AcasCard& acasCard;
     bool stop{ false };
     std::thread workerThread;
-    NamedLock ipcLock{ "dantto4k_acas" };
-
+    std::string acasServerUrl;
 };

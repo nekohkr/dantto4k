@@ -183,6 +183,9 @@ int main(int argc, char* argv[]) {
             printReaderList();
             return 1;
         }
+        else if (arg.find("--acasServerUrl=") == 0) {
+            config.acasServerUrl = arg.substr(std::string("--acasServerUrl=").length());
+        }
         else {
             if (inputPath == "") {
                 inputPath = arg;
@@ -200,12 +203,13 @@ int main(int argc, char* argv[]) {
     }
 
     if (inputPath == "" || outputPath == "") {
-        std::cerr << "dantto4k.exe <input.mmts> <output.ts> [options]" << std::endl;
+        std::cerr << "dantto4k <input.mmts> <output.ts> [options]" << std::endl;
         std::cerr << "\t'-' can be used instead of a file path to enable piping via stdin or stdout." << std::endl;
         std::cerr << "options:" << std::endl;
         std::cerr << "\t--disableADTSConversion: Use the raw LATM format without converting to ADTS." << std::endl;
         std::cerr << "\t--listSmartCardReader: List the available smart card readers." << std::endl;
         std::cerr << "\t--smartCardReaderName=<name>: Set the smart card reader to use." << std::endl;
+        std::cerr << "\t--acasServerUrl=<url>: Use the ACAS server instead of the local smartcard." << std::endl;
         return 1;
     }
 
@@ -238,7 +242,12 @@ int main(int argc, char* argv[]) {
     }
 
     demuxer.setDemuxerHandler(handler);
-    demuxer.setSmartCardReaderName(config.smartCardReaderName);
+    if (config.acasServerUrl.empty()) {
+        demuxer.setSmartCardReaderName(config.smartCardReaderName);
+    }
+    else {
+        demuxer.setAcasServerUrl(config.acasServerUrl);
+    }
     demuxer.init();
 
     std::vector<uint8_t> inputBuffer;

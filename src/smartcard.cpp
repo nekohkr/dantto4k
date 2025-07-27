@@ -1,4 +1,5 @@
 #include "smartcard.h"
+#include <sstream>
 
 namespace MmtTlv::Acas {
 
@@ -16,7 +17,7 @@ bool SmartCard::isConnected() const
     return false;
 }
 
-bool SmartCard::connect() {
+void SmartCard::connect() {
     LONG result;
     DWORD readersSize = SCARD_AUTOALLOCATE;
     std::string readerName;
@@ -26,7 +27,9 @@ bool SmartCard::connect() {
         char* readers = nullptr;
         result = SCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
         if (result != SCARD_S_SUCCESS) {
-            return false;
+            std::ostringstream oss;
+            oss << "Failed to enumerate smart card readers: " << std::showbase << std::hex << result;
+            throw std::runtime_error(oss.str());
         }
 
         readerName = readers;
@@ -39,10 +42,10 @@ bool SmartCard::connect() {
 
     result = SCardConnect(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
     if (result != SCARD_S_SUCCESS) {
-        return false;
+        std::ostringstream oss;
+        oss << "Failed to connect to smart card reader: " << std::showbase << std::hex << result;
+        throw std::runtime_error(oss.str());
     }
-
-    return true;
 }
 
 uint32_t SmartCard::transmit(const std::vector<uint8_t>& message, ApduResponse& response) {
@@ -88,6 +91,23 @@ void SmartCard::release()
 		SCardReleaseContext(hContext);
         hContext = 0;
     }
+}
+
+void SmartCard::startTransaction()
+{
+    if (!isConnected()) {
+        throw std::runtime_error("smart card not connected");
+    }
+
+    LONG result = SCardBeginTransaction(hCard);
+    if (result != SCARD_S_SUCCESS) {
+        throw std::runtime_error("SCardBeginTransaction failed");
+    }
+}
+
+void SmartCard::endTransaction()
+{
+    SCardEndTransaction(hCard, SCARD_LEAVE_CARD);
 }
 
 }

@@ -183,7 +183,7 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
         if (div.end) {
             std::vector<uint8_t> unitDataByte;
 
-            uint64_t duration = (div.end - div.begin) / 100;
+            uint64_t duration = (div.end.value() - div.begin) / 100;
             while (duration > 0) {
                 uint8_t value = static_cast<uint8_t>(std::min(duration, static_cast<uint64_t>(0x3F)));
                 unitDataByte.push_back(B24ControlSet::TIME);
@@ -204,7 +204,7 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
         pesData.SetPESType(B24::PESData::PESType::Synchronized);
         pesData.pack(packedPesData);
 
-        output.push_back({ packedPesData , div.begin, div.end });
+        output.push_back({ packedPesData , div.begin });
     }
 
     return true;  

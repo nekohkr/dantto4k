@@ -47,6 +47,7 @@ public:
 	bool init();
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
 	void setSmartCardReaderName(const std::string& smartCardReaderName);
+    void setAcasServerUrl(const std::string& acasServerUrl);
 	DemuxStatus demux(Common::ReadStream& stream);
 	void clear();
 	void release();
@@ -93,5 +94,7 @@ private:
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	DemuxerHandler* demuxerHandler = nullptr;
 	mmtTlvStatistics statistics;
+
+	std::string acasServerUrl;
 };
 }

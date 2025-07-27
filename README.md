@@ -11,6 +11,7 @@ options:
         --disableADTSConversion: Use the raw LATM format without converting to ADTS.
         --listSmartCardReader: List the available smart card readers.
         --smartCardReaderName=<name>: Set the smart card reader to use.
+        --acasServerUrl=<url>: Use the ACAS server instead of the local smartcard.
 ```
 
 ### BonDriver_dantto4k.dll

@@ -163,7 +163,7 @@ public:
 class TTMLDivTag {
 public:
     uint64_t begin;
-    uint64_t end;
+    std::optional<uint64_t> end;
     std::list<TTMLPTag> pTags;
 };
 

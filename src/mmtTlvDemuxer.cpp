@@ -45,16 +45,14 @@ MmtTlvDemuxer::MmtTlvDemuxer()
 bool MmtTlvDemuxer::init()
 {
     try {
-        smartCard.init();
-
-        if (!smartCard.connect()) {
-            return false;
+        if (acasServerUrl.empty()) {
+            smartCard.init();
+            smartCard.connect();
         }
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
     }
-
 
     return true;
 }
@@ -68,6 +66,12 @@ void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderNam
     
     smartCard.setSmartCardReaderName(smartCardReaderName);
 }
+
+void MmtTlvDemuxer::setAcasServerUrl(const std::string& acasServerUrl) {
+    this->acasServerUrl = acasServerUrl;
+    ecmProcessor.setAcasServerUrl(acasServerUrl);
+}
+
 
 DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
 {
