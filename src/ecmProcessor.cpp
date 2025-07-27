@@ -4,7 +4,11 @@
 
 namespace {
 
-void splitHex(const std::string& hex, std::array<uint8_t, 16>& even, std::array<uint8_t, 16>& odd) {
+void parseAcasServerResponse(const std::string& hex, std::array<uint8_t, 16>& even, std::array<uint8_t, 16>& odd) {
+    if (hex.size() != 64) {
+        throw std::runtime_error("Invalid ACAS server response size: " + std::to_string(hex.size()) + ", expected 64 characters.");
+    }
+
     for (size_t i = 0; i < 32; i += 2) {
         std::string byte_str = hex.substr(i, 2);
         uint8_t byte = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
@@ -144,7 +148,12 @@ void EcmProcessor::worker()
                     break;
                 }
 
-                splitHex(res->body, key.even, key.odd);
+                try {
+                    parseAcasServerResponse(res->body, key.even, key.odd);
+                }
+                catch (const std::runtime_error& e) {
+                    std::cerr << e.what() << std::endl;
+                }
                 break;
             }
         }

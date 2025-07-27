@@ -89,16 +89,16 @@ public:
 
     class Transaction {
     public:
-        Transaction(SmartCard& card)
-            : card(card) {
-            card.startTransaction();
+        explicit Transaction(SmartCard& smartCard)
+            : smartCard(smartCard) {
+            smartCard.startTransaction();
         }
 
         ~Transaction() {
-            card.endTransaction();
+            smartCard.endTransaction();
         }
     private:
-        SmartCard& card;
+        SmartCard& smartCard;
     };
 
     [[nodiscard]] Transaction scopedTransaction() {

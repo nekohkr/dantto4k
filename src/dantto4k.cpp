@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (inputPath == "" || outputPath == "") {
-        std::cerr << "dantto4k.exe <input.mmts> <output.ts> [options]" << std::endl;
+        std::cerr << "dantto4k <input.mmts> <output.ts> [options]" << std::endl;
         std::cerr << "\t'-' can be used instead of a file path to enable piping via stdin or stdout." << std::endl;
         std::cerr << "options:" << std::endl;
         std::cerr << "\t--disableADTSConversion: Use the raw LATM format without converting to ADTS." << std::endl;

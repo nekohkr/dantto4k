@@ -192,7 +192,6 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmt
         B24SubtiteOutput subtitleOutput;
         subtitleOutput.pesData = packedPesData;
         subtitleOutput.begin = output.begin()->begin;
-        subtitleOutput.end = 0;
         writeSubtitle(mmtStream, subtitleOutput);
     }
     
@@ -283,9 +282,6 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtS
         output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
         ++i;
     }
-
-
-
 }
 
 void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)

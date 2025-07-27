@@ -136,7 +136,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>tsduck.lib;libcrypto.lib;Crypt32.lib;dbghelp.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;libssl.lib;Crypt32.lib;dbghelp.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -157,7 +157,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>tsduck.lib;libcrypto.lib;Crypt32.lib;dbghelp.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;libssl.lib;Crypt32.lib;dbghelp.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -289,7 +289,6 @@
     <ClInclude Include="mmtTableFactory.h" />
     <ClInclude Include="mmtTlvStatistics.h" />
     <ClInclude Include="multimediaServiceInformationDescriptor.h" />
-    <ClInclude Include="namedLock.h" />
     <ClInclude Include="ntp.h" />
     <ClInclude Include="pesPacket.h" />
     <ClInclude Include="pugiconfig.hpp" />

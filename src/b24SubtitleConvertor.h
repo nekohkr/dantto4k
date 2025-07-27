@@ -300,8 +300,8 @@ namespace B24 {
 class B24SubtiteOutput {
 public:
     B24SubtiteOutput() = default;
-    B24SubtiteOutput(std::vector<uint8_t> pesData, uint64_t begin, uint64_t end)
-        : pesData(pesData), begin(begin), end(end) {}
+    B24SubtiteOutput(std::vector<uint8_t> pesData, uint64_t begin)
+        : pesData(pesData), begin(begin) {}
 
     uint64_t calcPts(uint64_t programStartTime) const {
         return (programStartTime * 1000 + begin) * 90;
@@ -309,7 +309,6 @@ public:
 
     std::vector<uint8_t> pesData;
     uint64_t begin;
-    uint64_t end;
 };
 
 class B24SubtiteConvertor {
