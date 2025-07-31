@@ -54,7 +54,7 @@ public:
 	void printStatistics() const;
 
 private:
-	bool isVaildTlv(Common::ReadStream& stream) const;
+	bool isValidTlv(Common::ReadStream& stream) const;
 
 	void processMpu(Common::ReadStream& stream);
 	void processMfuData(Common::ReadStream& stream);

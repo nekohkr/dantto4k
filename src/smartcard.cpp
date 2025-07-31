@@ -28,7 +28,7 @@ void SmartCard::connect() {
         result = SCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
         if (result != SCARD_S_SUCCESS) {
             std::ostringstream oss;
-            oss << "Failed to enumerate smart card readers: " << std::showbase << std::hex << result;
+            oss << "Failed to list smart card readers: " << std::showbase << std::hex << result;
             throw std::runtime_error(oss.str());
         }
 

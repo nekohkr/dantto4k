@@ -356,10 +356,12 @@ bool ts::ARIBCharset2::Encoder::encodeSpace(uint8_t*& out, size_t& out_size, boo
             code = SP;
             count = 1;
         }
+        /*
         else if (isAlphaNumeric(_GR)) {
             code = SP | 0x80;
             count = 1;
         }
+        */
         else if (selectCharSet(out, out_size, ALPHANUMERIC_MAP.selector1, false)) {
             code = ALPHANUMERIC_MAP.selector1 == _G[_GR] ? (SP | 0x80) : SP;
             count = 1;
@@ -398,30 +400,43 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
     uint8_t seq[7];
     size_t seq_size = 0;
 
-    if(selectorF == 0x4A /* ascii */) {
-        if(character_size != MSZ) {
-            seq[0] = MSZ;
+    // Use GL for ALPHANUMERIC to improve compatibility
+    if (selectorF == 0x4A /* ALPHANUMERIC */) {
+        if (selectorF != _G[_GL]) {
+            if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
+                seq_size += selectG0123(seq + seq_size, selectorF, byte2);
+            }
+            // Route the right Gx in either GL or GR.
+            seq_size += selectGLR(seq + seq_size, selectorF, true);
+            first = false;
+        }
+    }
+    else {
+        // There is some switching sequence to add only if the charset is neither in GL nor GR.
+        if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
+            // If the charset is not in G0-G3, we need to load it in one of them.
+            if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
+                seq_size += selectG0123(seq + seq_size, selectorF, byte2);
+            }
+            // Route the right Gx in either GL or GR.
+            seq_size += selectGLR(seq + seq_size, selectorF);
+            first = false;
+        }
+    }
+
+    if (selectorF == 0x4A /* ALPHANUMERIC */) {
+        if (character_size != MSZ) {
+            seq[seq_size] = MSZ;
             character_size = MSZ;
             seq_size++;
         }
     }
     else {
-        if(character_size != NSZ) {
-            seq[0] = NSZ;
+        if (character_size != NSZ) {
+            seq[seq_size] = NSZ;
             character_size = NSZ;
             seq_size++;
         }
-    }
-
-    // There is some switching sequence to add only if the charset is neither in GL nor GR.
-    if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
-        // If the charset is not in G0-G3, we need to load it in one of them.
-        if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
-            seq_size += selectG0123(seq + seq_size, selectorF, byte2);
-        }
-        // Route the right Gx in either GL or GR.
-        seq_size += selectGLR(seq + seq_size, selectorF);
-        first = false;
     }
 
     // Finally, insert the escape sequence if there is enough room for it plus one character.
@@ -445,7 +460,7 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
 // Select GL/GR from G0-3 for a given selector F. Return escape sequence size.
 //----------------------------------------------------------------------------
 
-size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
+size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F, bool forceGL)
 {
     int i = 0;
 
@@ -457,7 +472,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
         return i;
     }
     else if (F == _G[1]) {
-        if (_GL_last) {
+        if (_GL_last && !forceGL) {
             _GR = 1;
             seq[i++] = ESC; seq[i++] = 0x7E;
             return i;
@@ -470,7 +485,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
         }
     }
     else if (F == _G[2]) {
-        if (_GL_last) {
+        if (_GL_last && !forceGL) {
             _GR = 2;
             seq[i++] = ESC; seq[i++] = 0x7D;
             return i;
@@ -483,8 +498,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
         }
     }
     else {
-        assert(F == _G[3]);
-        if (_GL_last) {
+        if (_GL_last && !forceGL) {
             _GR = 3;
             seq[i++] = ESC; seq[i++] = 0x7C;
             return i;
