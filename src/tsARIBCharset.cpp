@@ -295,7 +295,6 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
                 EncoderEntry enc = ENCODING_TABLE[index];
                 prev_index = index;
 
-
                 // Make sure the right character set is selected.
                 // Insert the corresponding escape sequence if necessary.
                 // Also make sure that the encoded sequence will fit in output buffer.

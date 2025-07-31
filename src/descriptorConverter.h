@@ -406,8 +406,7 @@ struct DescriptorConverter<MmtTlv::MhServiceDescriptor> {
         const ts::ByteBlock serviceProviderName = aribEncode(mmtDescriptor.serviceProviderName);
         const ts::ByteBlock serviceName = aribEncode(mmtDescriptor.serviceName);
 
-
-        uint8_t descriptorLength = 1 // service_type
+        size_t descriptorLength = 1 // service_type
             + 1 // service_provider_name_length
             + serviceProviderName.size() // service_provider_name
             + 1 // service_name_length
@@ -423,7 +422,7 @@ struct DescriptorConverter<MmtTlv::MhServiceDescriptor> {
 
         MmtTlv::Common::WriteStream s;
         s.put8U(0x48); // descriptor_tag
-        s.put8U(descriptorLength); // descriptor_length
+        s.put8U(static_cast<uint8_t>(descriptorLength)); // descriptor_length
         s.put8U(1); // service_type
         s.put8U(static_cast<uint8_t>(serviceProviderName.size())); // service_provider_name_length
         if (serviceProviderName.size()) {

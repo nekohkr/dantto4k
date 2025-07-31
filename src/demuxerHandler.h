@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 namespace MmtTlv {
 
@@ -25,6 +26,8 @@ public:
 	virtual void onAudioData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
 	virtual void onSubtitleData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
 	virtual void onApplicationData(const std::shared_ptr<MmtStream> mmtStream, const std::shared_ptr<struct MfuData>& mfuData) {}
+
+	virtual void onPacketDrop(const std::shared_ptr<MmtTlv::MmtStream> mmtStream) {}
 
 	// MMT-SI
 	virtual void onEcm(const std::shared_ptr<Ecm>& ecm) {}

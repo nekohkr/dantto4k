@@ -154,6 +154,13 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
             auto mmtStat = statistics.getMmtStat(mmt.packetId);
             if (mmtStat->lastPacketSequenceNumber + 1 != mmt.packetSequenceNumber) {
                 mmtStat->drop++;
+
+                if (demuxerHandler) {
+                    auto stream = getStream(mmt.packetId);
+                    if (stream) {
+                        demuxerHandler->onPacketDrop(stream);
+                    }
+                }
             }
             mmtStat->lastPacketSequenceNumber = mmt.packetSequenceNumber;
             mmtStat->count++;

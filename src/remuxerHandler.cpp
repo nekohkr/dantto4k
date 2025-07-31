@@ -205,6 +205,16 @@ void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> 
 {
 }
 
+void RemuxerHandler::onPacketDrop(const std::shared_ptr<MmtTlv::MmtStream> mmtStream)
+{
+    ++mapCC[mmtStream->getMpeg2PacketId()];
+}
+
+void RemuxerHandler::setOutputCallback(OutputCallback cb)
+{
+    outputCallback = std::move(cb);
+}
+
 void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData)
 {
     constexpr AVRational tsTimeBase = { 1, 90000 };
@@ -249,7 +259,9 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
         memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
         payloadLength -= chunkSize;
 
-        output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+        if (outputCallback) {
+            outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+        }
         ++i;
     }
 }
@@ -279,7 +291,9 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtS
         memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
         payloadLength -= chunkSize;
 
-        output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+        if (outputCallback) {
+            outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+        }
         ++i;
     }
 }
@@ -401,7 +415,9 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit)
             packet.setCC(mapCC[ts::PID_BIT] & 0xF);
             mapCC[ts::PID_BIT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -561,7 +577,9 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
             packet.setCC(mapCC[ts::PID_EIT] & 0xF);
             mapCC[ts::PID_EIT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -623,7 +641,9 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
             packet.setCC(mapCC[ts::PID_SDT] & 0xF);
             mapCC[ts::PID_SDT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -668,7 +688,9 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt)
             packet.setCC(mapCC[ts::PID_PAT] & 0xF);
             mapCC[ts::PID_PAT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -789,7 +811,9 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt)
             packet.setCC(mapCC[pid] & 0xF);
             mapCC[pid]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -816,7 +840,9 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot)
             packet.setCC(mapCC[ts::PID_TOT] & 0xF);
             mapCC[ts::PID_TOT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -846,7 +872,9 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt)
             packet.setCC(mapCC[ts::PID_CDT] & 0xF);
             mapCC[ts::PID_CDT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -902,7 +930,9 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit)
             packet.setCC(mapCC[ts::PID_NIT] & 0xF);
             mapCC[ts::PID_NIT]++;
 
-            output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
         }
     }
 }
@@ -915,7 +945,9 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp)
 
     // Add 0.1 seconds to resolve the playback issue in VLC
     packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
-    output.insert(output.end(), packet.b, packet.b + packet.getHeaderSize() + packet.getPayloadSize());
+    if (outputCallback) {
+        outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+    }
 
     lastPcr = ntp->transmit_timestamp.toPcrValue();
 }
