@@ -1,8 +1,9 @@
 #pragma once
-#include <tsduck.h>
 #include "demuxerHandler.h"
 #include "b24SubtitleConvertor.h"
+#include <tsduck.h>
 #include <unordered_map>
+#include <functional>
 
 namespace StreamType {
 
@@ -43,8 +44,8 @@ constexpr uint16_t PCR_PID = 0x01FF;
 
 class RemuxerHandler : public MmtTlv::DemuxerHandler {
 public:
-	RemuxerHandler(MmtTlv::MmtTlvDemuxer& demuxer, std::vector<uint8_t>& output)
-		: demuxer(demuxer), output(output) {
+	RemuxerHandler(MmtTlv::MmtTlvDemuxer& demuxer)
+		: demuxer(demuxer) {
 	}
 
 	// MPU data
@@ -52,6 +53,8 @@ public:
 	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
 	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
 	void onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
+
+	void onPacketDrop(const std::shared_ptr<MmtTlv::MmtStream> mmtStream) override;
 
 	// MMT message
 	void onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhCdt) override;
@@ -72,19 +75,25 @@ public:
 
 	void clear();
 
+public:
+	using OutputCallback = std::function<void(const uint8_t*, size_t)>;
+	void setOutputCallback(OutputCallback cb);
+
 private:
 	void writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& data);
 	void writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const B24SubtiteOutput& subtitle);
 
 	MmtTlv::MmtTlvDemuxer& demuxer;
-	std::vector<uint8_t>& output;
+	OutputCallback outputCallback;
 	std::unordered_map<uint16_t, uint16_t> mapService2Pid;
 	std::unordered_map<uint16_t, uint8_t> mapCC;
+	std::unordered_map<uint16_t, bool> mapPacketDrop;
 	int tsid{-1};
 	int streamCount{};
 
 	uint64_t eitPresentStartTime{};
 	uint64_t lastPcr{};
+	
 
 	ts::DuckContext duck;
 

@@ -12,7 +12,7 @@
 
 MmtTlv::MmtTlvDemuxer demuxer;
 std::vector<uint8_t> output;
-RemuxerHandler handler(demuxer, output);
+RemuxerHandler handler(demuxer);
 
 #ifdef _WIN32
 CBonTuner bonTuner;
@@ -36,7 +36,12 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
         std::string path = getConfigFilePath(hDantto4kModule);
         config = loadConfig(path);
 
+        handler.setOutputCallback([&](const uint8_t* data, size_t size) {
+            assert(size == 188);
+            output.insert(output.end(), data, data + size);
+        });
         demuxer.setDemuxerHandler(handler);
+        demuxer.setAcasServerUrl(config.acasServerUrl);
         demuxer.setSmartCardReaderName(config.smartCardReaderName);
         demuxer.init();
 
@@ -241,13 +246,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    handler.setOutputCallback([&](const uint8_t* data, size_t size) {
+        assert(size == 188);
+        output.insert(output.end(), data, data + size);
+    });
     demuxer.setDemuxerHandler(handler);
-    if (config.acasServerUrl.empty()) {
-        demuxer.setSmartCardReaderName(config.smartCardReaderName);
-    }
-    else {
-        demuxer.setAcasServerUrl(config.acasServerUrl);
-    }
+    demuxer.setAcasServerUrl(config.acasServerUrl);
+    demuxer.setSmartCardReaderName(config.smartCardReaderName);
     demuxer.init();
 
     std::vector<uint8_t> inputBuffer;
