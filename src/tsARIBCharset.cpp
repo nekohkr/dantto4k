@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------------
 //
 // TSDuck - The MPEG Transport Stream Toolkit
 // Copyright (c) 2005-2024, Thierry Lelegard
@@ -100,6 +100,30 @@
 // Define single instance
 const ts::ARIBCharset2 ts::ARIBCharset2::B24({u"ARIB-STD-B24-2", u"ARIB-2"});
 
+namespace {
+
+const char32_t fullwidthChars[] = U"！”＃＄％＆’（）＊＋，−．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［￥］＾＿‘ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝￣";
+const char32_t halfwidthChars[] = U"!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+
+bool isFullwidth(char32_t ch) {
+    for (const char32_t* p = fullwidthChars; *p != 0; ++p) {
+        if (*p == ch) {
+            return true;
+        }
+    }
+    return false;
+}
+
+char32_t toHalfwidth(char32_t ch) {
+    for (size_t i = 0; fullwidthChars[i] != 0; ++i) {
+        if (fullwidthChars[i] == ch) {
+            return halfwidthChars[i];
+        }
+    }
+    return ch;
+}
+
+}
 
 //----------------------------------------------------------------------------
 // Constructor
@@ -268,15 +292,42 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
             if (index != NPOS) {
                 // This character is encodable.
                 assert(index < ENCODING_COUNT);
-                const EncoderEntry& enc(ENCODING_TABLE[index]);
+                EncoderEntry enc = ENCODING_TABLE[index];
                 prev_index = index;
+
 
                 // Make sure the right character set is selected.
                 // Insert the corresponding escape sequence if necessary.
                 // Also make sure that the encoded sequence will fit in output buffer.
+
+                bool fullwidth = isFullwidth(cp);
+                if (isFullwidth(cp)) {
+                    // Convert fullwidth character to halfwidth.
+                    cp = toHalfwidth(cp);
+                    const size_t index = FindEncoderEntry(cp, prev_index);
+                    enc = ENCODING_TABLE[index];
+                }
+
                 if (!selectCharSet(out, out_size, enc.selectorF(), enc.byte2())) {
                     // Cannot insert the right sequence. Do not attempt to encode the code point.
                     return;
+                }
+
+                if (enc.selectorF() == 0x4A) {
+                    if (fullwidth) {
+                        if (character_size != NSZ) {
+                            *out++ = NSZ;
+                            character_size = NSZ;
+                            --out_size;
+                        }
+                    }
+                    else {
+                        if (character_size != MSZ) {
+                            *out++ = MSZ;
+                            character_size = MSZ;
+                            --out_size;
+                        }
+                    }
                 }
 
                 // Insert the encoded code point (1 or 2 bytes).
@@ -356,12 +407,10 @@ bool ts::ARIBCharset2::Encoder::encodeSpace(uint8_t*& out, size_t& out_size, boo
             code = SP;
             count = 1;
         }
-        /*
         else if (isAlphaNumeric(_GR)) {
             code = SP | 0x80;
             count = 1;
         }
-        */
         else if (selectCharSet(out, out_size, ALPHANUMERIC_MAP.selector1, false)) {
             code = ALPHANUMERIC_MAP.selector1 == _G[_GR] ? (SP | 0x80) : SP;
             count = 1;
@@ -424,14 +473,7 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
         }
     }
 
-    if (selectorF == 0x4A /* ALPHANUMERIC */) {
-        if (character_size != MSZ) {
-            seq[seq_size] = MSZ;
-            character_size = MSZ;
-            seq_size++;
-        }
-    }
-    else {
+    if (selectorF != 0x4A /* ALPHANUMERIC */) {
         if (character_size != NSZ) {
             seq[seq_size] = NSZ;
             character_size = NSZ;

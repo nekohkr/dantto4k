@@ -589,7 +589,9 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt)
                 auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhServiceDescriptor>(descriptor);
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhServiceDescriptor>::convert(*mmtDescriptor);
 
-                tsService.descs.add(duck, tsDescriptor);
+                if (tsDescriptor) {
+                    tsService.descs.add(tsDescriptor->data(), tsDescriptor->size());
+                }
                 break;
             }
             case MmtTlv::MhLogoTransmissionDescriptor::kDescriptorTag:
