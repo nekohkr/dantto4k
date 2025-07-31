@@ -48,6 +48,15 @@ constexpr Gaiji GaijiTable[] = {
     {u8"渚", u8"渚"},
     {u8"禮", u8"禮"},
     {u8"⾓", u8"角"},
+
+    // https://github.com/ashtuchkin/iconv-lite/issues/145
+    {u8"\U0000FF5E", u8"\U0000301C"}, //～ 〜
+    {u8"\U00002225", u8"\U00002016"}, //∥ ‖
+    {u8"\U0000FFE0", u8"\U000000A2"}, //￠ ¢
+    {u8"\U0000FFE1", u8"\U000000A3"}, //￡ £
+    {u8"\U0000FFE2", u8"\U000000AC"}, //￢ ¬
+    {u8"\U0000FFE4", u8"\U000000A6"}, //￤ ¦
+    
 };
 
 namespace {
