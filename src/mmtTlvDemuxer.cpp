@@ -62,16 +62,16 @@ void MmtTlvDemuxer::setDemuxerHandler(DemuxerHandler& demuxerHandler)
     this->demuxerHandler = &demuxerHandler;
 }
 
-void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderName) {
-    
+void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderName)
+{
     smartCard.setSmartCardReaderName(smartCardReaderName);
 }
 
-void MmtTlvDemuxer::setAcasServerUrl(const std::string& acasServerUrl) {
+void MmtTlvDemuxer::setAcasServerUrl(const std::string& acasServerUrl)
+{
     this->acasServerUrl = acasServerUrl;
     ecmProcessor.setAcasServerUrl(acasServerUrl);
 }
-
 
 DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
 {
@@ -81,7 +81,7 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
         return DemuxStatus::NotEnoughBuffer;
     }
 
-    if (!isVaildTlv(stream)) {
+    if (!isValidTlv(stream)) {
         stream.skip(1);
         return DemuxStatus::NotValidTlv;
     }
@@ -746,7 +746,6 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
     assembler->checkState(mmt.packetSequenceNumber);
 
     mmtStream->rapFlag = mmt.rapFlag;
-    
 
     if (mpu.aggregateFlag == 0) {
         DataUnit dataUnit;
@@ -859,8 +858,6 @@ void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream)
             }
         }
     }
-
-    return;
 }
 
 void MmtTlvDemuxer::processSignalingMessage(Common::ReadStream& stream)
@@ -881,7 +878,7 @@ void MmtTlvDemuxer::processSignalingMessage(Common::ReadStream& stream)
     }
 }
 
-bool MmtTlvDemuxer::isVaildTlv(Common::ReadStream& stream) const
+bool MmtTlvDemuxer::isValidTlv(Common::ReadStream& stream) const
 {
     try {
         uint8_t bytes[2];

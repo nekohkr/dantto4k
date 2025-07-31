@@ -237,7 +237,7 @@ namespace ts {
 
             // Select GL/GR from G0-3 for a given selector F. Return escape sequence size.
             // Escape sequence buffer must be at least 2 characters long.
-            size_t selectGLR(uint8_t* seq, uint8_t F);
+            size_t selectGLR(uint8_t* seq, uint8_t F, bool forceGL = false);
 
             // Set G0-3 to a given selector F. Return escape sequence size.
             // Escape sequence buffer must be at least 5 characters long.

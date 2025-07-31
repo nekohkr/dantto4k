@@ -402,14 +402,39 @@ struct DescriptorConverter<MmtTlv::MultimediaServiceInformationDescriptor> {
 
 template <>
 struct DescriptorConverter<MmtTlv::MhServiceDescriptor> {
-    static ts::ServiceDescriptor convert(const MmtTlv::MhServiceDescriptor& mmtDescriptor) {
+    static std::optional<std::vector<uint8_t>> convert(const MmtTlv::MhServiceDescriptor& mmtDescriptor) {
         const ts::ByteBlock serviceProviderName = aribEncode(mmtDescriptor.serviceProviderName);
         const ts::ByteBlock serviceName = aribEncode(mmtDescriptor.serviceName);
 
-        ts::ServiceDescriptor tsDescriptor(1,
-            ts::UString::FromUTF8((char*)serviceProviderName.data(), serviceProviderName.size()),
-            ts::UString::FromUTF8((char*)serviceName.data(), serviceName.size()));
-        return tsDescriptor;
+
+        uint8_t descriptorLength = 1 // service_type
+            + 1 // service_provider_name_length
+            + serviceProviderName.size() // service_provider_name
+            + 1 // service_name_length
+            + serviceName.size(); // service_name
+
+        if (descriptorLength > 255) {
+            return std::nullopt;
+        }
+
+        if (serviceProviderName.size() > 255 || serviceName.size() > 255) {
+            return std::nullopt;
+        }
+
+        MmtTlv::Common::WriteStream s;
+        s.put8U(0x48); // descriptor_tag
+        s.put8U(descriptorLength); // descriptor_length
+        s.put8U(1); // service_type
+        s.put8U(static_cast<uint8_t>(serviceProviderName.size())); // service_provider_name_length
+        if (serviceProviderName.size()) {
+            s.write(serviceProviderName); // service_provider_name
+        }
+        s.put8U(static_cast<uint8_t>(serviceName.size())); // service_name_length
+        if (serviceName.size()) {
+            s.write(serviceName); // service_name
+        }
+
+        return s.getData();
     }
 };
 

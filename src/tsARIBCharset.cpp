@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------------
 //
 // TSDuck - The MPEG Transport Stream Toolkit
 // Copyright (c) 2005-2024, Thierry Lelegard
@@ -100,6 +100,30 @@
 // Define single instance
 const ts::ARIBCharset2 ts::ARIBCharset2::B24({u"ARIB-STD-B24-2", u"ARIB-2"});
 
+namespace {
+
+const char32_t fullwidthChars[] = U"！”＃＄％＆’（）＊＋，−．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［￥］＾＿‘ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝￣";
+const char32_t halfwidthChars[] = U"!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+
+bool isFullwidth(char32_t ch) {
+    for (const char32_t* p = fullwidthChars; *p != 0; ++p) {
+        if (*p == ch) {
+            return true;
+        }
+    }
+    return false;
+}
+
+char32_t toHalfwidth(char32_t ch) {
+    for (size_t i = 0; fullwidthChars[i] != 0; ++i) {
+        if (fullwidthChars[i] == ch) {
+            return halfwidthChars[i];
+        }
+    }
+    return ch;
+}
+
+}
 
 //----------------------------------------------------------------------------
 // Constructor
@@ -268,15 +292,42 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
             if (index != NPOS) {
                 // This character is encodable.
                 assert(index < ENCODING_COUNT);
-                const EncoderEntry& enc(ENCODING_TABLE[index]);
+                EncoderEntry enc = ENCODING_TABLE[index];
                 prev_index = index;
+
 
                 // Make sure the right character set is selected.
                 // Insert the corresponding escape sequence if necessary.
                 // Also make sure that the encoded sequence will fit in output buffer.
+
+                bool fullwidth = isFullwidth(cp);
+                if (isFullwidth(cp)) {
+                    // Convert fullwidth character to halfwidth.
+                    cp = toHalfwidth(cp);
+                    const size_t index = FindEncoderEntry(cp, prev_index);
+                    enc = ENCODING_TABLE[index];
+                }
+
                 if (!selectCharSet(out, out_size, enc.selectorF(), enc.byte2())) {
                     // Cannot insert the right sequence. Do not attempt to encode the code point.
                     return;
+                }
+
+                if (enc.selectorF() == 0x4A) {
+                    if (fullwidth) {
+                        if (character_size != NSZ) {
+                            *out++ = NSZ;
+                            character_size = NSZ;
+                            --out_size;
+                        }
+                    }
+                    else {
+                        if (character_size != MSZ) {
+                            *out++ = MSZ;
+                            character_size = MSZ;
+                            --out_size;
+                        }
+                    }
                 }
 
                 // Insert the encoded code point (1 or 2 bytes).
@@ -398,30 +449,36 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
     uint8_t seq[7];
     size_t seq_size = 0;
 
-    if(selectorF == 0x4A /* ascii */) {
-        if(character_size != MSZ) {
-            seq[0] = MSZ;
-            character_size = MSZ;
-            seq_size++;
+    // Use GL for ALPHANUMERIC to improve compatibility
+    if (selectorF == 0x4A /* ALPHANUMERIC */) {
+        if (selectorF != _G[_GL]) {
+            if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
+                seq_size += selectG0123(seq + seq_size, selectorF, byte2);
+            }
+            // Route the right Gx in either GL or GR.
+            seq_size += selectGLR(seq + seq_size, selectorF, true);
+            first = false;
         }
     }
     else {
-        if(character_size != NSZ) {
-            seq[0] = NSZ;
-            character_size = NSZ;
-            seq_size++;
+        // There is some switching sequence to add only if the charset is neither in GL nor GR.
+        if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
+            // If the charset is not in G0-G3, we need to load it in one of them.
+            if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
+                seq_size += selectG0123(seq + seq_size, selectorF, byte2);
+            }
+            // Route the right Gx in either GL or GR.
+            seq_size += selectGLR(seq + seq_size, selectorF);
+            first = false;
         }
     }
 
-    // There is some switching sequence to add only if the charset is neither in GL nor GR.
-    if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
-        // If the charset is not in G0-G3, we need to load it in one of them.
-        if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
-            seq_size += selectG0123(seq + seq_size, selectorF, byte2);
+    if (selectorF != 0x4A /* ALPHANUMERIC */) {
+        if (character_size != NSZ) {
+            seq[seq_size] = NSZ;
+            character_size = NSZ;
+            seq_size++;
         }
-        // Route the right Gx in either GL or GR.
-        seq_size += selectGLR(seq + seq_size, selectorF);
-        first = false;
     }
 
     // Finally, insert the escape sequence if there is enough room for it plus one character.
@@ -445,7 +502,7 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
 // Select GL/GR from G0-3 for a given selector F. Return escape sequence size.
 //----------------------------------------------------------------------------
 
-size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
+size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F, bool forceGL)
 {
     int i = 0;
 
@@ -457,7 +514,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
         return i;
     }
     else if (F == _G[1]) {
-        if (_GL_last) {
+        if (_GL_last && !forceGL) {
             _GR = 1;
             seq[i++] = ESC; seq[i++] = 0x7E;
             return i;
@@ -470,7 +527,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
         }
     }
     else if (F == _G[2]) {
-        if (_GL_last) {
+        if (_GL_last && !forceGL) {
             _GR = 2;
             seq[i++] = ESC; seq[i++] = 0x7D;
             return i;
@@ -483,8 +540,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F)
         }
     }
     else {
-        assert(F == _G[3]);
-        if (_GL_last) {
+        if (_GL_last && !forceGL) {
             _GR = 3;
             seq[i++] = ESC; seq[i++] = 0x7C;
             return i;
