@@ -43,7 +43,7 @@ private:
     std::mutex queueMutex;
     std::mutex keyMutex;
     bool ecmReady{ false };
-    struct MmtTlv::Acas::DecryptedEcm key;
+    struct MmtTlv::Acas::DecryptionKey key;
     MmtTlv::Acas::AcasCard& acasCard;
     bool stop{ false };
     std::thread workerThread;

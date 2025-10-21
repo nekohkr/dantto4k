@@ -45,8 +45,7 @@ namespace {
 
 }
 
-TTML TTMLPaser::parse(const std::vector<uint8_t>& input)
-{
+TTML TTMLPaser::parse(const std::vector<uint8_t>& input) {
     TTML output;
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_buffer(input.data(), input.size());

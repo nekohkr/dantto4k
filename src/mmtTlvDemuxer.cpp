@@ -157,9 +157,7 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
 
                 if (demuxerHandler) {
                     auto stream = getStream(mmt.packetId);
-                    if (stream) {
-                        demuxerHandler->onPacketDrop(stream);
-                    }
+                    demuxerHandler->onPacketDrop(mmt.packetId, stream);
                 }
             }
             mmtStat->lastPacketSequenceNumber = mmt.packetSequenceNumber;
@@ -310,7 +308,6 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
     }
     case MmtTableId::Ecm_0:
     {
-
         processEcm(std::dynamic_pointer_cast<Ecm>(table));
         break;
     }
@@ -798,7 +795,7 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream)
     stream.read(data.data(), stream.leftBytes());
 
     const auto ret = mmtStream->mfuDataProcessor->process(mmtStream, data);
-    if (ret.has_value()) {
+    if (ret) {
         const auto& mfuData = ret.value();
         auto it = mapStreamByStreamIdx.find(mfuData.streamIndex);
         if (it == mapStreamByStreamIdx.end()) {

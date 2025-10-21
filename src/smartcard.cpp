@@ -8,8 +8,7 @@ bool SmartCard::init() {
     return result == SCARD_S_SUCCESS;
 }
 
-bool SmartCard::isConnected() const
-{
+bool SmartCard::isConnected() const {
     if (hCard) {
         return true;
     }
@@ -83,8 +82,7 @@ void SmartCard::disconnect() {
     }
 }
 
-void SmartCard::release()
-{
+void SmartCard::release() {
     disconnect();
 
     if (hContext != 0) {
@@ -93,8 +91,7 @@ void SmartCard::release()
     }
 }
 
-void SmartCard::startTransaction()
-{
+void SmartCard::beginTransaction() {
     if (!isConnected()) {
         throw std::runtime_error("smart card not connected");
     }
@@ -105,8 +102,7 @@ void SmartCard::startTransaction()
     }
 }
 
-void SmartCard::endTransaction()
-{
+void SmartCard::endTransaction() {
     SCardEndTransaction(hCard, SCARD_LEAVE_CARD);
 }
 

@@ -84,14 +84,14 @@ public:
     uint32_t transmit(const std::vector<uint8_t>& message, ApduResponse& response);
     bool isConnected() const;
     void release();
-    void startTransaction();
+    void beginTransaction();
     void endTransaction();
 
     class Transaction {
     public:
         explicit Transaction(SmartCard& smartCard)
             : smartCard(smartCard) {
-            smartCard.startTransaction();
+            smartCard.beginTransaction();
         }
 
         ~Transaction() {

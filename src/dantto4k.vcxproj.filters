@@ -268,6 +268,9 @@
     <ClCompile Include="ecmProcessor.cpp">
       <Filter>dantto4k</Filter>
     </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bonTuner.h">
@@ -398,9 +401,6 @@
     </ClInclude>
     <ClInclude Include="acascard.h">
       <Filter>mmttlv\acas</Filter>
-    </ClInclude>
-    <ClInclude Include="dantto4k.h">
-      <Filter>dantto4k</Filter>
     </ClInclude>
     <ClInclude Include="remuxerHandler.h">
       <Filter>dantto4k</Filter>
@@ -580,6 +580,10 @@
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
     <ClInclude Include="ecmProcessor.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="cxxopts.hpp" />
+    <ClInclude Include="bonDriverContext.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>

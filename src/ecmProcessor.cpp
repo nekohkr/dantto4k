@@ -1,41 +1,5 @@
 #include "ecmProcessor.h"
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#include "httplib.h"
-
-namespace {
-
-void parseAcasServerResponse(const std::string& hex, std::array<uint8_t, 16>& even, std::array<uint8_t, 16>& odd) {
-    if (hex.size() != 64) {
-        throw std::runtime_error("Invalid ACAS server response size: " + std::to_string(hex.size()) + ", expected 64 characters.");
-    }
-
-    for (size_t i = 0; i < 32; i += 2) {
-        std::string byte_str = hex.substr(i, 2);
-        uint8_t byte = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
-        even[i/2] = byte;
-    }
-    for (size_t i = 32; i < 64; i += 2) {
-        std::string byte_str = hex.substr(i, 2);
-        uint8_t byte = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
-        odd[(i - 32) / 2] = byte;
-    }
-}
-
-std::optional<std::tuple<std::string, std::string, std::string>> splitUrl(const std::string& fullUrl) {
-    std::regex urlRegex(R"((https?)://([^/]+)(/.*))");
-    std::smatch match;
-    if (std::regex_match(fullUrl, match, urlRegex)) {
-        std::string scheme = match[1];
-        std::string host = match[2];
-        std::string path = match[3];
-        return std::make_tuple(scheme, host, path);
-    }
-    else {
-        return std::nullopt;
-    }
-}
-
-}
+#include "config.h"
 
 void EcmProcessor::onEcm(const std::vector<uint8_t>& ecm)
 {
@@ -99,15 +63,15 @@ void EcmProcessor::worker()
             current = std::move(queue.front());
         }
 
-        MmtTlv::Acas::DecryptedEcm key = {};
-        MmtTlv::Acas::DecryptEcmResult ret;
+        MmtTlv::Acas::DecryptionKey key = {};
+        MmtTlv::Acas::EcmResult ret;
 
         if (acasServerUrl.empty()) {
             try {
-                ret = acasCard.decryptEcm(current, key);
+                ret = acasCard.ecm(current, key);
 
-                if (ret == MmtTlv::Acas::DecryptEcmResult::CardResetError) {
-                    acasCard.decryptEcm(current, key);
+                if (ret == MmtTlv::Acas::EcmResult::CardResetError) {
+                    acasCard.ecm(current, key);
                 }
             }
             catch (const std::runtime_error& e) {
@@ -116,46 +80,18 @@ void EcmProcessor::worker()
             }
         }
         else {
-            while (1) {
-                auto result = splitUrl(acasServerUrl);
-                if (!result) {
-                    break;
-                }
-
-                auto [scheme, host, path] = *result;
-
-                httplib::Client cli(scheme + "://" + host);
-
-                auto to_hex = [](const std::vector<uint8_t>& data) {
-                    std::ostringstream oss;
-                    for (auto b : data) {
-                        oss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)b;
-                    }
-                    return oss.str();
-                    };
-
-                std::string keyHex = to_hex(current);
-                std::string body = "ecm=" + keyHex;
-                auto res = cli.Post(path, body, "application/x-www-form-urlencoded");
-
-                if (res.error() != httplib::Error::Success) {
-                    std::cerr << "Failed to send ECM to ACAS server: " << res.error() << std::endl;
-                    break;
-                }
-
-                if (res->status != 200) {
-                    std::cerr << "ACAS server returned error: " << res->status << std::endl;
-                    break;
-                }
-
-                try {
-                    parseAcasServerResponse(res->body, key.even, key.odd);
-                }
-                catch (const std::runtime_error& e) {
-                    std::cerr << e.what() << std::endl;
-                }
-                break;
+            /*
+            MmtTlv::Acas::AcasClient client(config.acasServerUrl);
+            MmtTlv::Acas::EcmRequest ecmRequest;
+            ecmRequest.setSmartCardReaderName(config.smartCardReaderName);
+            ecmRequest.setEcm(current);
+            auto res = client.sendRequest(ecmRequest);
+            if (res.getStatus() == MmtTlv::Acas::AcasServerResponseStatus::Success) {
+                key = res.getData();
+            } else {
+                std::cerr << "Failed to get smart card readers from ACAS server: " << res.getMessage() << std::endl;
             }
+            */
         }
 
         {

@@ -135,12 +135,12 @@ uint8_t convertTableId(uint8_t mmtTableId) {
 
 } // anonymous namespace
 
-void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
+void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
     writeStream(mmtStream, mfuData, mfuData->data);
 }
 
-void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
+void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
     // ADTS conversion for 22.2ch is not implemented.
     if (mmtStream->Is22_2chAudio()) {
@@ -162,7 +162,7 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     writeStream(mmtStream, mfuData, output);
 }
 
-void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
+void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
     std::list<B24SubtiteOutput> output;
     B24SubtiteConvertor::convert(mfuData->data, output);
@@ -201,13 +201,32 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream> mmt
     }
 }
 
-void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
+void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData)
 {
 }
 
-void RemuxerHandler::onPacketDrop(const std::shared_ptr<MmtTlv::MmtStream> mmtStream)
+void RemuxerHandler::onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream)
 {
-    ++mapCC[mmtStream->getMpeg2PacketId()];
+    if (mmtStream) {
+        ++mapCC[mmtStream->getMpeg2PacketId()];
+        return;
+    }
+
+    switch (packetId) {
+    case MmtTlv::MmtPacketId::MhEit:
+        ++mapCC[ts::PID_EIT];
+        break;
+    case MmtTlv::MmtPacketId::MhSdt:
+        ++mapCC[ts::PID_SDT];
+        break;
+    case MmtTlv::MmtPacketId::MhTot:
+        ++mapCC[ts::PID_TOT];
+        break;
+    case MmtTlv::MmtPacketId::MhCdt:
+        ++mapCC[ts::PID_CDT];
+        break;
+    }
+    
 }
 
 void RemuxerHandler::setOutputCallback(OutputCallback cb)
@@ -215,7 +234,7 @@ void RemuxerHandler::setOutputCallback(OutputCallback cb)
     outputCallback = std::move(cb);
 }
 
-void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData)
+void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData)
 {
     constexpr AVRational tsTimeBase = { 1, 90000 };
     const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
@@ -266,7 +285,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream> mmtStr
     }
 }
 
-void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream> mmtStream, const B24SubtiteOutput& subtitle)
+void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtiteOutput& subtitle)
 {
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
@@ -430,11 +449,6 @@ void RemuxerHandler::onMhAit(const std::shared_ptr<MmtTlv::MhAit>& mhAit)
 void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit)
 {
     tsid = mhEit->tlvStreamId;
-
-    if (mhEit->isPf() && mhEit->sectionNumber == 0 && mhEit->events.size() > 0) {
-        struct tm startTime = EITConvertStartTime(mhEit->events.begin()->get()->startTime);
-        eitPresentStartTime = mktime(&startTime);
-    }
 
     ts::EIT tsEit(true, mhEit->isPf(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
     for (const auto& mhEvent : mhEit->events) {

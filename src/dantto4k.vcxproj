@@ -161,6 +161,7 @@
     <ClCompile Include="contentCopyControlDescriptor.cpp" />
     <ClCompile Include="dataTransmissionMessage.cpp" />
     <ClCompile Include="dataUnit.cpp" />
+    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ecm.cpp" />
     <ClCompile Include="ecmProcessor.cpp" />
     <ClCompile Include="eventPackageDescriptor.cpp" />
@@ -246,12 +247,13 @@
     <ClInclude Include="b24Color.h" />
     <ClInclude Include="b24ControlSet.h" />
     <ClInclude Include="b24SubtitleConvertor.h" />
+    <ClInclude Include="bonDriverContext.h" />
     <ClInclude Include="bonTuner.h" />
     <ClInclude Include="caMessage.h" />
     <ClInclude Include="compressedIPPacket.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="contentCopyControlDescriptor.h" />
-    <ClInclude Include="dantto4k.h" />
+    <ClInclude Include="cxxopts.hpp" />
     <ClInclude Include="dataTransmissionMessage.h" />
     <ClInclude Include="dataUnit.h" />
     <ClInclude Include="descriptorConverter.h" />

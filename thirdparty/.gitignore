@@ -1,6 +1,5 @@
-ffmpeg/*
-!ffmpeg/.gitkeep
 openssl/*
 !openssl/.gitkeep
 tsduck/*
 !tsduck/.gitkeep
+rapidjson/

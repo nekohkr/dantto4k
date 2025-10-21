@@ -16,12 +16,12 @@ static constexpr uint8_t masterKey[] = {
     0x05, 0x77, 0xF9, 0xEF, 0xE5, 0x56, 0x1F, 0x32,
 };
 
-struct DecryptedEcm {
+struct DecryptionKey {
     std::array<uint8_t, 16> odd;
     std::array<uint8_t, 16> even;
 };
 
-enum class DecryptEcmResult {
+enum class EcmResult {
     Success,
     CardResetError,
     OtherError
@@ -30,8 +30,7 @@ enum class DecryptEcmResult {
 class AcasCard {
 public:
     AcasCard(SmartCard& smartCard);
-
-    DecryptEcmResult decryptEcm(const std::vector<uint8_t>& ecm, DecryptedEcm& output);
+    EcmResult ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output);
 
 private:
     bool getA0AuthKcl(Common::sha256_t& output);

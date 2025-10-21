@@ -6,15 +6,28 @@
 
 namespace MmtTlv {
 
-namespace Acas {
-	struct DecryptedEcm;
-}
-
 enum class PayloadType
 {
 	Mpu = 0x00,
 	Undefined = 0x01,
 	ContainsOneOrMoreControlMessage = 0x02
+};
+
+namespace MmtPacketId {
+
+constexpr uint16_t PaMessage = 0x0000;
+constexpr uint16_t CaMessage = 0x0001;
+constexpr uint16_t MhEit = 0x8000;
+constexpr uint16_t MhAit = 0x8001;
+constexpr uint16_t MhBit = 0x8002;
+constexpr uint16_t MhSdtt = 0x8003;
+constexpr uint16_t MhSdt = 0x8004;
+constexpr uint16_t MhTot = 0x8005;
+constexpr uint16_t MhCdt = 0x8006;
+constexpr uint16_t DataTransmissionMessage = 0x8007;
+constexpr uint16_t MhDit = 0x8008;
+constexpr uint16_t MhSit = 0x8009;
+
 };
 
 class Mmt {
