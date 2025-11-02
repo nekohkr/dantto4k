@@ -7,7 +7,7 @@ public:
     std::string bondriverPath{};
     std::string mmtsDumpPath{};
     std::string smartCardReaderName{};
-    std::string acasServerUrl{};
+    std::string casProxyServer{};
     bool disableADTSConversion{false};
 };
 

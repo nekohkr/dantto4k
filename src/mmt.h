@@ -33,7 +33,6 @@ constexpr uint16_t MhSit = 0x8009;
 class Mmt {
 public:
 	bool unpack(Common::ReadStream& stream);
-	bool decryptPayload(const std::array<uint8_t, 16>& key);
 
 public:
 	uint8_t version;

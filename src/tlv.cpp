@@ -1,6 +1,5 @@
 #include "tlv.h"
 #include "stream.h"
-#include "mmtTlvDemuxer.h"
 
 namespace MmtTlv {
 	
@@ -12,7 +11,7 @@ bool Tlv::unpack(Common::ReadStream& stream)
 
 	uint8_t syncByte = stream.get8U();
 	if (syncByte != 0x7F) {
-		throw std::runtime_error("not valid tlv packet.");
+		throw std::runtime_error("Not valid tlv packet.");
 	}
 
 	packetType = stream.get8U();

@@ -3,7 +3,6 @@
 #include <map>
 #include <list>
 #include "stream.h"
-#include "acascard.h"
 #include "mmt.h"
 #include "tlv.h"
 #include "mpu.h"
@@ -14,7 +13,7 @@
 #include "compressedIPPacket.h"
 #include "mfuDataProcessorBase.h"
 #include "mmtTlvStatistics.h"
-#include "ecmProcessor.h"
+#include "casHandler.h"
 
 namespace MmtTlv {
 
@@ -43,19 +42,14 @@ enum class DemuxStatus {
 
 class MmtTlvDemuxer {
 public:
-	MmtTlvDemuxer();
-	bool init();
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
-	void setSmartCardReaderName(const std::string& smartCardReaderName);
-    void setAcasServerUrl(const std::string& acasServerUrl);
+	void setCasHandler(std::unique_ptr<CasHandler> handler);
 	DemuxStatus demux(Common::ReadStream& stream);
 	void clear();
-	void release();
 	void printStatistics() const;
 
 private:
 	bool isValidTlv(Common::ReadStream& stream) const;
-
 	void processMpu(Common::ReadStream& stream);
 	void processMfuData(Common::ReadStream& stream);
 	void processSignalingMessages(Common::ReadStream& stream);
@@ -75,26 +69,20 @@ private:
 
 public:
 	std::shared_ptr<MmtStream> getStream(uint16_t pid);
-
 	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
 	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStreamByStreamIdx;
 
 private:
 	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
-
-	Acas::SmartCard smartCard;
-	Acas::AcasCard acasCard;
-	EcmProcessor ecmProcessor;
-
 	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
 	Tlv tlv;
 	CompressedIPPacket compressedIPPacket;
 	Mmt mmt;
 	Mpu mpu;
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
+	std::unique_ptr<CasHandler> casHandler;
 	DemuxerHandler* demuxerHandler = nullptr;
 	mmtTlvStatistics statistics;
 
-	std::string acasServerUrl;
 };
 }

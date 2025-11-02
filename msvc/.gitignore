@@ -1,4 +1,7 @@
+.vs
 x64
+dantto4k.sln
+dantto4k_dev.sln
 dantto4k.vcxproj.user
 dantto4k_dll.vcxproj.user
 dantto4k_dev.vcxproj

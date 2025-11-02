@@ -1,6 +1,5 @@
 #include "mmt.h"
 #include "extensionHeaderScrambling.h"
-#include "acascard.h"
 #include <openssl/evp.h>
 
 namespace MmtTlv {
@@ -67,30 +66,6 @@ bool Mmt::unpack(Common::ReadStream& stream)
 	catch (const std::out_of_range&) {
 		return false;
 	}
-
-	return true;
-}
-
-bool Mmt::decryptPayload(const std::array<uint8_t, 16>& key)
-{
-	if (!extensionHeaderScrambling) {
-		return false;
-	}
-
-	std::vector<uint8_t> iv(16, 0);
-
-	uint16_t swappedPacketId = Common::swapEndian16(packetId);
-	uint32_t swappedPacketSequenceNumber = Common::swapEndian32(packetSequenceNumber);
-	memcpy(iv.data(), &swappedPacketId, 2);
-	memcpy(iv.data() + 2, &swappedPacketSequenceNumber, 4);
-
-	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-	EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), nullptr, key.data(), iv.data());
-
-	int outlen;
-	EVP_EncryptUpdate(ctx, payload.data() + 8, &outlen, payload.data() + 8, static_cast<int>(payload.size() - 8));
-	EVP_EncryptFinal_ex(ctx, payload.data() + 8 + outlen, &outlen);
-	EVP_CIPHER_CTX_free(ctx);
 
 	return true;
 }

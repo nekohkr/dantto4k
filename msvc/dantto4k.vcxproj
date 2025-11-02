@@ -1,0 +1,353 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{d89922dc-4fe6-4fc1-8d78-bbf73f7a8b6b}</ProjectGuid>
+    <RootNamespace>dantto4k</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>dantto4k</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)thirdparty\tsduck\include;$(SolutionDir)..\thirdparty\asio\asio\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)thirdparty\tsduck\lib\Debug-Win64;$(LibraryPath)</LibraryPath>
+    <IntDir>$(Platform)\$(Configuration)\dantto4k\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir)thirdparty\tsduck\include;$(SolutionDir)..\thirdparty\asio\asio\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)thirdparty\tsduck\lib\Release-Win64;$(LibraryPath)</LibraryPath>
+    <IntDir>$(Platform)\$(Configuration)\dantto4k\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_DEBUG;_CONSOLE;USE_CASPROXYSERVER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;libssl.lib;Crypt32.lib;dbghelp.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>tsduck.lib;libcrypto.lib;libssl.lib;Crypt32.lib;dbghelp.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="../src/accessControlDescriptor.cpp" />
+    <ClCompile Include="../src/applicationMfuDataProcessor.cpp" />
+    <ClCompile Include="../src/aribUtil.cpp" />
+    <ClCompile Include="../src/audioMfuDataProcessor.cpp" />
+    <ClCompile Include="../src/acasCard.cpp" />
+    <ClCompile Include="../src/adtsConverter.cpp" />
+    <ClCompile Include="../src/b24Color.cpp" />
+    <ClCompile Include="../src/b24SubtitleConvertor.cpp" />
+    <ClCompile Include="../src/bonTuner.cpp" />
+    <ClCompile Include="../src/caMessage.cpp" />
+    <ClCompile Include="../src/casProxyClient.cpp" />
+    <ClCompile Include="../src/compressedIPPacket.cpp" />
+    <ClCompile Include="../src/config.cpp" />
+    <ClCompile Include="../src/contentCopyControlDescriptor.cpp" />
+    <ClCompile Include="../src/dataTransmissionMessage.cpp" />
+    <ClCompile Include="../src/dataUnit.cpp" />
+    <ClCompile Include="../src/dllmain.cpp" />
+    <ClCompile Include="../src/ecm.cpp" />
+    <ClCompile Include="../src/acasHandler.cpp" />
+    <ClCompile Include="../src/eventPackageDescriptor.cpp" />
+    <ClCompile Include="../src/extensionHeaderScrambling.cpp" />
+    <ClCompile Include="../src/ipv6.cpp" />
+    <ClCompile Include="../src/mhAit.cpp" />
+    <ClCompile Include="../src/mhApplicationDescriptor.cpp" />
+    <ClCompile Include="../src/mhBit.cpp" />
+    <ClCompile Include="../src/mhBroadcasterNameDescriptor.cpp" />
+    <ClCompile Include="../src/mhServiceListDescriptor.cpp" />
+    <ClCompile Include="../src/mhSiParameterDescriptor.cpp" />
+    <ClCompile Include="../src/mmtDescriptorFactory.cpp" />
+    <ClCompile Include="../src/mmtTableFactory.cpp" />
+    <ClCompile Include="../src/multimediaServiceInformationDescriptor.cpp" />
+    <ClCompile Include="../src/ntp.cpp" />
+    <ClCompile Include="../src/pesPacket.cpp" />
+    <ClCompile Include="../src/pugixml.cpp" />
+    <ClCompile Include="../src/relatedBroadcasterDescriptor.cpp" />
+    <ClCompile Include="../src/systemManagementDescriptor.cpp" />
+    <ClCompile Include="../src/timebase.cpp" />
+    <ClCompile Include="../src/timeUtil.cpp" />
+    <ClCompile Include="../src/tlvDescriptorFactory.cpp" />
+    <ClCompile Include="../src/tlvTableFactory.cpp" />
+    <ClCompile Include="../src/tsARIBCharset.cpp" />
+    <ClCompile Include="../src/tsARIBCharsetData.cpp" />
+    <ClCompile Include="../src/tsARIBCharsetEncoding.cpp" />
+    <ClCompile Include="../src/ttml.cpp" />
+    <ClCompile Include="../src/videoMfuDataProcessor.cpp" />
+    <ClCompile Include="../src/m2SectionMessage.cpp" />
+    <ClCompile Include="../src/m2ShortSectionMessage.cpp" />
+    <ClCompile Include="../src/mhAudioComponentDescriptor.cpp" />
+    <ClCompile Include="../src/dantto4k.cpp" />
+    <ClCompile Include="../src/mhCaContractInformation.cpp" />
+    <ClCompile Include="../src/mhCdt.cpp" />
+    <ClCompile Include="../src/mhContentDescriptor.cpp" />
+    <ClCompile Include="../src/mhDataComponentDescriptor.cpp" />
+    <ClCompile Include="../src/mhEit.cpp" />
+    <ClCompile Include="../src/mhEventGroupDescriptor.cpp" />
+    <ClCompile Include="../src/mhExtendedEventDescriptor.cpp" />
+    <ClCompile Include="../src/mhLinkageDescriptor.cpp" />
+    <ClCompile Include="../src/mhLogoTransmissionDescriptor.cpp" />
+    <ClCompile Include="../src/mhParentalRatingDescriptor.cpp" />
+    <ClCompile Include="../src/mhSdt.cpp" />
+    <ClCompile Include="../src/mhSeriesDescriptor.cpp" />
+    <ClCompile Include="../src/mhServiceDescriptor.cpp" />
+    <ClCompile Include="../src/mhShortEventDescriptor.cpp" />
+    <ClCompile Include="../src/mhStreamIdentificationDescriptor.cpp" />
+    <ClCompile Include="../src/mhTot.cpp" />
+    <ClCompile Include="../src/mmt.cpp" />
+    <ClCompile Include="../src/mmtDescriptors.cpp" />
+    <ClCompile Include="../src/mmtGeneralLocationInfo.cpp" />
+    <ClCompile Include="../src/remuxerHandler.cpp" />
+    <ClCompile Include="../src/mmtStream.cpp" />
+    <ClCompile Include="../src/mmtTlvDemuxer.cpp" />
+    <ClCompile Include="../src/mpt.cpp" />
+    <ClCompile Include="../src/mpu.cpp" />
+    <ClCompile Include="../src/fragmentAssembler.cpp" />
+    <ClCompile Include="../src/mfuDataProcessorFactory.cpp" />
+    <ClCompile Include="../src/mpuExtendedTimestampDescriptor.cpp" />
+    <ClCompile Include="../src/mpuTimestampDescriptor.cpp" />
+    <ClCompile Include="../src/networkNameDescriptor.cpp" />
+    <ClCompile Include="../src/nit.cpp" />
+    <ClCompile Include="../src/paMessage.cpp" />
+    <ClCompile Include="../src/plt.cpp" />
+    <ClCompile Include="../src/remoteControlKeyDescriptor.cpp" />
+    <ClCompile Include="../src/serviceListDescriptor.cpp" />
+    <ClCompile Include="../src/signalingMessage.cpp" />
+    <ClCompile Include="../src/stream.cpp" />
+    <ClCompile Include="../src/tlv.cpp" />
+    <ClCompile Include="../src/smartCard.cpp" />
+    <ClCompile Include="../src/tlvDescriptors.cpp" />
+    <ClCompile Include="../src/transmissionControlSignal.cpp" />
+    <ClCompile Include="../src/subtitleMfuDataProcessor.cpp" />
+    <ClCompile Include="../src/videoComponentDescriptor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="../src/accessControlDescriptor.h" />
+    <ClInclude Include="../src/applicationMfuDataProcessor.h" />
+    <ClInclude Include="../src/aribUtil.h" />
+    <ClInclude Include="../src/audioMfuDataProcessor.h" />
+    <ClInclude Include="../src/acasCard.h" />
+    <ClInclude Include="../src/adtsConverter.h" />
+    <ClInclude Include="../src/b24Color.h" />
+    <ClInclude Include="../src/b24ControlSet.h" />
+    <ClInclude Include="../src/b24SubtitleConvertor.h" />
+    <ClInclude Include="../src/bonDriverContext.h" />
+    <ClInclude Include="../src/bonTuner.h" />
+    <ClInclude Include="../src/caMessage.h" />
+    <ClInclude Include="../src/casHandler.h" />
+    <ClInclude Include="../src/casProxy.h" />
+    <ClInclude Include="../src/casProxyClient.h" />
+    <ClInclude Include="../src/compressedIPPacket.h" />
+    <ClInclude Include="../src/config.h" />
+    <ClInclude Include="../src/contentCopyControlDescriptor.h" />
+    <ClInclude Include="../src/dataTransmissionMessage.h" />
+    <ClInclude Include="../src/dataUnit.h" />
+    <ClInclude Include="../src/descriptorConverter.h" />
+    <ClInclude Include="../src/ecm.h" />
+    <ClInclude Include="../src/acasHandler.h" />
+    <ClInclude Include="../src/eventPackageDescriptor.h" />
+    <ClInclude Include="../src/extensionHeaderScrambling.h" />
+    <ClInclude Include="../src/demuxerHandler.h" />
+    <ClInclude Include="../src/ipv6.h" />
+    <ClInclude Include="../src/mhAit.h" />
+    <ClInclude Include="../src/mhApplicationDescriptor.h" />
+    <ClInclude Include="../src/mhBit.h" />
+    <ClInclude Include="../src/mhBroadcasterNameDescriptor.h" />
+    <ClInclude Include="../src/mhServiceListDescriptor.h" />
+    <ClInclude Include="../src/mhSiParameterDescriptor.h" />
+    <ClInclude Include="../src/mmtDescriptorFactory.h" />
+    <ClInclude Include="../src/mmtFragment.h" />
+    <ClInclude Include="../src/mmtTableFactory.h" />
+    <ClInclude Include="../src/mmtTlvStatistics.h" />
+    <ClInclude Include="../src/multimediaServiceInformationDescriptor.h" />
+    <ClInclude Include="../src/ntp.h" />
+    <ClInclude Include="../src/pesPacket.h" />
+    <ClInclude Include="../src/pugiconfig.hpp" />
+    <ClInclude Include="../src/pugixml.hpp" />
+    <ClInclude Include="../src/relatedBroadcasterDescriptor.h" />
+    <ClInclude Include="../src/systemManagementDescriptor.h" />
+    <ClInclude Include="../src/timebase.h" />
+    <ClInclude Include="../src/timeUtil.h" />
+    <ClInclude Include="../src/tlvDescriptorFactory.h" />
+    <ClInclude Include="../src/tlvTableFactory.h" />
+    <ClInclude Include="../src/tsARIBCharset.h" />
+    <ClInclude Include="../src/ttml.h" />
+    <ClInclude Include="../src/videoMfuDataProcessor.h" />
+    <ClInclude Include="../src/IBonDriver.h" />
+    <ClInclude Include="../src/ip.h" />
+    <ClInclude Include="../src/m2SectionMessage.h" />
+    <ClInclude Include="../src/m2ShortSectionMessage.h" />
+    <ClInclude Include="../src/mhAudioComponentDescriptor.h" />
+    <ClInclude Include="../src/mhCaContractInformation.h" />
+    <ClInclude Include="../src/mhCdt.h" />
+    <ClInclude Include="../src/mhContentDescriptor.h" />
+    <ClInclude Include="../src/mhDataComponentDescriptor.h" />
+    <ClInclude Include="../src/mhEit.h" />
+    <ClInclude Include="../src/mhEventGroupDescriptor.h" />
+    <ClInclude Include="../src/mhExtendedEventDescriptor.h" />
+    <ClInclude Include="../src/mhLinkageDescriptor.h" />
+    <ClInclude Include="../src/mhLogoTransmissionDescriptor.h" />
+    <ClInclude Include="../src/mhParentalRatingDescriptor.h" />
+    <ClInclude Include="../src/mhSdt.h" />
+    <ClInclude Include="../src/mhSeriesDescriptor.h" />
+    <ClInclude Include="../src/mhServiceDescriptor.h" />
+    <ClInclude Include="../src/mhShortEventDescriptor.h" />
+    <ClInclude Include="../src/mhStreamIdentificationDescriptor.h" />
+    <ClInclude Include="../src/mhTot.h" />
+    <ClInclude Include="../src/mmt.h" />
+    <ClInclude Include="../src/mmtDescriptors.h" />
+    <ClInclude Include="../src/mmtGeneralLocationInfo.h" />
+    <ClInclude Include="../src/remuxerHandler.h" />
+    <ClInclude Include="../src/mmtStream.h" />
+    <ClInclude Include="../src/mpt.h" />
+    <ClInclude Include="../src/mpu.h" />
+    <ClInclude Include="../src/fragmentAssembler.h" />
+    <ClInclude Include="../src/mfuDataProcessorBase.h" />
+    <ClInclude Include="../src/mfuDataProcessorFactory.h" />
+    <ClInclude Include="../src/mpuExtendedTimestampDescriptor.h" />
+    <ClInclude Include="../src/mpuTimestampDescriptor.h" />
+    <ClInclude Include="../src/networkNameDescriptor.h" />
+    <ClInclude Include="../src/nit.h" />
+    <ClInclude Include="../src/paMessage.h" />
+    <ClInclude Include="../src/plt.h" />
+    <ClInclude Include="../src/remoteControlKeyDescriptor.h" />
+    <ClInclude Include="../src/serviceListDescriptor.h" />
+    <ClInclude Include="../src/signalingMessage.h" />
+    <ClInclude Include="../src/smartCard.h" />
+    <ClInclude Include="../src/stream.h" />
+    <ClInclude Include="../src/mmtTableBase.h" />
+    <ClInclude Include="../src/swap.h" />
+    <ClInclude Include="../src/tlv.h" />
+    <ClInclude Include="../src/tlvDescriptorBase.h" />
+    <ClInclude Include="../src/tlvDescriptors.h" />
+    <ClInclude Include="../src/tlvTableBase.h" />
+    <ClInclude Include="../src/transmissionControlSignal.h" />
+    <ClInclude Include="../src/subtitleMfuDataProcessor.h" />
+    <ClInclude Include="../src/videoComponentDescriptor.h" />
+    <ClInclude Include="../src/IBonDriver2.h" />
+    <ClInclude Include="../src/mmtDescriptorBase.h" />
+    <ClInclude Include="../src/mmtTlvDemuxer.h" />
+    <ClInclude Include="../src/aesCtrCipher.h" />
+    <ClInclude Include="../src/sha256.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

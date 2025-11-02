@@ -53,7 +53,6 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
         std::string text;
         for (const auto& p : div.pTags) {
             for (const auto& span : p.spanTags) {
-                std::u8string utf((char8_t*)(span.text.c_str()));
                 text.append(span.text);
                 text.push_back('\0');
             }
@@ -87,12 +86,12 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
             }
 
             if (p.region.origin.has_value()) {
-                int offsetY = 0;
+                float offsetY = 0;
                 if (p.spanTags.begin()->style.lineHeight.has_value() &&
                     p.spanTags.begin()->style.fontSize) {
-                    int lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
-                    int fontSizeX = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
-                    int fontSizeY = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
+                    float lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
+                    float fontSizeX = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
+                    float fontSizeY = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
                     offsetY = (lineHeight - fontSizeY) / 2;
                     if (fontSizeX == 72 && fontSizeY == 72) {
                         offsetY -= 95;

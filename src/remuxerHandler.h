@@ -49,10 +49,10 @@ public:
 	}
 
 	// MPU data
-	void onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
-	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
-	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
-	void onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) override;
+	void onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
+	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
+	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
+	void onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
 
 	void onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream) override;
 
@@ -89,10 +89,7 @@ private:
 	std::unordered_map<uint16_t, uint8_t> mapCC;
 	int tsid{-1};
 	int streamCount{};
-
 	uint64_t lastPcr{};
-	
-
 	ts::DuckContext duck;
 
 

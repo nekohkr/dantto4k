@@ -102,26 +102,26 @@ const ts::ARIBCharset2 ts::ARIBCharset2::B24({u"ARIB-STD-B24-2", u"ARIB-2"});
 
 namespace {
 
-const char32_t fullwidthChars[] = U"！”＃＄％＆’（）＊＋，−．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［￥］＾＿‘ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝￣";
-const char32_t halfwidthChars[] = U"!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+    const char32_t fullwidthChars[] = U"！”＃＄％＆’（）＊＋，−．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［￥］＾＿‘ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝￣";
+    const char32_t halfwidthChars[] = U"!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
-bool isFullwidth(char32_t ch) {
-    for (const char32_t* p = fullwidthChars; *p != 0; ++p) {
-        if (*p == ch) {
-            return true;
+    bool isFullwidth(char32_t ch) {
+        for (const char32_t* p = fullwidthChars; *p != 0; ++p) {
+            if (*p == ch) {
+                return true;
+            }
         }
+        return false;
     }
-    return false;
-}
 
-char32_t toHalfwidth(char32_t ch) {
-    for (size_t i = 0; fullwidthChars[i] != 0; ++i) {
-        if (fullwidthChars[i] == ch) {
-            return halfwidthChars[i];
+    char32_t toHalfwidth(char32_t ch) {
+        for (size_t i = 0; fullwidthChars[i] != 0; ++i) {
+            if (fullwidthChars[i] == ch) {
+                return halfwidthChars[i];
+            }
         }
+        return ch;
     }
-    return ch;
-}
 
 }
 
@@ -245,11 +245,11 @@ ts::ARIBCharset2::Encoder::Encoder(uint8_t*& out, size_t& out_size, const UChar*
     _G{KANJI_STANDARD_MAP.selector1,   // Same initial state as decoding engine
        ALPHANUMERIC_MAP.selector1,
        HIRAGANA_MAP.selector1,
-       JIS_X0201_KATAKANA_MAP.selector1},
+       KATAKANA_MAP.selector1},
     _byte2{KANJI_STANDARD_MAP.byte2,   // Same order as _G
            ALPHANUMERIC_MAP.byte2,
            HIRAGANA_MAP.byte2,
-           JIS_X0201_KATAKANA_MAP.byte2},
+           KATAKANA_MAP.byte2},
     _GL(0),             // G0 -> GL
     _GR(2),             // G2 -> GR
     _GL_last(false),    // First charset switch will use GL
@@ -459,6 +459,16 @@ bool ts::ARIBCharset2::Encoder::selectCharSet(uint8_t*& out, size_t& out_size, u
             first = false;
         }
     }
+    else if (selectorF == 0x31 /* Katakana */) {
+        if (selectorF != _G[_GL]) {
+            if (selectorF != _G[0] && selectorF != _G[1] && selectorF != _G[2] && selectorF != _G[3]) {
+                seq_size += selectG0123(seq + seq_size, selectorF, byte2);
+            }
+            // Route the right Gx in either GL or GR.
+            seq_size += selectGLR(seq + seq_size, selectorF);
+            first = false;
+        }
+    }
     else {
         // There is some switching sequence to add only if the charset is neither in GL nor GR.
         if (selectorF != _G[_GL] && selectorF != _G[_GR]) {
@@ -521,7 +531,7 @@ size_t ts::ARIBCharset2::Encoder::selectGLR(uint8_t* seq, uint8_t F, bool forceG
         }
         else {
             _GL = 1;
-             seq[i++] = LS1;
+            seq[i++] = LS1;
             return i;
         }
     }

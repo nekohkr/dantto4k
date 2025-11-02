@@ -1,5 +1,4 @@
-﻿#include "acascard.h"
-#include "dataUnit.h"
+﻿#include "dataUnit.h"
 #include "ecm.h"
 #include "m2SectionMessage.h"
 #include "m2ShortSectionMessage.h"
@@ -18,7 +17,6 @@
 #include "paMessage.h"
 #include "plt.h"
 #include "signalingMessage.h"
-#include "smartcard.h"
 #include "stream.h"
 #include "mmtTableFactory.h"
 #include "tlvTableFactory.h"
@@ -35,46 +33,15 @@
 
 namespace MmtTlv {
 
-MmtTlvDemuxer::MmtTlvDemuxer()
-    : smartCard(),
-    acasCard(smartCard),
-    ecmProcessor(acasCard)
-{
-}
-
-bool MmtTlvDemuxer::init()
-{
-    try {
-        if (acasServerUrl.empty()) {
-            smartCard.init();
-            smartCard.connect();
-        }
-    }
-    catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-    }
-
-    return true;
-}
-
-void MmtTlvDemuxer::setDemuxerHandler(DemuxerHandler& demuxerHandler)
-{
+void MmtTlvDemuxer::setDemuxerHandler(DemuxerHandler& demuxerHandler) {
     this->demuxerHandler = &demuxerHandler;
 }
 
-void MmtTlvDemuxer::setSmartCardReaderName(const std::string& smartCardReaderName)
-{
-    smartCard.setSmartCardReaderName(smartCardReaderName);
+void MmtTlvDemuxer::setCasHandler(std::unique_ptr<CasHandler> handler) {
+    casHandler = std::move(handler);
 }
 
-void MmtTlvDemuxer::setAcasServerUrl(const std::string& acasServerUrl)
-{
-    this->acasServerUrl = acasServerUrl;
-    ecmProcessor.setAcasServerUrl(acasServerUrl);
-}
-
-DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
-{
+DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream) {
     size_t cur = stream.getPos();
 
     if (stream.leftBytes() < 4) {
@@ -167,12 +134,12 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream)
         if (mmt.extensionHeaderScrambling.has_value()) {
             if (mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
                 mmt.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-                auto key = ecmProcessor.getDecryptionKey(mmt.extensionHeaderScrambling->encryptionFlag);
-                if (!key) {
+                if (!casHandler) {
                     return DemuxStatus::WattingForEcm;
                 }
-                
-                mmt.decryptPayload(*key);
+                if (!casHandler->decrypt(mmt)) {
+                    return DemuxStatus::WattingForEcm;
+                }
             }
         }
 
@@ -666,24 +633,20 @@ void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<
     }
 }
 
-void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm)
-{
-    ecmProcessor.onEcm(ecm->ecmData);
+void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm) {
+    if (!casHandler) {
+        return;
+    }
+    casHandler->onEcm(ecm->ecmData);
 }
 
 
-void MmtTlvDemuxer::clear()
-{
+void MmtTlvDemuxer::clear() {
     mapAssembler.clear();
     mfuData.clear();
     mapStream.clear();
     mapStreamByStreamIdx.clear();
     statistics.clear();
-}
-
-void MmtTlvDemuxer::release()
-{
-    smartCard.release();
 }
 
 void MmtTlvDemuxer::printStatistics() const

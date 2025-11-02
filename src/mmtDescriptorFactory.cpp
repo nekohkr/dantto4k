@@ -66,8 +66,7 @@ std::shared_ptr<MmtDescriptorBase> MmtDescriptorFactory::create(uint16_t tag) {
 	return it->second();
 }
 
-bool MmtDescriptorFactory::isValidTag(uint16_t tag)
-{
+bool MmtDescriptorFactory::isValidTag(uint16_t tag) {
 	auto it = mapMmtDescriptor.find(tag);
 	if (it == mapMmtDescriptor.end()) {
 		return false;

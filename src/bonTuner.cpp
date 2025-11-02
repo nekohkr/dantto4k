@@ -14,7 +14,7 @@ std::vector<uint8_t> outputBuffer;
 bool CBonTuner::init() {
 	HINSTANCE hBonDriverDLL = LoadLibraryA(config.bondriverPath.c_str());
 	if (!hBonDriverDLL) {
-		std::cerr << "Error: Failed to load BonDriver (Error code: " << GetLastError() << ")" << std::endl;
+		std::cerr << "Failed to load BonDriver: " << std::showbase << std::hex << GetLastError() << std::endl;
 		return false;
 	}
 
@@ -25,7 +25,7 @@ bool CBonTuner::init() {
 		FreeLibrary(hBonDriverDLL);
 		hBonDriverDLL = NULL;
 
-		std::cerr << "Error: Could not get address CreateBonDriver()" << std::endl;
+		std::cerr << "Failed to get address CreateBonDriver()" << std::endl;
 		return false;
 	}
 	
@@ -35,7 +35,7 @@ bool CBonTuner::init() {
 		FreeLibrary(hBonDriverDLL);
 		hBonDriverDLL = NULL;
 
-		std::cerr << "Error: Could not get IBonDriver" << std::endl;
+		std::cerr << "Failed to get IBonDriver" << std::endl;
 		return false;
 	}
 
@@ -169,6 +169,5 @@ const uint32_t CBonTuner::GetCurChannel(void) {
 }
 
 void CBonTuner::Release(void) {
-	g_bonDriverContext.demuxer.release();
 	return pBonDriver2->Release();
 }

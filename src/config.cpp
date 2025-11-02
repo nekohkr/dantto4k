@@ -14,8 +14,7 @@ std::string trim(const std::string& str) {
 
 }
 
-Config loadConfig(const std::string& filename)
-{
+Config loadConfig(const std::string& filename) {
      Config config;
      std::ifstream file(filename);
      if (!file.is_open()) {
@@ -61,8 +60,8 @@ Config loadConfig(const std::string& filename)
                  if (key == "smartCardReaderName") {
                      config.smartCardReaderName = value;
                  }
-                 if (key == "acasServerUrl") {
-                     config.acasServerUrl = value;
+                 if (key == "casProxyServer") {
+                     config.casProxyServer = value;
                  }
              }
          }
