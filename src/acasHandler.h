@@ -12,7 +12,7 @@ public:
     AcasHandler();
     ~AcasHandler();
     bool onEcm(const std::vector<uint8_t>& ecm) override;
-    bool decrypt(MmtTlv::Mmt& mmt) override;
+    bool decrypt(MmtTlv::Mmtp& mmtp) override;
     void setSmartCard(std::unique_ptr<ISmartCard> sc);
 
 private:

@@ -33,7 +33,7 @@
 #include "adtsConverter.h"
 #include "mmtTlvDemuxer.h"
 #include "timebase.h"
-#include "mfuDataProcessorBase.h"
+#include "mpuProcessorBase.h"
 #include "config.h"
 #include "ntp.h"
 #include "pugixml.hpp"
@@ -134,11 +134,11 @@ uint8_t convertTableId(uint8_t mmtTableId) {
 
 } // anonymous namespace
 
-void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
+void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) {
     writeStream(mmtStream, mfuData, mfuData->data);
 }
 
-void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
+void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) {
     // ADTS conversion for 22.2ch is not implemented.
     if (mmtStream->Is22_2chAudio()) {
         writeStream(mmtStream, mfuData, mfuData->data);
@@ -159,7 +159,7 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     writeStream(mmtStream, mfuData, output);
 }
 
-void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) {
+void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MpuData>& mfuData) {
     std::list<B24SubtiteOutput> output;
     B24SubtiteConvertor::convert(mfuData->data, output);
 
@@ -197,7 +197,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
     }
 }
 
-void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
+void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) {
 }
 
 void RemuxerHandler::onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream) {
@@ -220,14 +220,13 @@ void RemuxerHandler::onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTl
         ++mapCC[ts::PID_CDT];
         break;
     }
-    
 }
 
 void RemuxerHandler::setOutputCallback(OutputCallback cb) {
     outputCallback = std::move(cb);
 }
 
-void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData) {
+void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData, const std::vector<uint8_t>& streamData) {
     constexpr AVRational tsTimeBase = { 1, 90000 };
     const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
 

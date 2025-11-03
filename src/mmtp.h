@@ -30,7 +30,7 @@ constexpr uint16_t MhSit = 0x8009;
 
 };
 
-class Mmt {
+class Mmtp {
 public:
 	bool unpack(Common::ReadStream& stream);
 

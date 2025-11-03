@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool DataUnit::unpack(Common::ReadStream& stream, bool timedFlag, bool aggregateFlag)
-{
+bool DataUnit::unpack(Common::ReadStream& stream, bool timedFlag, bool aggregateFlag) {
 	try {
 		if (timedFlag) {
 			if (aggregateFlag == 0) {

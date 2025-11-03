@@ -1,6 +1,6 @@
 #include "acasHandler.h"
 #include "config.h"
-#include "mmt.h"
+#include "mmtp.h"
 #include "aesCtrCipher.h"
 
 AcasHandler::AcasHandler() {
@@ -35,22 +35,22 @@ bool AcasHandler::onEcm(const std::vector<uint8_t>& ecm) {
     return true;
 }
 
-bool AcasHandler::decrypt(MmtTlv::Mmt& mmt) {
-    auto key = getDecryptionKey(mmt.extensionHeaderScrambling->encryptionFlag);
+bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
+    auto key = getDecryptionKey(mmtp.extensionHeaderScrambling->encryptionFlag);
     if (!key) {
         return false;
     }
 
     std::array<uint8_t, 16> iv{};
-    uint16_t packetIdBe = MmtTlv::Common::swapEndian16(mmt.packetId);
-    uint32_t packetSequenceNumberBe = MmtTlv::Common::swapEndian32(mmt.packetSequenceNumber);
+    uint16_t packetIdBe = MmtTlv::Common::swapEndian16(mmtp.packetId);
+    uint32_t packetSequenceNumberBe = MmtTlv::Common::swapEndian32(mmtp.packetSequenceNumber);
     memcpy(iv.data(), &packetIdBe, 2);
     memcpy(iv.data() + 2, &packetSequenceNumberBe, 4);
 
     try {
         AESCtrCipher aes(*key);
         aes.setIv(iv);
-        aes.decrypt(mmt.payload.data() + 8, static_cast<int>(mmt.payload.size() - 8), mmt.payload.data() + 8);
+        aes.decrypt(mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8), mmtp.payload.data() + 8);
     }
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;

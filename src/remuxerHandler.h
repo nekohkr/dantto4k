@@ -49,10 +49,10 @@ public:
 	}
 
 	// MPU data
-	void onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
-	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
-	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
-	void onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
+	void onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) override;
+	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) override;
+	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) override;
+	void onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) override;
 
 	void onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream) override;
 
@@ -80,7 +80,7 @@ public:
 	void setOutputCallback(OutputCallback cb);
 
 private:
-	void writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& data);
+	void writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData, const std::vector<uint8_t>& data);
 	void writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtiteOutput& subtitle);
 
 	MmtTlv::MmtTlvDemuxer& demuxer;

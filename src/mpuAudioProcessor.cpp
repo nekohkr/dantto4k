@@ -1,9 +1,8 @@
-#include "audioMfuDataProcessor.h"
+#include "mpuAudioProcessor.h"
 
 namespace MmtTlv {
 
-std::optional<MfuData> AudioMfuDataProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data)
-{
+std::optional<MpuData> MpuAudioProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
     Common::ReadStream stream(data);
     size_t size = stream.leftBytes();
 
@@ -15,7 +14,7 @@ std::optional<MfuData> AudioMfuDataProcessor::process(const std::shared_ptr<MmtS
         return std::nullopt;
     }
 
-    MfuData mfuData;
+    MpuData mfuData;
     mfuData.data.resize(size + 3);
     mfuData.data[0] = 0x56;
     mfuData.data[1] = ((size >> 8) & 0x1F) | 0xE0;

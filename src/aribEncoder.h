@@ -491,7 +491,7 @@ private:
                 if (charset->rows[actualRow][col] == c) {
                     findResult result = {
                         charset,
-                        row + charset->rowStart,
+                        static_cast<uint8_t>(row + charset->rowStart),
                         col
                     };
                     return result;

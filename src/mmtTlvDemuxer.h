@@ -3,7 +3,7 @@
 #include <map>
 #include <list>
 #include "stream.h"
-#include "mmt.h"
+#include "mmtp.h"
 #include "tlv.h"
 #include "mpu.h"
 #include "mpuExtendedTimestampDescriptor.h"
@@ -11,9 +11,10 @@
 #include "mpt.h"
 #include "mmtStream.h"
 #include "compressedIPPacket.h"
-#include "mfuDataProcessorBase.h"
+#include "mpuProcessorBase.h"
 #include "mmtTlvStatistics.h"
 #include "casHandler.h"
+#include "dataUnit.h"
 
 namespace MmtTlv {
 
@@ -77,8 +78,9 @@ private:
 	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
 	Tlv tlv;
 	CompressedIPPacket compressedIPPacket;
-	Mmt mmt;
+	Mmtp mmtp;
 	Mpu mpu;
+	DataUnit dataUnit;
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	std::unique_ptr<CasHandler> casHandler;
 	DemuxerHandler* demuxerHandler = nullptr;

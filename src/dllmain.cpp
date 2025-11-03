@@ -27,31 +27,34 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
     std::string path = getConfigFilePath(::hModule);
     config = loadConfig(path);
 
-    std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
-    std::unique_ptr<ISmartCard> smartCard;
-    if (config.casProxyServer.empty()) {
-        smartCard = std::make_unique<LocalSmartCard>();
-    }
-    else {
-        auto parsed = casproxy::parseAddress(config.casProxyServer);
-        if (!parsed) {
-            std::cerr << "Invalid CasProxyServer address" << std::endl;
-            std::exit(1);
+    {
+        std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
+        std::unique_ptr<ISmartCard> smartCard;
+        if (config.casProxyServer.empty()) {
+            smartCard = std::make_unique<LocalSmartCard>();
         }
-        smartCard = std::make_unique<RemoteSmartCard>(parsed->first, parsed->second);
+        else {
+            auto parsed = casproxy::parseAddress(config.casProxyServer);
+            if (!parsed) {
+                std::cerr << "Invalid CasProxyServer address" << std::endl;
+                std::exit(1);
+            }
+            smartCard = std::make_unique<RemoteSmartCard>(parsed->first, parsed->second);
+        }
+
+        smartCard->setSmartCardReaderName(config.smartCardReaderName);
+
+        try {
+            smartCard->init();
+            smartCard->connect();
+        }
+        catch (const std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
+        acasHandler->setSmartCard(std::move(smartCard));
+        g_bonDriverContext.demuxer.setCasHandler(std::move(acasHandler));
     }
 
-    smartCard->setSmartCardReaderName(config.smartCardReaderName);
-
-    try {
-        smartCard->init();
-        smartCard->connect();
-    }
-    catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-    }
-    acasHandler->setSmartCard(std::move(smartCard));
-    g_bonDriverContext.demuxer.setCasHandler(std::move(acasHandler));
     g_bonDriverContext.handler.setOutputCallback([&](const uint8_t* data, size_t size) {
         assert(size == 188);
         g_bonDriverContext.remuxOutput.insert(g_bonDriverContext.remuxOutput.end(), data, data + size);

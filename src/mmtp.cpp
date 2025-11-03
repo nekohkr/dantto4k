@@ -1,9 +1,9 @@
-#include "mmt.h"
+#include "mmtp.h"
 #include "extensionHeaderScrambling.h"
 
 namespace MmtTlv {
 
-bool Mmt::unpack(Common::ReadStream& stream) {
+bool Mmtp::unpack(Common::ReadStream& stream) {
 	try {
 		uint8_t uint8 = stream.get8U();
 		version = (uint8 & 0b11000000) >> 6;

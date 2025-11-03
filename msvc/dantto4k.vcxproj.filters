@@ -67,19 +67,19 @@
     <ClCompile Include="../src/adtsConverter.cpp">
       <Filter>dantto4k\adts</Filter>
     </ClCompile>
-    <ClCompile Include="../src/videoMfuDataProcessor.cpp">
+    <ClCompile Include="..\src\mpuVideoProcessor.cpp">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClCompile>
     <ClCompile Include="../src/mmtStream.cpp">
       <Filter>mmttlv</Filter>
     </ClCompile>
-    <ClCompile Include="../src/mfuDataProcessorFactory.cpp">
+    <ClCompile Include="..\src\mpuProcessorFactory.cpp">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClCompile>
-    <ClCompile Include="../src/audioMfuDataProcessor.cpp">
+    <ClCompile Include="..\src\mpuAudioProcessor.cpp">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClCompile>
-    <ClCompile Include="../src/subtitleMfuDataProcessor.cpp">
+    <ClCompile Include="..\src\mpuSubtitleProcessor.cpp">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClCompile>
     <ClCompile Include="../src/fragmentAssembler.cpp">
@@ -145,7 +145,7 @@
     <ClCompile Include="../src/extensionHeaderScrambling.cpp">
       <Filter>mmttlv\mmt\structs</Filter>
     </ClCompile>
-    <ClCompile Include="../src/mmt.cpp">
+    <ClCompile Include="..\src\mmtp.cpp">
       <Filter>mmttlv\mmt\structs</Filter>
     </ClCompile>
     <ClCompile Include="../src/tlv.cpp">
@@ -205,11 +205,8 @@
     <ClCompile Include="../src/relatedBroadcasterDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
-    <ClCompile Include="../src/applicationMfuDataProcessor.cpp">
+    <ClCompile Include="..\src\mpuApplicationProcessor.cpp">
       <Filter>mmttlv\mmt\mpu</Filter>
-    </ClCompile>
-    <ClCompile Include="../src/aribUtil.cpp">
-      <Filter>dantto4k</Filter>
     </ClCompile>
     <ClCompile Include="../src/timeUtil.cpp">
       <Filter>dantto4k</Filter>
@@ -231,15 +228,6 @@
     </ClCompile>
     <ClCompile Include="../src/mhServiceListDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
-    </ClCompile>
-    <ClCompile Include="../src/tsARIBCharset.cpp">
-      <Filter>dantto4k</Filter>
-    </ClCompile>
-    <ClCompile Include="../src/tsARIBCharsetData.cpp">
-      <Filter>dantto4k</Filter>
-    </ClCompile>
-    <ClCompile Include="../src/tsARIBCharsetEncoding.cpp">
-      <Filter>dantto4k</Filter>
     </ClCompile>
     <ClCompile Include="../src/dataTransmissionMessage.cpp">
       <Filter>mmttlv\mmt\structs</Filter>
@@ -275,6 +263,9 @@
       <Filter>dantto4k\cas</Filter>
     </ClCompile>
     <ClCompile Include="..\src\aribEncoder.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="../src/aribUtil.cpp">
       <Filter>dantto4k</Filter>
     </ClCompile>
   </ItemGroup>
@@ -345,22 +336,22 @@
     <ClInclude Include="../src/adtsConverter.h">
       <Filter>dantto4k\adts</Filter>
     </ClInclude>
-    <ClInclude Include="../src/mfuDataProcessorBase.h">
+    <ClInclude Include="..\src\mpuProcessorBase.h">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClInclude>
-    <ClInclude Include="../src/videoMfuDataProcessor.h">
+    <ClInclude Include="..\src\mpuVideoProcessor.h">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClInclude>
     <ClInclude Include="../src/mmtStream.h">
       <Filter>mmttlv</Filter>
     </ClInclude>
-    <ClInclude Include="../src/mfuDataProcessorFactory.h">
+    <ClInclude Include="..\src\mpuProcessorFactory.h">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClInclude>
-    <ClInclude Include="../src/audioMfuDataProcessor.h">
+    <ClInclude Include="..\src\mpuAudioProcessor.h">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClInclude>
-    <ClInclude Include="../src/subtitleMfuDataProcessor.h">
+    <ClInclude Include="..\src\mpuSubtitleProcessor.h">
       <Filter>mmttlv\mmt\mpu</Filter>
     </ClInclude>
     <ClInclude Include="../src/fragmentAssembler.h">
@@ -435,7 +426,7 @@
     <ClInclude Include="../src/extensionHeaderScrambling.h">
       <Filter>mmttlv\mmt\structs</Filter>
     </ClInclude>
-    <ClInclude Include="../src/mmt.h">
+    <ClInclude Include="..\src\mmtp.h">
       <Filter>mmttlv\mmt\structs</Filter>
     </ClInclude>
     <ClInclude Include="../src/swap.h">
@@ -513,11 +504,8 @@
     <ClInclude Include="../src/relatedBroadcasterDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
-    <ClInclude Include="../src/applicationMfuDataProcessor.h">
+    <ClInclude Include="..\src\mpuApplicationProcessor.h">
       <Filter>mmttlv\mmt\mpu</Filter>
-    </ClInclude>
-    <ClInclude Include="../src/aribUtil.h">
-      <Filter>dantto4k</Filter>
     </ClInclude>
     <ClInclude Include="../src/descriptorConverter.h">
       <Filter>dantto4k</Filter>
@@ -542,9 +530,6 @@
     </ClInclude>
     <ClInclude Include="../src/mhServiceListDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
-    </ClInclude>
-    <ClInclude Include="../src/tsARIBCharset.h">
-      <Filter>dantto4k</Filter>
     </ClInclude>
     <ClInclude Include="../src/mmtTlvStatistics.h">
       <Filter>mmttlv</Filter>
@@ -594,13 +579,16 @@
     <ClInclude Include="../src/bonDriverContext.h">
       <Filter>dantto4k\bondriver</Filter>
     </ClInclude>
-    <ClInclude Include="../src/aesCtrCipher.h">
+    <ClInclude Include="..\src\aesCtrCipher.h">
       <Filter>dantto4k\cas</Filter>
     </ClInclude>
-    <ClInclude Include="../src/sha256.h">
+    <ClInclude Include="..\src\sha256.h">
       <Filter>dantto4k\cas</Filter>
     </ClInclude>
     <ClInclude Include="..\src\aribEncoder.h">
+      <Filter>dantto4k</Filter>
+    </ClInclude>
+    <ClInclude Include="../src/aribUtil.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>

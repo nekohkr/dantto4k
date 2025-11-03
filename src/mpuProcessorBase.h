@@ -3,6 +3,9 @@
 #include <optional>
 #include <memory>
 #include "mmtStream.h"
+#include "mmtp.h"
+#include "dataUnit.h"
+#include "mpu.h"
 
 namespace MmtTlv {
 
@@ -19,7 +22,7 @@ namespace AssetType {
 
 constexpr uint64_t NOPTS_VALUE = 0x8000000000000000;
 
-struct MfuData {
+struct MpuData {
 	std::vector<uint8_t> data;
 	uint64_t pts{NOPTS_VALUE};
 	uint64_t dts{NOPTS_VALUE};
@@ -27,17 +30,17 @@ struct MfuData {
 	bool keyframe{false};
 };
 
-class MfuDataProcessorBase {
+class MpuProcessorBase {
 public:
-	virtual ~MfuDataProcessorBase() = default;
-	virtual std::optional<MfuData> process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) { return std::nullopt; }
+	virtual ~MpuProcessorBase() = default;
+	virtual std::optional<MpuData> process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) { return std::nullopt; }
 
 };
 
 template<uint32_t assetType>
-class MfuDataProcessorTemplate : public MfuDataProcessorBase {
+class MpuProcessorTemplate : public MpuProcessorBase {
 public:
-	virtual ~MfuDataProcessorTemplate() = default;
+	virtual ~MpuProcessorTemplate() = default;
 
 	static constexpr uint32_t kAssetType = assetType;
 
