@@ -27,9 +27,6 @@ std::optional<MpuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStrea
     
     appendPendingData(stream, size);
 
-    if (nalUnitType == 34) {
-        int a = 1;
-    }
     if (nalUnitType < 0x20) {
         if (sliceSegmentCount >= (mmtStream->Is8KVideo() ? 3 : 0)) {
             std::pair<int64_t, int64_t> ptsDts;

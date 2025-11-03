@@ -160,7 +160,6 @@ private:
 
     std::string encodeImpl(std::u8string input) {
         u32 = toU32(input);
-        size_t index = 0;
         size_t pos = 0;
         for (char32_t c : u32) {
             bool fullwidth = isFullwidth(c);
@@ -424,9 +423,6 @@ private:
 
     const Charset* getNextCharset(CharsetCode currentCharsetCode, size_t pos) {
         for (size_t i = pos; i < u32.size(); i++) {
-            uint8_t glCode = static_cast<uint8_t>(graphic[gl]);
-            uint8_t grCode = static_cast<uint8_t>(graphic[gr]);
-
             auto result = findChar(u32[i], currentCharsetCode, CharsetCode::None);
             if (!result) {
                 return nullptr;
