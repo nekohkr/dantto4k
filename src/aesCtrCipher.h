@@ -2,7 +2,8 @@
 #include <array>
 #include <vector>
 #include <cstdint>
-#include <wmmintrin.h>
+#include <immintrin.h>
+#include <tmmintrin.h>
 #include <stdexcept>
 #if defined(_MSC_VER)
 #include <intrin.h>

@@ -1,5 +1,8 @@
 ﻿#include "aribUtil.h"
 #include "tsARIBCharset.h"
+#include "aribEncoder.h"
+
+namespace {
 
 struct Gaiji {
     const char8_t* find;
@@ -7,6 +10,7 @@ struct Gaiji {
 };
 
 constexpr Gaiji GaijiTable[] = {
+
     // ARIB STD-B62
     {u8"\U0001F19B", u8"[3D]"},
     {u8"\U0001F19C", u8"[2nd Scr]"},
@@ -49,17 +53,14 @@ constexpr Gaiji GaijiTable[] = {
     {u8"禮", u8"禮"},
     {u8"⾓", u8"角"},
 
-    // https://github.com/ashtuchkin/iconv-lite/issues/145
     {u8"\U0000FF5E", u8"\U0000301C"}, //～ 〜
     {u8"\U00002225", u8"\U00002016"}, //∥ ‖
     {u8"\U0000FFE0", u8"\U000000A2"}, //￠ ¢
     {u8"\U0000FFE1", u8"\U000000A3"}, //￡ £
     {u8"\U0000FFE2", u8"\U000000AC"}, //￢ ¬
     {u8"\U0000FFE4", u8"\U000000A6"}, //￤ ¦
-    
-};
 
-namespace {
+};
 
 void replaceSequence(std::string& str, const std::string& sequence, const char* replacement) {
     std::size_t pos = 0;
@@ -78,15 +79,14 @@ void convertGaiji(std::string& str) {
 
 }
 
-const ts::ByteBlock aribEncode(const std::string& input) {
+const std::string aribEncode(const std::string& input, bool isCaption) {
     std::string converted = input;
     convertGaiji(converted);
 
-    ts::UString text = ts::UString::FromUTF8(converted.data(), converted.size());
-    return ts::ARIBCharset2::B24.encoded(text);
+    return AribEncoder::encode(input, isCaption);
 }
 
 
-const ts::ByteBlock aribEncode(const char* input, size_t size) {
-    return aribEncode(std::string{ input, size });
+const std::string aribEncode(const char* input, size_t size, bool isCaption) {
+    return aribEncode(std::string{ input, size }, isCaption);
 }

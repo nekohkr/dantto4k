@@ -115,7 +115,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_DEBUG;_CONSOLE;USE_CASPROXYSERVER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -237,6 +237,7 @@
     <ClCompile Include="../src/transmissionControlSignal.cpp" />
     <ClCompile Include="../src/subtitleMfuDataProcessor.cpp" />
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
+    <ClCompile Include="..\src\aribEncoder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/accessControlDescriptor.h" />
@@ -346,6 +347,7 @@
     <ClInclude Include="../src/mmtTlvDemuxer.h" />
     <ClInclude Include="../src/aesCtrCipher.h" />
     <ClInclude Include="../src/sha256.h" />
+    <ClInclude Include="..\src\aribEncoder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

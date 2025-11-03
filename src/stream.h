@@ -153,6 +153,11 @@ public:
         return data.size();
     }
 
+    size_t write(std::string data) {
+        buffer.insert(buffer.end(), data.begin(), data.end());
+        return data.size();
+    }
+
     size_t put8U(uint8_t value) {
         return writeObject(value);
     }

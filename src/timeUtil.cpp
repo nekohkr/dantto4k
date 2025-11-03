@@ -4,14 +4,14 @@
 
 namespace {
 
-    constexpr int BASE_YEAR = 1900;
-    constexpr int MJD_OFFSET = 15078;
-    constexpr int MJD_OFFSET_2 = 14956;
-    constexpr uint64_t UNKNOWN_START_TIME = UINT64_C(0xffffffffff);
+constexpr int BASE_YEAR = 1900;
+constexpr int MJD_OFFSET = 15078;
+constexpr int MJD_OFFSET_2 = 14956;
+constexpr uint64_t UNKNOWN_START_TIME = UINT64_C(0xffffffffff);
 
-    inline int convertFromBcd(uint64_t value) {
-        return ((value >> 4) & 0xf) * 10 + (value & 0xf);
-    }
+inline int convertFromBcd(uint64_t value) {
+    return ((value >> 4) & 0xf) * 10 + (value & 0xf);
+}
 
 }
 

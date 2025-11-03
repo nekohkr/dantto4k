@@ -1,6 +1,5 @@
 #pragma once
-#include <tsduck.h>
+#include <string>
 
-const ts::ByteBlock aribEncode(const std::string& input);
-
-const ts::ByteBlock aribEncode(const char* input, size_t size);
+const std::string aribEncode(const std::string& input, bool isCaption = false);
+const std::string aribEncode(const char* input, size_t size, bool isCaption = false);

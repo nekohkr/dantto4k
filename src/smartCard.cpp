@@ -158,7 +158,6 @@ void RemoteSmartCard::connect() {
     LONG result;
     DWORD readersSize = SCARD_AUTOALLOCATE;
     std::string readerName;
-    int retryCount = 0;
     
     disconnect();
     
@@ -233,6 +232,8 @@ uint32_t RemoteSmartCard::transmit(const std::vector<uint8_t>& message, ApduResp
     if (result != SCARD_S_SUCCESS) {
         return result;
     }
+    
+    recvBuffer.resize(recvLength);
 
     uint8_t sw1 = recvBuffer[recvLength - 2];
     uint8_t sw2 = recvBuffer[recvLength - 1];

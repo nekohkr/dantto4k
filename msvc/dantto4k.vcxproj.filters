@@ -274,6 +274,9 @@
     <ClCompile Include="../src/acasHandler.cpp">
       <Filter>dantto4k\cas</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\aribEncoder.cpp">
+      <Filter>dantto4k</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/bonTuner.h">
@@ -596,6 +599,9 @@
     </ClInclude>
     <ClInclude Include="../src/sha256.h">
       <Filter>dantto4k\cas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\aribEncoder.h">
+      <Filter>dantto4k</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
