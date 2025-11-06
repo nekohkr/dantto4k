@@ -207,5 +207,24 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
         output.push_back({ packedPesData , div.begin });
     }
 
+    if (output.size() == 0) {
+        B24::CaptionStatementData captionStatementData;
+        {
+            // clear
+            std::vector<uint8_t> unitDataByte;
+            unitDataByte.push_back(B24ControlSet::CS);
+            captionStatementData.dataUnits.push_back({ unitDataByte });
+        }
+        B24::DataGroup dataGroup;
+        dataGroup.setGroupData(captionStatementData);
+
+        std::vector<uint8_t> packedPesData;
+        B24::PESData pesData(dataGroup);
+        pesData.SetPESType(B24::PESData::PESType::Synchronized);
+        pesData.pack(packedPesData);
+
+        output.push_back({ packedPesData , 0 });
+    }
+
     return true;
 }
