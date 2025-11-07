@@ -31,14 +31,14 @@ Args parseArguments(int argc, char* argv[]) {
         options.add_options()
             ("input", "Input file ('-' for stdin)", cxxopts::value<std::string>()->default_value(""))
             ("output", "Output file ('-' for stdout)", cxxopts::value<std::string>()->default_value(""))
-            ("casProxyServer", "Specify the address of a CasProxyServer to use a remote smartcard instead of a local smartcard", cxxopts::value<std::string>()->default_value(""))
+            ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>()->default_value(""))
             ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>()->default_value(""))
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
             ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
         options.parse_positional({ "input", "output" });
-        options.positional_help("input output");
+        options.positional_help("input output ('-' for stdin/stdout)");
         auto result = options.parse(argc, argv);
 
         if (result.count("help") || (!result.count("listSmartCardReader") && (!result.count("input") || !result.count("output")))) {

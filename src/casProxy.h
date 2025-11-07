@@ -843,7 +843,6 @@ protected:
 class ResponseFactory {
 public:
     static std::shared_ptr<ResponseBase> create(Opcode opcode) {
-        std::cout << "ResponseFactory::create" << std::endl;
         auto it = mapResponse.find(opcode);
         if (it != mapResponse.end()) {
             return it->second();

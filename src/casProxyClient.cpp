@@ -7,6 +7,10 @@ CasProxyClient::CasProxyClient(const std::string& host, uint16_t port)
 
 CasProxyClient::~CasProxyClient() {
     close();
+
+    if (thread.joinable()) {
+        thread.join();
+    }
 }
 
 void CasProxyClient::connect() {
@@ -66,9 +70,6 @@ void CasProxyClient::close() {
 
     workGuard.reset();
     io_context.stop();
-    if (thread.joinable()) {
-        thread.join();
-    }
 
     std::lock_guard<std::mutex> lock(connectionMutex);
     connected = false;

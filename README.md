@@ -6,10 +6,10 @@
 mmtsから復号化およびMPEG-2 TSへの変換を行います。
 ```
 Usage:
-  dantto4k [OPTION...] input output
+  dantto4k [OPTION...] input output ('-' for stdin/stdout)
 
-      --casProxyServer arg      Use a CasProxyServer instead of a local
-                                smartcard (default: "")
+      --casProxyServer arg      Specify the address of a CasProxyServer
+                                (default: "")
       --smartCardReaderName arg
                                 Specify the smart card reader to use
                                 (default: "")
