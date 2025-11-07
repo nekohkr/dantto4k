@@ -83,7 +83,7 @@ const std::string aribEncode(const std::string& input, bool isCaption) {
     std::string converted = input;
     convertGaiji(converted);
 
-    return AribEncoder::encode(input, isCaption);
+    return AribEncoder::encode(converted, isCaption);
 }
 
 
