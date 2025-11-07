@@ -91,12 +91,10 @@ TTML TTMLPaser::parse(const std::vector<uint8_t>& input) {
     }
 
     for (pugi::xml_node div : doc.child("tt").child("body").children("div")) {
-        if (!div.attribute("begin")) {
-            continue;
-        }
-
         TTMLDivTag divTag;
-        divTag.begin = parseTimestamp(div.attribute("begin").value());
+        if (div.attribute("begin")) {
+            divTag.begin = parseTimestamp(div.attribute("begin").value());
+        }
         if (div.attribute("end")) {
             divTag.end = parseTimestamp(div.attribute("end").value());
         }
