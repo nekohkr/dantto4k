@@ -8,19 +8,19 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y make g++ libssl-dev libpcsclite-dev pkgconf
+        sudo apt install -y make g++ libpcsclite-dev pkgconf
     - name: Install tsduck
       run: |
-        git clone https://github.com/tsduck/tsduck.git
-        cd tsduck
+        cd thirdparty/tsduck
         scripts/install-prerequisites.sh
         make -j10
         sudo make install
