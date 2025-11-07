@@ -31,7 +31,7 @@ Args parseArguments(int argc, char* argv[]) {
         options.add_options()
             ("input", "Input file ('-' for stdin)", cxxopts::value<std::string>()->default_value(""))
             ("output", "Output file ('-' for stdout)", cxxopts::value<std::string>()->default_value(""))
-            ("casProxyServer", "Use a CasProxyServer instead of a local smartcard", cxxopts::value<std::string>()->default_value(""))
+            ("casProxyServer", "Specify the address of a CasProxyServer to use a remote smartcard instead of a local smartcard", cxxopts::value<std::string>()->default_value(""))
             ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>()->default_value(""))
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
             ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
