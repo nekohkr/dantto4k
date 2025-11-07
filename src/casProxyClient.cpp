@@ -6,11 +6,7 @@ CasProxyClient::CasProxyClient(const std::string& host, uint16_t port)
 }
 
 CasProxyClient::~CasProxyClient() {
-    workGuard.reset();
-    io_context.stop();
-    if (thread.joinable()) {
-        thread.join();
-    }
+    close();
 }
 
 void CasProxyClient::connect() {
@@ -25,7 +21,7 @@ void CasProxyClient::connect() {
         if (!error && !connected) {
             onFail();
         }
-        });
+    });
 
     asio::ip::tcp::resolver::query query(host, std::to_string(port));
     resolver.async_resolve(query,
@@ -52,17 +48,31 @@ void CasProxyClient::connect() {
 }
 
 void CasProxyClient::close() {
-    if (socket.is_open()) {
-        asio::error_code ec;
-        socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-        socket.close(ec);
+    for (auto& promise : mapResponsePromise) {
+        promise.second.set_value(nullptr);
     }
+    mapResponsePromise.clear();
 
     std::deque<std::vector<uint8_t>> empty;
     sendQueue.swap(empty);
 
+    if (socket.is_open()) {
+        asio::error_code ec;
+        socket.cancel(ec);
+        socket.close(ec);
+    }
+
+    connectionTimer.cancel();
+
+    workGuard.reset();
+    io_context.stop();
+    if (thread.joinable()) {
+        thread.join();
+    }
+
     std::lock_guard<std::mutex> lock(connectionMutex);
     connected = false;
+    connecting = false;
 }
 
 void CasProxyClient::doRead() {
@@ -112,6 +122,10 @@ void CasProxyClient::handleResponse() {
     casproxy::Opcode opcode = static_cast<casproxy::Opcode>(opcodeValue);
 
     auto res = casproxy::ResponseFactory::create(opcode);
+    if (!res) {
+        return;
+    }
+
     if (!res->unpack(packetId, resultCode, reader)) {
         return;
     }
@@ -198,6 +212,11 @@ std::optional<std::shared_ptr<casproxy::ResponseBase>> CasProxyClient::sendReque
         std::lock_guard<std::mutex> lock(responsePromiseMutex);
         mapResponsePromise.erase(req.packetId);
     }
+
+    if (!res) {
+        return std::nullopt;
+    }
+
     return res;
 }
 

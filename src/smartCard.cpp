@@ -133,17 +133,7 @@ bool RemoteSmartCard::init() {
 }
 
 RemoteSmartCard::~RemoteSmartCard() {
-    try {
-        disconnect();
-
-        if (hContext != 0) {
-            client->scardReleaseContext(hContext);
-            hContext = 0;
-        }
-    }
-    catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-    }
+    client->close();
 }
 
 bool RemoteSmartCard::isConnected() const {

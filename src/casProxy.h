@@ -843,6 +843,7 @@ protected:
 class ResponseFactory {
 public:
     static std::shared_ptr<ResponseBase> create(Opcode opcode) {
+        std::cout << "ResponseFactory::create" << std::endl;
         auto it = mapResponse.find(opcode);
         if (it != mapResponse.end()) {
             return it->second();
@@ -851,11 +852,6 @@ public:
     }
 
 private:
-    template<typename T>
-    std::shared_ptr<ResponseBase> createResponse() {
-        return std::make_shared<T>();
-    }
-
     static inline const std::unordered_map<Opcode, std::function<std::shared_ptr<ResponseBase>()>> mapResponse = {
         { Opcode::SCardEstablishContextRes,		[]{ return std::make_shared<SCardEstablishContextResponse>(); } },
         { Opcode::SCardReleaseContextRes,		[]{ return std::make_shared<SCardReleaseContextResponse>(); } },

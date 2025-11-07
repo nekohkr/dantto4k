@@ -25,7 +25,13 @@ std::string getConfigFilePath(void* hModule) {
 
 extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
     std::string path = getConfigFilePath(::hModule);
-    config = loadConfig(path);
+    try {
+        config = loadConfig(path);
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+        return nullptr;
+    }
 
     {
         std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
@@ -37,7 +43,7 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
             auto parsed = casproxy::parseAddress(config.casProxyServer);
             if (!parsed) {
                 std::cerr << "Invalid CasProxyServer address" << std::endl;
-                std::exit(1);
+                return nullptr;
             }
             smartCard = std::make_unique<RemoteSmartCard>(parsed->first, parsed->second);
         }
