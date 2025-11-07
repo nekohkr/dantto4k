@@ -5,13 +5,17 @@
 ### dantto4k.exe
 mmtsから復号化およびMPEG-2 TSへの変換を行います。
 ```
-dantto4k.exe <input.mmts> <output.ts> [options]
-        '-' can be used instead of a file path to enable piping via stdin or stdout.
-options:
-        --disableADTSConversion: Use the raw LATM format without converting to ADTS.
-        --listSmartCardReader: List the available smart card readers.
-        --smartCardReaderName=<name>: Set the smart card reader to use.
-        --acasServerUrl=<url>: Use the ACAS server instead of the local smartcard.
+Usage:
+  dantto4k [OPTION...] input output ('-' for stdin/stdout)
+
+      --casProxyServer arg      Specify the address of a CasProxyServer
+                                (default: "")
+      --smartCardReaderName arg
+                                Specify the smart card reader to use
+                                (default: "")
+      --disableADTSConversion   Disable ADTS conversion
+      --listSmartCardReader     List available smart card readers
+      --help                    Show help
 ```
 
 ### BonDriver_dantto4k.dll
@@ -25,25 +29,31 @@ mirakurunのソースコードを修正してtimeoutを30秒以上に変更す�
 
 https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13-L175C55
 
+### CasProxyServer
+スマートカードのプロキシサーバーが必要な場合、以下のリポジトリから構築できます。
+https://github.com/nekohkr/casproxyserver
+
 ## ビルド
 ### Windows
-/thirdpartyフォルダにopenssl 3, tsduckを準備します。
+/thirdpartyフォルダにtsduckを準備します。
 下記のURLからbinaryをダウンロードすることができます。
 
-- https://slproweb.com/products/Win32OpenSSL.html
 - https://github.com/tsduck/tsduck/
 ### Ubuntu
 
 ```bash
 sudo apt install make g++ libssl-dev libpcsclite-dev pcscd pkgconf
-git clone https://github.com/tsduck/tsduck.git
-cd tsduck
+
+git clone https://github.com/nekohkr/dantto4k.git
+cd dantto4k
+git submodule update --init --recursive
+
+cd thirdparty/tsduck
 scripts/install-prerequisites.sh
 make -j10
 make install
 
-git clone https://github.com/nekohkr/dantto4k.git
-cd dantto4k
+cd ../..
 make
 make install
 ```

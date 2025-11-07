@@ -6,7 +6,7 @@
 
 namespace MmtTlv {
 
-class MfuDataProcessorBase;
+class MpuProcessorBase;
 class VideoComponentDescriptor;
 class MhAudioComponentDescriptor;
 
@@ -58,7 +58,7 @@ private:
 
 	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
 	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
-	std::shared_ptr<MfuDataProcessorBase> mfuDataProcessor;
+	std::shared_ptr<MpuProcessorBase> mpuProcessor;
 	std::shared_ptr<VideoComponentDescriptor> videoComponentDescriptor;
 	std::shared_ptr<MhAudioComponentDescriptor> mhAudioComponentDescriptor;
 };

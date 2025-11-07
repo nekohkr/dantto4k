@@ -1,0 +1,6 @@
+[submodule "thirdparty/asio"]
+	path = thirdparty/asio
+	url = https://github.com/chriskohlhoff/asio.git
+[submodule "thirdparty/tsduck"]
+	path = thirdparty/tsduck
+	url = https://github.com/tsduck/tsduck.git

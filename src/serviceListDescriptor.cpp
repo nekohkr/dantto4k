@@ -10,6 +10,7 @@ bool ServiceListDescriptor::unpack(Common::ReadStream& stream)
         }
 
         Common::ReadStream nstream(stream, descriptorLength);
+
         while (!nstream.isEof()) {
             Entry item;
             if (!item.unpack(nstream)) {
@@ -17,6 +18,7 @@ bool ServiceListDescriptor::unpack(Common::ReadStream& stream)
             }
             services.push_back(item);
         }
+
         stream.skip(descriptorLength);
 	}
 	catch (const std::out_of_range&) {

@@ -6,37 +6,38 @@
 
 namespace {
 
-    std::vector<std::string> splitByNull(const std::vector<uint8_t>& data) {
-        std::vector<std::string> tokens;
-        std::string current;
-        for (auto byte : data) {
-            if (byte == 0) {
-                tokens.push_back(current);
-                current.clear();
-            }
-            else {
-                current.push_back(static_cast<char>(byte));
-            }
-        }
-        if (!current.empty()) {
+std::vector<std::string> splitByNull(const std::string& data) {
+    std::vector<std::string> tokens;
+    std::string current;
+    for (auto byte : data) {
+        if (byte == 0) {
             tokens.push_back(current);
+            current.clear();
         }
-        return tokens;
+        else {
+            current.push_back(static_cast<char>(byte));
+        }
     }
+    if (!current.empty()) {
+        tokens.push_back(current);
+    }
+    return tokens;
+}
 
-    void appendNumber(std::vector<uint8_t>& output, int n) {
-        if (n == 0) {
-            output.push_back(0x30);
-            return;
-        }
-        std::vector<uint8_t> temp;
-        while (n > 0) {
-            temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
-            n /= 10;
-        }
-        std::reverse(temp.begin(), temp.end());
-        output.insert(output.end(), temp.begin(), temp.end());
+void appendNumber(std::vector<uint8_t>& output, int n) {
+    if (n == 0) {
+        output.push_back(0x30);
+        return;
     }
+    std::vector<uint8_t> temp;
+    while (n > 0) {
+        temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
+        n /= 10;
+    }
+    std::reverse(temp.begin(), temp.end());
+    output.insert(output.end(), temp.begin(), temp.end());
+}
+
 }
 
 bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B24SubtiteOutput>& output) {
@@ -53,16 +54,15 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
         std::string text;
         for (const auto& p : div.pTags) {
             for (const auto& span : p.spanTags) {
-                std::u8string utf((char8_t*)(span.text.c_str()));
                 text.append(span.text);
                 text.push_back('\0');
             }
         }
 
-        auto encoded = aribEncode(text);
+        auto encoded = aribEncode(text, true);
         auto encodedSplit = splitByNull(encoded);
         int encodedSplitIndex = 0;
-        
+
         {
             // clear
             std::vector<uint8_t> unitDataByte;
@@ -87,12 +87,12 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
             }
 
             if (p.region.origin.has_value()) {
-                int offsetY = 0;
+                float offsetY = 0;
                 if (p.spanTags.begin()->style.lineHeight.has_value() &&
                     p.spanTags.begin()->style.fontSize) {
-                    int lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
-                    int fontSizeX = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
-                    int fontSizeY = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
+                    float lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
+                    float fontSizeX = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
+                    float fontSizeY = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
                     offsetY = (lineHeight - fontSizeY) / 2;
                     if (fontSizeX == 72 && fontSizeY == 72) {
                         offsetY -= 95;
@@ -207,5 +207,24 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
         output.push_back({ packedPesData , div.begin });
     }
 
-    return true;  
+    if (output.size() == 0) {
+        B24::CaptionStatementData captionStatementData;
+        {
+            // clear
+            std::vector<uint8_t> unitDataByte;
+            unitDataByte.push_back(B24ControlSet::CS);
+            captionStatementData.dataUnits.push_back({ unitDataByte });
+        }
+        B24::DataGroup dataGroup;
+        dataGroup.setGroupData(captionStatementData);
+
+        std::vector<uint8_t> packedPesData;
+        B24::PESData pesData(dataGroup);
+        pesData.SetPESType(B24::PESData::PESType::Synchronized);
+        pesData.pack(packedPesData);
+
+        output.push_back({ packedPesData , 0 });
+    }
+
+    return true;
 }

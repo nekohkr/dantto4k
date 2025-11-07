@@ -3,50 +3,49 @@
 
 namespace {
 
-    uint64_t parseTimestamp(const std::string& timestamp) {
-        size_t dotPos = timestamp.find('.');
-        uint64_t hours, minutes, seconds, millis = 0;
+uint64_t parseTimestamp(const std::string& timestamp) {
+    size_t dotPos = timestamp.find('.');
+    uint64_t hours, minutes, seconds, millis = 0;
 
-        if (dotPos != std::string::npos) {
-            if (timestamp.size() < 10) {
-                throw std::invalid_argument("Invalid timestamp format: " + timestamp);
-            }
-            if (timestamp[2] != ':' || timestamp[5] != ':') {
-                throw std::invalid_argument("Invalid timestamp format: " + timestamp);
-            }
-            hours = std::stoull(timestamp.substr(0, 2));
-            minutes = std::stoull(timestamp.substr(3, 2));
-            seconds = std::stoull(timestamp.substr(6, 2));
-            std::string frac = timestamp.substr(dotPos + 1);
-            if (frac.empty() || frac.size() > 3) {
-                throw std::invalid_argument("Invalid fractional seconds in timestamp: " + timestamp);
-            }
-            if (frac.size() == 1) {
-                millis = std::stoull(frac) * 100;
-            }
-            else if (frac.size() == 2) {
-                millis = std::stoull(frac) * 10;
-            }
-            else {
-                millis = std::stoull(frac);
-            }
+    if (dotPos != std::string::npos) {
+        if (timestamp.size() < 10) {
+            throw std::invalid_argument("Invalid timestamp format: " + timestamp);
+        }
+        if (timestamp[2] != ':' || timestamp[5] != ':') {
+            throw std::invalid_argument("Invalid timestamp format: " + timestamp);
+        }
+        hours = std::stoull(timestamp.substr(0, 2));
+        minutes = std::stoull(timestamp.substr(3, 2));
+        seconds = std::stoull(timestamp.substr(6, 2));
+        std::string frac = timestamp.substr(dotPos + 1);
+        if (frac.empty() || frac.size() > 3) {
+            throw std::invalid_argument("Invalid fractional seconds in timestamp: " + timestamp);
+        }
+        if (frac.size() == 1) {
+            millis = std::stoull(frac) * 100;
+        }
+        else if (frac.size() == 2) {
+            millis = std::stoull(frac) * 10;
         }
         else {
-            if (timestamp.size() != 8 || timestamp[2] != ':' || timestamp[5] != ':') {
-                throw std::invalid_argument("Invalid timestamp format: " + timestamp);
-            }
-            hours = std::stoull(timestamp.substr(0, 2));
-            minutes = std::stoull(timestamp.substr(3, 2));
-            seconds = std::stoull(timestamp.substr(6, 2));
+            millis = std::stoull(frac);
         }
-
-        return hours * 3600 * 1000ULL + minutes * 60 * 1000ULL + seconds * 1000ULL + millis;
     }
+    else {
+        if (timestamp.size() != 8 || timestamp[2] != ':' || timestamp[5] != ':') {
+            throw std::invalid_argument("Invalid timestamp format: " + timestamp);
+        }
+        hours = std::stoull(timestamp.substr(0, 2));
+        minutes = std::stoull(timestamp.substr(3, 2));
+        seconds = std::stoull(timestamp.substr(6, 2));
+    }
+
+    return hours * 3600 * 1000ULL + minutes * 60 * 1000ULL + seconds * 1000ULL + millis;
+}
 
 }
 
-TTML TTMLPaser::parse(const std::vector<uint8_t>& input)
-{
+TTML TTMLPaser::parse(const std::vector<uint8_t>& input) {
     TTML output;
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_buffer(input.data(), input.size());
@@ -92,12 +91,10 @@ TTML TTMLPaser::parse(const std::vector<uint8_t>& input)
     }
 
     for (pugi::xml_node div : doc.child("tt").child("body").children("div")) {
-        if (!div.attribute("begin")) {
-            continue;
-        }
-
         TTMLDivTag divTag;
-        divTag.begin = parseTimestamp(div.attribute("begin").value());
+        if (div.attribute("begin")) {
+            divTag.begin = parseTimestamp(div.attribute("begin").value());
+        }
         if (div.attribute("end")) {
             divTag.end = parseTimestamp(div.attribute("end").value());
         }
