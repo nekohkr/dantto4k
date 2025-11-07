@@ -13,6 +13,7 @@ public:
         bool unpack(Common::ReadStream& stream);
         uint8_t remoteControlKeyId;
         uint16_t serviceId;
+        uint16_t reserved;
 
     };
 

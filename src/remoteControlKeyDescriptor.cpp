@@ -11,10 +11,10 @@ bool RemoteControlKeyDescriptor::unpack(Common::ReadStream& stream)
 
         Common::ReadStream nstream(stream, descriptorLength);
 
-        numOfRemoteControlKeyId = stream.get8U();
+        numOfRemoteControlKeyId = nstream.get8U();
         for (int i = 0; i < numOfRemoteControlKeyId; i++) {
             Entry item;
-            if (!item.unpack(stream)) {
+            if (!item.unpack(nstream)) {
                 return false;
             }
             entries.push_back(item);
@@ -33,7 +33,7 @@ bool RemoteControlKeyDescriptor::Entry::unpack(Common::ReadStream& stream)
 {
     remoteControlKeyId = stream.get8U();
     serviceId = stream.getBe16U();
-    uint16_t reserved = stream.getBe16U();
+    reserved = stream.getBe16U();
     return true;
 }
 
