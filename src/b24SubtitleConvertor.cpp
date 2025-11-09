@@ -40,14 +40,16 @@ void appendNumber(std::vector<uint8_t>& output, int n) {
 
 }
 
-bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B24SubtiteOutput>& output) {
+bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24SubtitleOutput>& output) {
     const TTML ttml = TTMLPaser::parse(input);
 
     uint8_t lastTextColorPalette = 0;
     uint8_t lastTextColorIndex = 7;
     uint8_t lastBackgroundColorPalette = 0;
     uint8_t lastBackgroundColorIndex = 8;
-
+    uint8_t characterSize = B24ControlSet::NSZ;
+    float fontHeight = 0;
+    
     for (const auto& div : ttml.divTags) {
         B24::CaptionStatementData captionStatementData;
 
@@ -77,6 +79,36 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
                 continue;
             }
 
+            // Set character size
+            const auto firstSpan = p.spanTags.begin();
+            if (firstSpan != p.spanTags.end() && firstSpan->style.fontSize) {
+                TTMLCssValueLength first = firstSpan->style.fontSize->first.getValue<TTMLCssValueLength>();
+                TTMLCssValueLength second = firstSpan->style.fontSize->second.getValue<TTMLCssValueLength>();
+
+                if (first.value == 144 && second.value == 144) {
+                    if (characterSize != B24ControlSet::NSZ) {
+                        unitDataByte.push_back(B24ControlSet::NSZ);
+                        characterSize = B24ControlSet::NSZ;
+                    }
+                    fontHeight = 240;
+                }
+                else if (first.value == 72 && second.value == 144) {
+                    if (characterSize != B24ControlSet::MSZ) {
+                        unitDataByte.push_back(B24ControlSet::MSZ);
+                        characterSize = B24ControlSet::MSZ;
+                    }
+                    fontHeight = 240;
+                }
+                else if (first.value == 72 && second.value == 72) {
+                    if (characterSize != B24ControlSet::SSZ) {
+                        unitDataByte.push_back(B24ControlSet::SSZ);
+                        characterSize = B24ControlSet::SSZ;
+                    }
+                    fontHeight = 120;
+                }
+            }
+
+            // Set display format
             if (p.region.extent.has_value()) {
                 unitDataByte.push_back(B24ControlSet::CSI);
                 appendNumber(unitDataByte, static_cast<uint32_t>(p.region.extent->first.getValue<TTMLCssValueLength>().value * 960 / 3840));
@@ -86,16 +118,14 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
                 unitDataByte.push_back(B24ControlSet::SDF);
             }
 
+            // Set position
             if (p.region.origin.has_value()) {
                 float offsetY = 0;
                 if (p.spanTags.begin()->style.lineHeight.has_value() &&
                     p.spanTags.begin()->style.fontSize) {
                     float lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
-                    float fontSizeX = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
-                    float fontSizeY = p.spanTags.begin()->style.fontSize->second.getValue<TTMLCssValueLength>().value;
-                    offsetY = (lineHeight - fontSizeY) / 2;
-                    if (fontSizeX == 72 && fontSizeY == 72) {
-                        offsetY -= 95;
+                    if (p.region.extent.has_value()) {
+                        offsetY = (lineHeight - fontHeight) / 2;
                     }
                 }
 
@@ -107,13 +137,39 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
                 unitDataByte.push_back(B24ControlSet::SDP);
             }
 
-            // set active position to 0 x 0
+            // Set active position to 0 x 0
             unitDataByte.push_back(B24ControlSet::APS);
             unitDataByte.push_back(0x40);
             unitDataByte.push_back(0x40);
 
             TTMLStyle oldStyle;
             for (const auto& span : p.spanTags) {
+                // Set character size
+                if (span.style.fontSize) {
+                    TTMLCssValueLength first = span.style.fontSize->first.getValue<TTMLCssValueLength>();
+                    TTMLCssValueLength second = span.style.fontSize->second.getValue<TTMLCssValueLength>();
+
+                    if (first.value == 144 && second.value == 144) {
+                        if (characterSize != B24ControlSet::NSZ) {
+                            unitDataByte.push_back(B24ControlSet::NSZ);
+                            characterSize = B24ControlSet::NSZ;
+                        }
+                    }
+                    else if (first.value == 72 && second.value == 144) {
+                        if (characterSize != B24ControlSet::MSZ) {
+                            unitDataByte.push_back(B24ControlSet::MSZ);
+                            characterSize = B24ControlSet::MSZ;
+                        }
+                    }
+                    else if (first.value == 72 && second.value == 72) {
+                        if (characterSize != B24ControlSet::SSZ) {
+                            unitDataByte.push_back(B24ControlSet::SSZ);
+                            characterSize = B24ControlSet::SSZ;
+                        }
+                    }
+                }
+
+                // Set background color
                 if (span.style.backgroundColor.has_value()) {
                     TTMLCssValueColor color = span.style.backgroundColor->getValue<TTMLCssValueColor>();
                     auto closetColor = findClosestColor(ColorRGBA{ color.r, color.g, color.b, color.a });
@@ -129,6 +185,8 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
                         lastBackgroundColorIndex = closetColor.second;
                     }
                 }
+
+                // Set text color
                 if (span.style.color.has_value()) {
                     TTMLCssValueColor color = span.style.color->getValue<TTMLCssValueColor>();
                     auto closetColor = findClosestColor(ColorRGBA{ color.r, color.g, color.b, color.a });
@@ -153,25 +211,6 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
                     }
                 }
 
-                if (span.style.fontSize.has_value()) {
-                    TTMLCssValueLength first = span.style.fontSize->first.getValue<TTMLCssValueLength>();
-                    TTMLCssValueLength second = span.style.fontSize->second.getValue<TTMLCssValueLength>();
-
-                    if (first.value == 144 && second.value == 144) {
-                        unitDataByte.push_back(B24ControlSet::NSZ);
-                    }
-                    else if (first.value == 72 && second.value == 144) {
-                        unitDataByte.push_back(B24ControlSet::MSZ);
-                    }
-                    else if (first.value == 72 && second.value == 72) {
-                        unitDataByte.push_back(B24ControlSet::SSZ);
-
-                        // It does not assume that ruby and regular characters are used together in a <p> tag.
-                        unitDataByte.push_back(B24ControlSet::APS);
-                        unitDataByte.push_back(0x40);
-                        unitDataByte.push_back(0x40);
-                    }
-                }
 
                 unitDataByte.insert(unitDataByte.end(), encodedSplit[encodedSplitIndex].begin(), encodedSplit[encodedSplitIndex].end());
                 encodedSplitIndex++;
@@ -180,10 +219,10 @@ bool B24SubtiteConvertor::convert(const std::vector<uint8_t>& input, std::list<B
 
         captionStatementData.dataUnits.push_back({ unitDataByte });
 
-        if (div.end) {
+        if (div.begin && div.end) {
             std::vector<uint8_t> unitDataByte;
 
-            uint64_t duration = (div.end.value() - div.begin) / 100;
+            uint64_t duration = (*div.end - *div.begin) / 100;
             while (duration > 0) {
                 uint8_t value = static_cast<uint8_t>(std::min(duration, static_cast<uint64_t>(0x3F)));
                 unitDataByte.push_back(B24ControlSet::TIME);

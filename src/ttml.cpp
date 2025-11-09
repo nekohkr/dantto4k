@@ -45,7 +45,7 @@ uint64_t parseTimestamp(const std::string& timestamp) {
 
 }
 
-TTML TTMLPaser::parse(const std::vector<uint8_t>& input) {
+TTML TTMLPaser::parse(const std::string& input) {
     TTML output;
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_buffer(input.data(), input.size());
@@ -155,4 +155,47 @@ TTML TTMLPaser::parse(const std::vector<uint8_t>& input) {
     }
 
 	return output;
+}
+
+TTMLCssValue TTMLCssValueParser::parse(const std::string& input) {
+    try {
+        if (input.find("px") != std::string::npos || input.find("em") != std::string::npos ||
+            input.find("rem") != std::string::npos || input.find("%") != std::string::npos) {
+            std::regex regex(R"(^([+-]?\d*\.?\d+)(px|em|rem|%)$)");
+            std::smatch match;
+            if (std::regex_match(input, match, regex)) {
+                return TTMLCssValue(TTMLCssValueLength(std::stof(match[1]), match[2]));
+            }
+            else {
+                throw std::invalid_argument("Invalid length value: " + input);
+            }
+        }
+
+        if (input.find("#") == 0) {
+            return TTMLCssValue(TTMLCssValueColor(input));
+        }
+
+        static const std::set<std::string> validKeywords = { "bold", "italic", "normal", "none" };
+        if (validKeywords.find(input) != validKeywords.end()) {
+            return TTMLCssValue(TTMLCssValueKeyword(input));
+        }
+
+        return TTMLCssValue(TTMLCssValueNumber(std::stof(input)));
+
+    }
+    catch (const std::invalid_argument& e) {
+        std::cerr << e.what() << std::endl;
+        throw;
+    }
+}
+
+TTMLCssValuePair TTMLCssValueParser::parsePair(const std::string& input) {
+    std::istringstream iss(input);
+    std::string token1, token2;
+    if (!(iss >> token1 >> token2)) {
+        throw std::invalid_argument("Failed to parse TTML value pair from: " + input);
+    }
+    TTMLCssValue value1 = parse(token1);
+    TTMLCssValue value2 = parse(token2);
+    return std::make_pair(value1, value2);
 }

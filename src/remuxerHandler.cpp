@@ -3,7 +3,6 @@
 #include "contentCopyControlDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
 #include "mhContentDescriptor.h"
-#include "mhEit.h"
 #include "mhEventGroupDescriptor.h"
 #include "mhExtendedEventDescriptor.h"
 #include "mhLinkageDescriptor.h"
@@ -21,9 +20,10 @@
 #include "videoComponentDescriptor.h"
 #include "mhServiceDescriptor.h"
 #include "descriptorConverter.h"
-#include "mhBit.h"
 #include "mhAit.h"
+#include "mhBit.h"
 #include "mhCdt.h"
+#include "mhEit.h"
 #include "mhSdt.h"
 #include "mhTot.h"
 #include "mpt.h"
@@ -160,8 +160,9 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 }
 
 void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MpuData>& mfuData) {
-    std::list<B24SubtiteOutput> output;
-    B24SubtiteConvertor::convert(mfuData->data, output);
+    std::list<B24SubtitleOutput> output;
+    std::string ttml(mfuData->data.begin(), mfuData->data.end());
+    B24SubtitleConvertor::convert(ttml, output);
 
     if (output.empty()) {
         return;
@@ -185,7 +186,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
         std::vector<uint8_t> packedPesData;
         pesData.pack(packedPesData);
 
-        B24SubtiteOutput subtitleOutput;
+        B24SubtitleOutput subtitleOutput;
         subtitleOutput.pesData = packedPesData;
         subtitleOutput.begin = output.begin()->begin;
         writeSubtitle(mmtStream, subtitleOutput);
@@ -276,7 +277,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     }
 }
 
-void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtiteOutput& subtitle) {
+void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle) {
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
     pes.setPts(lastPcr / 300);
