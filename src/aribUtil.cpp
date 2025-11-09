@@ -60,6 +60,8 @@ constexpr Gaiji GaijiTable[] = {
     {u8"\U0000FFE2", u8"\U000000AC"}, //￢ ¬
     {u8"\U0000FFE4", u8"\U000000A6"}, //￤ ¦
 
+    {u8"\U0000E11A", u8"〓"},
+
 };
 
 void replaceSequence(std::string& str, const std::string& sequence, const char* replacement) {

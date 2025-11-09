@@ -46,9 +46,6 @@ uint64_t parseTimestamp(const std::string& timestamp) {
 }
 
 TTML TTMLPaser::parse(const std::string& input) {
-    FILE* fp = fopen("C:\\dd\\caption.txt", "a");
-    fprintf(fp, "%s\n", input.c_str());
-    fclose(fp);
     TTML output;
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_buffer(input.data(), input.size());

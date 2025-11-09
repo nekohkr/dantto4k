@@ -205,9 +205,8 @@ private:
             // charset is not in GL or GR
             if (u32.size() > pos + 1 &&
                 find->charset->code != glCode && find->charset->code != grCode) {
-
-                // If the character is not Hiragana or Katakana
-                if (!(c >= 0x3041 && c <= 0x3093) && !(c >= 0x30A1 && c <= 0x30F6)) {
+                // If the character is neither Hiragana nor Katakana nor AdditionalSymbol
+                if (!(c >= 0x3041 && c <= 0x3093) && !(c >= 0x30A1 && c <= 0x30F6) && find->charset->code != CharsetCode::AdditionalSymbols) {
                     // check if the current and next characters belong to the same charset
                     auto find2 = findCharsetBy2Char(c, u32[pos + 1], glCode, grCode);
                     if (find2) {
@@ -516,8 +515,8 @@ private:
             }
         }
 
-        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &jisKanjiPlane1,
-                                    &jisKanjiPlane2, &additionalSymbols }) {
+        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1,
+                                    &jisKanjiPlane2 }) {
             if (seen.insert(charset).second) {
                 charsets.push_back(charset);
             }
@@ -551,8 +550,8 @@ private:
             }
         }
 
-        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &jisKanjiPlane1,
-                                    &jisKanjiPlane2, &additionalSymbols }) {
+        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1,
+                                    &jisKanjiPlane2 }) {
             if (seen.insert(charset).second) {
                 charsets.push_back(charset);
             }
