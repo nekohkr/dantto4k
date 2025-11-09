@@ -160,9 +160,9 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 }
 
 void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MpuData>& mfuData) {
-    std::list<B24SubtiteOutput> output;
+    std::list<B24SubtitleOutput> output;
     std::string ttml(mfuData->data.begin(), mfuData->data.end());
-    B24SubtiteConvertor::convert(ttml, output);
+    B24SubtitleConvertor::convert(ttml, output);
 
     if (output.empty()) {
         return;
@@ -186,7 +186,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
         std::vector<uint8_t> packedPesData;
         pesData.pack(packedPesData);
 
-        B24SubtiteOutput subtitleOutput;
+        B24SubtitleOutput subtitleOutput;
         subtitleOutput.pesData = packedPesData;
         subtitleOutput.begin = output.begin()->begin;
         writeSubtitle(mmtStream, subtitleOutput);
@@ -277,7 +277,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     }
 }
 
-void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtiteOutput& subtitle) {
+void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle) {
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
     pes.setPts(lastPcr / 300);

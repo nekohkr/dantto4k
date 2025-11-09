@@ -117,7 +117,7 @@ struct TTMLPTag {
 };
 
 struct TTMLDivTag {
-    uint64_t begin;
+    std::optional<uint64_t> begin;
     std::optional<uint64_t> end;
     std::list<TTMLPTag> pTags;
 };

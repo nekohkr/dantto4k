@@ -81,7 +81,7 @@ public:
 
 private:
 	void writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData, const std::vector<uint8_t>& data);
-	void writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtiteOutput& subtitle);
+	void writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle);
 
 	MmtTlv::MmtTlvDemuxer& demuxer;
 	OutputCallback outputCallback;
