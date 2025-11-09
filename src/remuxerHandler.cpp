@@ -3,7 +3,6 @@
 #include "contentCopyControlDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
 #include "mhContentDescriptor.h"
-#include "mhEit.h"
 #include "mhEventGroupDescriptor.h"
 #include "mhExtendedEventDescriptor.h"
 #include "mhLinkageDescriptor.h"
@@ -21,9 +20,10 @@
 #include "videoComponentDescriptor.h"
 #include "mhServiceDescriptor.h"
 #include "descriptorConverter.h"
-#include "mhBit.h"
 #include "mhAit.h"
+#include "mhBit.h"
 #include "mhCdt.h"
+#include "mhEit.h"
 #include "mhSdt.h"
 #include "mhTot.h"
 #include "mpt.h"
@@ -161,7 +161,8 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 
 void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MpuData>& mfuData) {
     std::list<B24SubtiteOutput> output;
-    B24SubtiteConvertor::convert(mfuData->data, output);
+    std::string ttml(mfuData->data.begin(), mfuData->data.end());
+    B24SubtiteConvertor::convert(ttml, output);
 
     if (output.empty()) {
         return;

@@ -313,10 +313,6 @@ public:
 
 class B24SubtiteConvertor {
 public:
-    static bool convert(const std::vector<uint8_t>& input, std::list<B24SubtiteOutput>& output);
-
-private:
-    static void makePesData(const B24::CaptionStatementData& captionStatementData, std::vector<uint8_t>& output);
-
+    static bool convert(const std::string& input, std::list<B24SubtiteOutput>& output);
 
 };
