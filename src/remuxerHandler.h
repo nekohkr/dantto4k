@@ -88,8 +88,8 @@ private:
 	std::unordered_map<uint16_t, uint16_t> mapService2Pid;
 	std::unordered_map<uint16_t, uint8_t> mapCC;
 	int tsid{-1};
-	int streamCount{};
-	uint64_t lastPcr{};
+	uint64_t lastPcr{0};
+	uint64_t programStartTime{0};
 	ts::DuckContext duck;
 
 
