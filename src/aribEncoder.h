@@ -202,12 +202,12 @@ private:
                 continue;
             }
 
-            // charset is not in GL or GR
+            // Charset is not in GL or GR
             if (u32.size() > pos + 1 &&
                 find->charset->code != glCode && find->charset->code != grCode) {
                 // If the character is neither Hiragana nor Katakana nor AdditionalSymbol
                 if (!(c >= 0x3041 && c <= 0x3093) && !(c >= 0x30A1 && c <= 0x30F6) && find->charset->code != CharsetCode::AdditionalSymbols) {
-                    // check if the current and next characters belong to the same charset
+                    // Check if the current and next characters belong to the same charset
                     auto find2 = findCharsetBy2Char(c, u32[pos + 1], glCode, grCode);
                     if (find2) {
                         find = find2;
@@ -290,28 +290,33 @@ private:
         }
 
         if (graphicIndex != 0xFF) {
-            // Check the next charset to decide whether to use GL or GR
-            CharsetCode glCode = graphic[gl];
-            CharsetCode grCode = graphic[gr];
-
-            bool useGR = charset->useGR;
-            if (charset->code == CharsetCode::Hiragana || charset->code == CharsetCode::Katakana) {
-                const Charset* nextCharset = getNextCharset(charset->code, pos);
-                if (nextCharset) {
-                    if (nextCharset->code == glCode) {
-                        useGR = true;
-                    }
-                    if (nextCharset->code == grCode) {
-                        useGR = false;
-                    }
-                }
-            }
-
-            if (useGR) {
-                setGR(graphicIndex);
+            if (graphicIndex == 0) {
+                setGL(graphicIndex);
             }
             else {
-                setGL(graphicIndex);
+                // Check the next charset to decide whether to use GL or GR
+                CharsetCode glCode = graphic[gl];
+                CharsetCode grCode = graphic[gr];
+
+                bool useGR = charset->useGR;
+                if (charset->code == CharsetCode::Hiragana || charset->code == CharsetCode::Katakana) {
+                    const Charset* nextCharset = getNextCharset(charset->code, pos);
+                    if (nextCharset) {
+                        if (nextCharset->code == glCode) {
+                            useGR = true;
+                        }
+                        if (nextCharset->code == grCode) {
+                            useGR = false;
+                        }
+                    }
+                }
+
+                if (useGR) {
+                    setGR(graphicIndex);
+                }
+                else {
+                    setGL(graphicIndex);
+                }
             }
         }
         else {

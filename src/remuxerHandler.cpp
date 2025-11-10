@@ -280,7 +280,13 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle) {
     std::vector<uint8_t> pesOutput;
     PESPacket pes;
-    pes.setPts(lastPcr / 300);
+    uint64_t pts = subtitle.calcPts(programStartTime);
+    pts = std::max(pts, lastPcr / 300);
+    if (pts == 0) {
+        return;
+    }
+
+    pes.setPts(pts);
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     pes.setPayload(&subtitle.pesData);
     pes.pack(pesOutput);
@@ -438,11 +444,16 @@ void RemuxerHandler::onMhAit(const std::shared_ptr<MmtTlv::MhAit>& mhAit) {
 void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
     tsid = mhEit->tlvStreamId;
 
+    if (mhEit->isPf() && mhEit->sectionNumber == 0) {
+        std::tm startTime = EITConvertStartTime((mhEit->events.begin())->get()->startTime);
+        programStartTime = static_cast<uint64_t>(std::mktime(&startTime));
+    }
+
     ts::EIT tsEit(true, mhEit->isPf(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
     for (const auto& mhEvent : mhEit->events) {
         ts::EIT::Event tsEvent(&tsEit);
 
-        struct tm startTime = EITConvertStartTime(mhEvent->startTime);
+        tm startTime = EITConvertStartTime(mhEvent->startTime);
         try {
             tsEvent.start_time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday,
                 startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
@@ -951,5 +962,4 @@ void RemuxerHandler::clear() {
     mapService2Pid.clear();
     mapCC.clear();
     tsid = -1;
-    streamCount = 0;
 }
