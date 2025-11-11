@@ -49,14 +49,6 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
         }
 
         smartCard->setSmartCardReaderName(config.smartCardReaderName);
-
-        try {
-            smartCard->init();
-            smartCard->connect();
-        }
-        catch (const std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
         acasHandler->setSmartCard(std::move(smartCard));
         g_bonDriverContext.demuxer.setCasHandler(std::move(acasHandler));
     }
