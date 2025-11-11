@@ -8,13 +8,15 @@ mmtsから復号化およびMPEG-2 TSへの変換を行います。
 Usage:
   dantto4k [OPTION...] input output ('-' for stdin/stdout)
 
+      --listSmartCardReader     List available smart card readers
       --casProxyServer arg      Specify the address of a CasProxyServer
                                 (default: "")
       --smartCardReaderName arg
                                 Specify the smart card reader to use
                                 (default: "")
+      --disableTransaction      Disable transaction when using the smart
+                                card
       --disableADTSConversion   Disable ADTS conversion
-      --listSmartCardReader     List available smart card readers
       --help                    Show help
 ```
 

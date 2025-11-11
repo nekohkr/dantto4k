@@ -15,10 +15,11 @@ struct Args {
     std::string input;
     std::string output;
     std::string casProxyHost;
-    uint16_t casProxyPort;
+    uint16_t casProxyPort{0};
     std::string smartCardReaderName;
-    bool disableADTSConversion = false;
-    bool listSmartCardReader = false;
+    bool disableTransaction{false};
+    bool disableADTSConversion{false};
+    bool listSmartCardReader{false};
 };
 
 
@@ -31,10 +32,11 @@ Args parseArguments(int argc, char* argv[]) {
         options.add_options()
             ("input", "Input file ('-' for stdin)", cxxopts::value<std::string>()->default_value(""))
             ("output", "Output file ('-' for stdout)", cxxopts::value<std::string>()->default_value(""))
+            ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
             ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>()->default_value(""))
             ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>()->default_value(""))
+            ("disableTransaction", "Disable transaction when using the smart card", cxxopts::value<bool>()->default_value("false"))
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
-            ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
         options.parse_positional({ "input", "output" });
@@ -60,7 +62,7 @@ Args parseArguments(int argc, char* argv[]) {
             args.casProxyPort = parsed->second;
         }
 
-        args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
+        args.smartCardReaderName = result["smartCardReaderName"].as<std::string>();
         args.listSmartCardReader = result["listSmartCardReader"].as<bool>();
 
         if (!args.listSmartCardReader) {
@@ -76,6 +78,9 @@ Args parseArguments(int argc, char* argv[]) {
                 std::exit(1);
             }
         }
+
+        args.disableTransaction = result["disableTransaction"].as<bool>();
+        args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
     }
     catch (const cxxopts::exceptions::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -176,6 +181,7 @@ int main(int argc, char* argv[]) {
     constexpr size_t chunkSize = 1024 * 1024 * 5; // 5MB
 
     Args args = parseArguments(argc, argv);
+    config.disableTransaction = args.disableTransaction;
     config.disableADTSConversion = args.disableADTSConversion;
 
     bool useStdin = (args.input == "-");
@@ -232,15 +238,8 @@ int main(int argc, char* argv[]) {
         else {
             smartCard = std::make_unique<RemoteSmartCard>(args.casProxyHost, args.casProxyPort);
         }
-
+        
         smartCard->setSmartCardReaderName(args.smartCardReaderName);
-        try {
-            smartCard->init();
-            smartCard->connect();
-        }
-        catch (const std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
         acasHandler->setSmartCard(std::move(smartCard));
         demuxer.setCasHandler(std::move(acasHandler));
     }

@@ -1,6 +1,7 @@
 #include "acasCard.h"
 #include <random>
 #include <algorithm>
+#include "config.h"
 
 bool AcasCard::getA0AuthKcl(sha256_t& output) {
     std::default_random_engine engine(std::random_device{}());
@@ -65,8 +66,11 @@ bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
             smartCard->connect();
         }
 
-        retry:
-        auto scope = smartCard->scopedTransaction();
+    retry:
+        std::unique_ptr<ISmartCard::Transaction> scope;
+        if (!config.disableTransaction) {
+            scope = smartCard->scopedTransaction();
+        }
 
         getA0AuthKcl(kcl);
 

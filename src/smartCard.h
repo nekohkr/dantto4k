@@ -88,7 +88,7 @@ public:
         ISmartCard& sc;
     };
 
-    [[nodiscard]] Transaction scopedTransaction() { return Transaction{ *this }; }
+    [[nodiscard]] std::unique_ptr<Transaction> scopedTransaction() { return std::make_unique<Transaction>(*this); }
 
 protected:
     virtual void beginTransaction() = 0;
