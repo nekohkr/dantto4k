@@ -8,6 +8,7 @@ public:
     std::string mmtsDumpPath{};
     std::string smartCardReaderName{};
     std::string casProxyServer{};
+    bool disableTransaction{false};
     bool disableADTSConversion{false};
 };
 
