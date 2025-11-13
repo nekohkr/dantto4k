@@ -17,7 +17,6 @@ struct Args {
     std::string casProxyHost;
     uint16_t casProxyPort{0};
     std::string smartCardReaderName;
-    bool disableTransaction{false};
     bool disableADTSConversion{false};
     bool listSmartCardReader{false};
 };
@@ -35,7 +34,6 @@ Args parseArguments(int argc, char* argv[]) {
             ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
             ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>()->default_value(""))
             ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>()->default_value(""))
-            ("disableTransaction", "Disable transaction when using the smart card", cxxopts::value<bool>()->default_value("false"))
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
@@ -79,7 +77,6 @@ Args parseArguments(int argc, char* argv[]) {
             }
         }
 
-        args.disableTransaction = result["disableTransaction"].as<bool>();
         args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
     }
     catch (const cxxopts::exceptions::exception& e) {
@@ -181,7 +178,6 @@ int main(int argc, char* argv[]) {
     constexpr size_t chunkSize = 1024 * 1024 * 5; // 5MB
 
     Args args = parseArguments(argc, argv);
-    config.disableTransaction = args.disableTransaction;
     config.disableADTSConversion = args.disableADTSConversion;
 
     bool useStdin = (args.input == "-");

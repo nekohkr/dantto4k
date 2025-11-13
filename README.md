@@ -14,8 +14,6 @@ Usage:
       --smartCardReaderName arg
                                 Specify the smart card reader to use
                                 (default: "")
-      --disableTransaction      Disable transaction when using the smart
-                                card
       --disableADTSConversion   Disable ADTS conversion
       --help                    Show help
 ```

@@ -462,17 +462,11 @@ LONG CasProxyClient::scardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pioSen
         req.sendPci = 3;
     }
     else {
-        if (pioSendPci == SCARD_PCI_T0) {
-            req.sendPci = 0;
-        }
-        else if (pioSendPci == SCARD_PCI_T1) {
+        if (pioSendPci == SCARD_PCI_T1) {
             req.sendPci = 1;
         }
-        else if (pioSendPci == SCARD_PCI_RAW) {
-            req.sendPci = 2;
-        }
         else {
-            req.sendPci = 3;
+            return SCARD_F_INTERNAL_ERROR;
         }
     }
 

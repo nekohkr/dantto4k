@@ -63,13 +63,6 @@ Config loadConfig(const std::string& filename) {
                  if (key == "casProxyServer") {
                      config.casProxyServer = value;
                  }
-                 if (key == "disableTransaction") {
-                     if (value == "true") {
-                         config.disableTransaction = true;
-                     }
-                 }
-
-                 
              }
          }
          if (currentSection == "audio") {

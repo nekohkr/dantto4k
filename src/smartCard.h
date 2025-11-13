@@ -97,6 +97,7 @@ protected:
 
 class LocalSmartCard : public ISmartCard {
 public:
+    LocalSmartCard();
     ~LocalSmartCard();
     bool init() override;
     void connect() override;
@@ -112,6 +113,14 @@ protected:
     void endTransaction() override;
 
 private:
+#ifdef WIN32
+    HMODULE hWinSCard = nullptr;
+    typedef LONG(WINAPI* FnSCardBeginTransaction)(SCARDHANDLE hCard);
+    typedef LONG(WINAPI* FnSCardEndTransaction)(SCARDHANDLE hCard, DWORD dwDisposition);
+    FnSCardBeginTransaction pSCardBeginTransaction = nullptr;
+    FnSCardEndTransaction pSCardEndTransaction = nullptr;
+#endif
+
     SCARDCONTEXT hContext = 0;
     SCARDHANDLE hCard = 0;
     DWORD dwActiveProtocol = 0;
