@@ -67,10 +67,7 @@ bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
         }
 
     retry:
-        std::unique_ptr<ISmartCard::Transaction> scope;
-        if (!config.disableTransaction) {
-            scope = smartCard->scopedTransaction();
-        }
+        auto scope = smartCard->scopedTransaction();
 
         getA0AuthKcl(kcl);
 

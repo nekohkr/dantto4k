@@ -84,7 +84,7 @@ private:
         const int8_t* rowIndex;
         const Row* rows;
     };
-    
+
     bool isCaption;
     std::array<CharsetCode, 4> graphic;
     bool isGR{false};
@@ -215,8 +215,6 @@ private:
                 }
             }
 
-            selectCharset(find->charset, pos);
-
             if (!isCaption) {
                 if (find->charset->code == CharsetCode::Alphanumeric) {
                     if (fullwidth) {
@@ -230,6 +228,8 @@ private:
                     setCharacterSize(NSZ);
                 }
             }
+
+            selectCharset(find->charset, pos);
 
             const uint8_t mask = isGR ? 0x80 : 0x00;
             if (find->charset->is2Byte) {
@@ -290,7 +290,10 @@ private:
         }
 
         if (graphicIndex != 0xFF) {
-            if (graphicIndex == 0) {
+            if (charset->code == CharsetCode::JISX0201Katakana) {
+                setGR(graphicIndex);
+            }
+            else if (graphicIndex == 0) {
                 setGL(graphicIndex);
             }
             else {
@@ -321,8 +324,14 @@ private:
         }
         else {
             // charset is not in G0–G3
-            setGraphicToCharset(0, charset->code);
-            setGL(0);
+            if (charset->code == CharsetCode::JISX0201Katakana) {
+                setGraphicToCharset(1, charset->code);
+                setGR(1);
+            }
+            else {
+                setGraphicToCharset(0, charset->code);
+                setGL(0);
+            }
         }
 
         prevCharsetCode = charset->code;
@@ -520,8 +529,7 @@ private:
             }
         }
 
-        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1,
-                                    &jisKanjiPlane2 }) {
+        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1, &jisKanjiPlane2 }) {
             if (seen.insert(charset).second) {
                 charsets.push_back(charset);
             }
@@ -555,8 +563,7 @@ private:
             }
         }
 
-        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1,
-                                    &jisKanjiPlane2 }) {
+        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1, &jisKanjiPlane2 }) {
             if (seen.insert(charset).second) {
                 charsets.push_back(charset);
             }

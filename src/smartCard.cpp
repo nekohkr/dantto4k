@@ -6,6 +6,18 @@ bool LocalSmartCard::init() {
     return result == SCARD_S_SUCCESS;
 }
 
+LocalSmartCard::LocalSmartCard() {
+#ifdef WIN32
+    HMODULE hWinSCard = LoadLibraryA("winscard.dll");
+    if (!hWinSCard) {
+        return;
+    }
+
+    pSCardBeginTransaction = reinterpret_cast<FnSCardBeginTransaction>(GetProcAddress(hWinSCard, "SCardBeginTransaction"));
+    pSCardEndTransaction = reinterpret_cast<FnSCardEndTransaction>(GetProcAddress(hWinSCard, "SCardEndTransaction"));
+#endif
+}
+
 LocalSmartCard::~LocalSmartCard() {
     disconnect();
 
@@ -115,11 +127,23 @@ void LocalSmartCard::beginTransaction() {
         return;
     }
 
+#ifdef WIN32
+    if (pSCardBeginTransaction != nullptr) {
+        pSCardBeginTransaction(hCard);
+    }
+#else
     SCardBeginTransaction(hCard);
+#endif
 }
 
 void LocalSmartCard::endTransaction() {
+#ifdef WIN32
+    if (pSCardEndTransaction != nullptr) {
+        pSCardEndTransaction(hCard, SCARD_LEAVE_CARD);
+    }
+#else
     SCardEndTransaction(hCard, SCARD_LEAVE_CARD);
+#endif
 }
 
 RemoteSmartCard::RemoteSmartCard(std::string casProxyHost, uint16_t port) {

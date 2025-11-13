@@ -75,9 +75,7 @@ inline uint64_t swapEndian64(uint64_t num) {
 
 inline const SCARD_IO_REQUEST* getPciByType(int32_t type) {
     switch (type) {
-    case 0: return SCARD_PCI_T0;
     case 1: return SCARD_PCI_T1;
-    case 2: return SCARD_PCI_RAW;
     default: return nullptr;
     }
 }
