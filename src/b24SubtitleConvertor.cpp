@@ -78,6 +78,16 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
             if (p.spanTags.empty()) {
                 continue;
             }
+            
+            // Set display format
+            if (p.region.extent.has_value()) {
+                unitDataByte.push_back(B24ControlSet::CSI);
+                appendNumber(unitDataByte, static_cast<uint32_t>(p.region.extent->first.getValue<TTMLCssValueLength>().value * 960 / 3840));
+                unitDataByte.push_back(0x3B);
+                appendNumber(unitDataByte, static_cast<uint32_t>(p.region.extent->second.getValue<TTMLCssValueLength>().value * 540 / 2160));
+                unitDataByte.push_back(B24ControlSet::SP);
+                unitDataByte.push_back(B24ControlSet::SDF);
+            }
 
             // Set character size
             const auto firstSpan = p.spanTags.begin();
@@ -106,16 +116,6 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
                     }
                     fontHeight = 120;
                 }
-            }
-
-            // Set display format
-            if (p.region.extent.has_value()) {
-                unitDataByte.push_back(B24ControlSet::CSI);
-                appendNumber(unitDataByte, static_cast<uint32_t>(p.region.extent->first.getValue<TTMLCssValueLength>().value * 960 / 3840));
-                unitDataByte.push_back(0x3B);
-                appendNumber(unitDataByte, static_cast<uint32_t>(p.region.extent->second.getValue<TTMLCssValueLength>().value * 540 / 2160));
-                unitDataByte.push_back(B24ControlSet::SP);
-                unitDataByte.push_back(B24ControlSet::SDF);
             }
 
             // Set position
@@ -168,7 +168,7 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
                         }
                     }
                 }
-
+                
                 // Set background color
                 if (span.style.backgroundColor.has_value()) {
                     TTMLCssValueColor color = span.style.backgroundColor->getValue<TTMLCssValueColor>();
