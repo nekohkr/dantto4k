@@ -142,7 +142,7 @@ void LocalSmartCard::endTransaction() {
         pSCardEndTransaction(hCard, SCARD_LEAVE_CARD);
     }
 #else
-    pSCardEndTransaction(hCard, SCARD_LEAVE_CARD);
+    SCardEndTransaction(hCard, SCARD_LEAVE_CARD);
 #endif
 }
 

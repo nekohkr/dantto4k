@@ -87,9 +87,9 @@ private:
 
     bool isCaption;
     std::array<CharsetCode, 4> graphic;
-    bool isGR{ false };
-    uint8_t gl{ 0 };
-    uint8_t gr{ 2 };
+    bool isGR{false};
+    uint8_t gl{0};
+    uint8_t gr{2};
     uint8_t singleShift = 0;
     CharsetCode prevCharsetCode{ CharsetCode::None };
     uint8_t characterSize = NSZ;
