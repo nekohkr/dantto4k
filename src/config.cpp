@@ -63,6 +63,9 @@ Config loadConfig(const std::string& filename) {
                  if (key == "casProxyServer") {
                      config.casProxyServer = value;
                  }
+                 if (key == "customWinscardDLL") {
+                     config.customWinscardDLL = value;
+                 }
              }
          }
          if (currentSection == "audio") {

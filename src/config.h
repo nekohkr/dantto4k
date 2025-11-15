@@ -8,6 +8,7 @@ public:
     std::string mmtsDumpPath{};
     std::string smartCardReaderName{};
     std::string casProxyServer{};
+    std::string customWinscardDLL{};
     bool disableADTSConversion{false};
 };
 

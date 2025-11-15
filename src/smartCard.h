@@ -75,6 +75,7 @@ public:
     virtual void disconnect() = 0;
     virtual bool isConnected() const = 0;
     virtual bool isInited() const = 0;
+    virtual std::vector<std::string> getReaders() const = 0;
     virtual uint32_t transmit(const std::vector<uint8_t>& message, ApduResponse& response) = 0;
     virtual void setSmartCardReaderName(const std::string& name) = 0;
     virtual std::string getSmartCardReaderName() const = 0;
@@ -104,6 +105,7 @@ public:
     void disconnect() override;
     bool isConnected() const override;
     bool isInited() const override;
+    virtual std::vector<std::string> getReaders() const;
     uint32_t transmit(const std::vector<uint8_t>& message, ApduResponse& response) override;
     virtual void setSmartCardReaderName(const std::string& name);
     virtual std::string getSmartCardReaderName() const;
@@ -115,10 +117,26 @@ protected:
 private:
 #ifdef WIN32
     HMODULE hWinSCard = nullptr;
+
+    typedef LONG(WINAPI* FnSCardEstablishContext)(DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
+    typedef LONG(WINAPI* FnSCardReleaseContext)(SCARDCONTEXT hContext);
+    typedef LONG(WINAPI* FnSCardConnect)(SCARDCONTEXT hContext, LPCSTR szReader, DWORD dwShareMode, DWORD dwPreferredProtocols, LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
+    typedef LONG(WINAPI* FnSCardDisconnect)(SCARDHANDLE hCard, DWORD dwDisposition);
     typedef LONG(WINAPI* FnSCardBeginTransaction)(SCARDHANDLE hCard);
     typedef LONG(WINAPI* FnSCardEndTransaction)(SCARDHANDLE hCard, DWORD dwDisposition);
+    typedef LONG(WINAPI* FnSCardTransmit)(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pioSendPci, LPCBYTE pbSendBuffer, DWORD cbSendLength, LPSCARD_IO_REQUEST pioRecvPci, LPBYTE pbRecvBuffer, LPDWORD pcbRecvLength);
+    typedef LONG(WINAPI* FnSCardListReaders)(SCARDCONTEXT hContext, LPCSTR mszGroups, LPSTR mszReaders, LPDWORD pcchReaders);
+    typedef LONG(WINAPI* FnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
+
+    FnSCardEstablishContext pSCardEstablishContext = nullptr;
+    FnSCardReleaseContext pSCardReleaseContext = nullptr;
+    FnSCardConnect pSCardConnect = nullptr;
+    FnSCardDisconnect pSCardDisconnect = nullptr;
     FnSCardBeginTransaction pSCardBeginTransaction = nullptr;
     FnSCardEndTransaction pSCardEndTransaction = nullptr;
+    FnSCardTransmit pSCardTransmit = nullptr;
+    FnSCardListReaders pSCardListReaders = nullptr;
+    FnSCardFreeMemory pSCardFreeMemory = nullptr;
 #endif
 
     SCARDCONTEXT hContext = 0;
@@ -137,6 +155,7 @@ public:
     void disconnect() override;
     bool isConnected() const override;
     bool isInited() const;
+    virtual std::vector<std::string> getReaders() const;
     uint32_t transmit(const std::vector<uint8_t>& message, ApduResponse& response) override;
     virtual void setSmartCardReaderName(const std::string& name);
     virtual std::string getSmartCardReaderName() const;

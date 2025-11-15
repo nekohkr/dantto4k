@@ -1,20 +1,61 @@
 #include "smartCard.h"
 #include <sstream>
+#include "config.h"
 
 bool LocalSmartCard::init() {
+#ifdef WIN32
+    LONG result = pSCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
+#else
     LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
+#endif
+    
     return result == SCARD_S_SUCCESS;
 }
 
 LocalSmartCard::LocalSmartCard() {
 #ifdef WIN32
-    HMODULE hWinSCard = LoadLibraryA("winscard.dll");
+    HMODULE hWinSCard = LoadLibraryA(config.customWinscardDLL.empty() ? "winscard.dll" : config.customWinscardDLL.c_str());
     if (!hWinSCard) {
-        return;
+        if (config.customWinscardDLL.empty()) {
+            throw std::runtime_error("Failed to load winscard.dll");
+        }
+        else {
+            throw std::runtime_error("Failed to load winscard.dll from specified path: " + config.customWinscardDLL);
+        }
+    }
+
+    pSCardEstablishContext = reinterpret_cast<FnSCardEstablishContext>(GetProcAddress(hWinSCard, "SCardEstablishContext"));
+    if (!pSCardEstablishContext) {
+        throw std::runtime_error("Failed to get address of SCardEstablishContext");
+    }
+    pSCardReleaseContext = reinterpret_cast<FnSCardReleaseContext>(GetProcAddress(hWinSCard, "SCardReleaseContext"));
+    if (!pSCardReleaseContext) {
+        throw std::runtime_error("Failed to get address of SCardReleaseContext");
+    }
+    pSCardConnect = reinterpret_cast<FnSCardConnect>(GetProcAddress(hWinSCard, "SCardConnectA"));
+    if (!pSCardConnect) {
+        throw std::runtime_error("Failed to get address of SCardConnectA");
+    }
+    pSCardDisconnect = reinterpret_cast<FnSCardDisconnect>(GetProcAddress(hWinSCard, "SCardDisconnect"));
+    if (!pSCardDisconnect) {
+        throw std::runtime_error("Failed to get address of SCardDisconnect");
     }
 
     pSCardBeginTransaction = reinterpret_cast<FnSCardBeginTransaction>(GetProcAddress(hWinSCard, "SCardBeginTransaction"));
     pSCardEndTransaction = reinterpret_cast<FnSCardEndTransaction>(GetProcAddress(hWinSCard, "SCardEndTransaction"));
+
+    pSCardTransmit = reinterpret_cast<FnSCardTransmit>(GetProcAddress(hWinSCard, "SCardTransmit"));
+    if (!pSCardTransmit) {
+        throw std::runtime_error("Failed to get address of SCardTransmit");
+    }
+    pSCardListReaders = reinterpret_cast<FnSCardListReaders>(GetProcAddress(hWinSCard, "SCardListReadersA"));
+    if (!pSCardListReaders) {
+        throw std::runtime_error("Failed to get address of SCardListReadersA");
+    }
+    pSCardFreeMemory = reinterpret_cast<FnSCardFreeMemory>(GetProcAddress(hWinSCard, "SCardFreeMemory"));
+    if (!pSCardFreeMemory) {
+        throw std::runtime_error("Failed to get address of SCardFreeMemory");
+    }
 #endif
 }
 
@@ -22,7 +63,11 @@ LocalSmartCard::~LocalSmartCard() {
     disconnect();
 
     if (hContext != 0) {
+#ifdef WIN32
+        pSCardReleaseContext(hContext);
+#else
         SCardReleaseContext(hContext);
+#endif
         hContext = 0;
     }
 }
@@ -35,6 +80,60 @@ bool LocalSmartCard::isInited() const {
     return (hContext != 0 && hContext != -1);
 }
 
+std::vector<std::string> LocalSmartCard::getReaders() const {
+    DWORD readersSize = 0;
+#ifdef WIN32
+    uint32_t result = pSCardListReaders(hContext, nullptr, nullptr, &readersSize);
+#else
+    uint32_t result = SCardListReaders(hContext, nullptr, nullptr, &readersSize);
+#endif
+    if (result != SCARD_S_SUCCESS) {
+        if (result == SCARD_E_NO_READERS_AVAILABLE) {
+            throw std::runtime_error("No smart card readers are available");
+        }
+
+        throw std::runtime_error(
+            "Failed to list smart card readers: " +
+            [&result]() {
+                std::ostringstream oss;
+                oss << std::showbase << std::hex << result;
+                return oss.str();
+            }()
+        );
+    }
+
+    std::vector<char> readersBuffer(readersSize);
+
+#ifdef WIN32
+    result = pSCardListReaders(hContext, nullptr, readersBuffer.data(), &readersSize);
+#else
+    result = SCardListReaders(hContext, nullptr, readersBuffer.data(), &readersSize);
+#endif
+    if (result != SCARD_S_SUCCESS) {
+        if (result == SCARD_E_NO_READERS_AVAILABLE) {
+            throw std::runtime_error("No smart card readers are available");
+        }
+
+        throw std::runtime_error(
+            "Failed to list smart card readers: " +
+            [&result]() {
+                std::ostringstream oss;
+                oss << std::showbase << std::hex << result;
+                return oss.str();
+            }()
+        );
+    }
+
+    std::vector<std::string> readers;
+    const char* reader = readersBuffer.data();
+    while (*reader != '\0') {
+        readers.emplace_back(reader);
+        reader += strlen(reader) + 1;
+    }
+
+    return readers;
+}
+
 void LocalSmartCard::connect() {
     LONG result;
     DWORD readersSize = SCARD_AUTOALLOCATE;
@@ -43,7 +142,11 @@ void LocalSmartCard::connect() {
 
     if(smartCardReaderName == "") {
         char* readers = nullptr;
+#ifdef WIN32
+        result = pSCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
+#else
         result = SCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
+#endif
         if (result != SCARD_S_SUCCESS) {
             if (result == SCARD_E_NO_READERS_AVAILABLE) {
                 std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -57,14 +160,18 @@ void LocalSmartCard::connect() {
 
         if (readers != nullptr) {
             readerName = readers;
-            SCardFreeMemory(hContext, readers);
+            pSCardFreeMemory(hContext, readers);
         }
     }
     else {
         readerName = smartCardReaderName;
     }
 
+#ifdef WIN32
+    result = pSCardConnect(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
+#else
     result = SCardConnect(hContext, readerName.c_str(), SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &hCard, &dwActiveProtocol);
+#endif
     if (result != SCARD_S_SUCCESS) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -83,7 +190,11 @@ uint32_t LocalSmartCard::transmit(const std::vector<uint8_t>& message, ApduRespo
     std::vector<uint8_t> recvBuffer(recvLength);
     int retryCount = 0;
 
+#ifdef WIN32
+    LONG result = pSCardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
+#else
     LONG result = SCardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
+#endif
     while (result != SCARD_S_SUCCESS && retryCount < 5) {
         if (result == SCARD_W_RESET_CARD || result == SCARD_E_NOT_TRANSACTED) {
             hCard = 0;
@@ -92,7 +203,12 @@ uint32_t LocalSmartCard::transmit(const std::vector<uint8_t>& message, ApduRespo
 
         retryCount++;
         recvLength = 256;
+
+#ifdef WIN32
+        result = pSCardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
+#else
         result = SCardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
+#endif
     }
 
     if (result != SCARD_S_SUCCESS) {
@@ -117,7 +233,11 @@ std::string LocalSmartCard::getSmartCardReaderName() const {
 
 void LocalSmartCard::disconnect() {
     if (hCard != 0) {
+#ifdef WIN32
+        pSCardDisconnect(hCard, SCARD_LEAVE_CARD);
+#else
         SCardDisconnect(hCard, SCARD_LEAVE_CARD);
+#endif
         hCard = 0;
     }
 }
@@ -166,6 +286,52 @@ bool RemoteSmartCard::isConnected() const {
 
 bool RemoteSmartCard::isInited() const {
     return (hContext != 0 && hContext != -1);
+}
+
+std::vector<std::string> RemoteSmartCard::getReaders() const {
+    DWORD readersSize = 0;
+    uint32_t result = client->scardListReaders(hContext, nullptr, nullptr, &readersSize);
+    if (result != SCARD_S_SUCCESS) {
+        if (result == SCARD_E_NO_READERS_AVAILABLE) {
+            throw std::runtime_error("No smart card readers are available");
+        }
+
+        throw std::runtime_error(
+            "Failed to list smart card readers: " +
+            [&result]() {
+                std::ostringstream oss;
+                oss << std::showbase << std::hex << result;
+                return oss.str();
+            }()
+        );
+    }
+
+    std::vector<char> readersBuffer(readersSize);
+
+    result = client->scardListReaders(hContext, nullptr, readersBuffer.data(), &readersSize);
+    if (result != SCARD_S_SUCCESS) {
+        if (result == SCARD_E_NO_READERS_AVAILABLE) {
+            throw std::runtime_error("No smart card readers are available");
+        }
+
+        throw std::runtime_error(
+            "Failed to list smart card readers: " +
+            [&result]() {
+                std::ostringstream oss;
+                oss << std::showbase << std::hex << result;
+                return oss.str();
+            }()
+        );
+    }
+
+    std::vector<std::string> readers;
+    const char* reader = readersBuffer.data();
+    while (*reader != '\0') {
+        readers.emplace_back(reader);
+        reader += strlen(reader) + 1;
+    }
+
+    return readers;
 }
 
 void RemoteSmartCard::connect() {
@@ -217,7 +383,7 @@ void RemoteSmartCard::connect() {
         }
 
         std::ostringstream oss;
-        oss << "Failed to connect to smart card (" << readerName << "): 0x" << std::hex << std::uppercase << result;
+        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << std::uppercase << result;
         throw std::runtime_error(oss.str());
     }
 }
