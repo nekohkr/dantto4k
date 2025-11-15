@@ -14,6 +14,8 @@ Usage:
       --smartCardReaderName arg
                                 Specify the smart card reader to use
                                 (default: "")
+      --customWinscardDLL arg   Specify the path to a custom winscard.dll
+                                (default: "")
       --disableADTSConversion   Disable ADTS conversion
       --help                    Show help
 ```
