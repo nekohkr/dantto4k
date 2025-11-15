@@ -9,6 +9,7 @@ bool AcasCard::getA0AuthKcl(sha256_t& output) {
 
     std::vector<uint8_t> data = { 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x8A, 0xF7 };
     std::vector<uint8_t> a0init(8);
+
     for (size_t i = 0; i < 8; ++i) {
         a0init[i] = static_cast<uint8_t>(distrib(engine));
     }
@@ -17,6 +18,14 @@ bool AcasCard::getA0AuthKcl(sha256_t& output) {
 
     ApduCommand apdu(0x90, 0xA0, 0x00, 0x01);
     ApduResponse response;
+
+    if (!smartCard->isInited()) {
+        smartCard->init();
+    }
+    if (!smartCard->isConnected()) {
+        smartCard->connect();
+    }
+
     if (smartCard->transmit(apdu.case4short(data, 0x00), response) != SCARD_S_SUCCESS) {
         return false;
     }
@@ -47,6 +56,7 @@ bool AcasCard::getA0AuthKcl(sha256_t& output) {
     }
 
     output = kcl;
+
     return true;
 }
 
@@ -59,6 +69,7 @@ bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
     }
 
     try {
+    retry:
         if (!smartCard->isInited()) {
             smartCard->init();
         }
@@ -66,10 +77,16 @@ bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
             smartCard->connect();
         }
 
-    retry:
         auto scope = smartCard->scopedTransaction();
 
-        getA0AuthKcl(kcl);
+        if (!getA0AuthKcl(kcl)) {
+            if (retryCount > 1) {
+                return false;
+            }
+
+            ++retryCount;
+            goto retry;
+        }
 
         ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
         uint32_t ret = smartCard->transmit(apdu.case4short(ecm, 0x00), response);
@@ -79,7 +96,6 @@ bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
                     return false;
                 }
 
-                smartCard->connect();
                 ++retryCount;
                 goto retry;
             }

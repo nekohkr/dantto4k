@@ -65,14 +65,8 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
         auto encodedSplit = splitByNull(encoded);
         int encodedSplitIndex = 0;
 
-        {
-            // clear
-            std::vector<uint8_t> unitDataByte;
-            unitDataByte.push_back(B24ControlSet::CS);
-            captionStatementData.dataUnits.push_back({ unitDataByte });
-        }
-
         std::vector<uint8_t> unitDataByte;
+        unitDataByte.push_back(B24ControlSet::CS);
 
         for (const auto& p : div.pTags) {
             if (p.spanTags.empty()) {

@@ -85,8 +85,8 @@ uint32_t LocalSmartCard::transmit(const std::vector<uint8_t>& message, ApduRespo
 
     LONG result = SCardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
     while (result != SCARD_S_SUCCESS && retryCount < 5) {
-        if (result == SCARD_W_RESET_CARD) {
-            connect();
+        if (result == SCARD_W_RESET_CARD || result == SCARD_E_NOT_TRANSACTED) {
+            hCard = 0;
             return SCARD_W_RESET_CARD;
         }
 
@@ -184,6 +184,7 @@ void RemoteSmartCard::connect() {
                 throw std::runtime_error("No smart card readers are available");
             }
 
+            // CasProxyServer error occurred
             if (result == SCARD_E_INVALID_HANDLE || result == SCARD_F_INTERNAL_ERROR) {
                 hContext = 0;
                 hCard = 0;
@@ -228,10 +229,12 @@ uint32_t RemoteSmartCard::transmit(const std::vector<uint8_t>& message, ApduResp
 
     LONG result = client->scardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
     while (result != SCARD_S_SUCCESS && retryCount < 5) {
-        if (result == SCARD_W_RESET_CARD) {
-            connect();
+        if (result == SCARD_W_RESET_CARD || result == SCARD_E_NOT_TRANSACTED) {
+            hCard = 0;
             return SCARD_W_RESET_CARD;
         }
+
+        // CasProxyServer error occurred
         if (result == SCARD_E_INVALID_HANDLE || result == SCARD_F_INTERNAL_ERROR) {
             hContext = 0;
             hCard = 0;
