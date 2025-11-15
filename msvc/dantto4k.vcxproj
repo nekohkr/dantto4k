@@ -147,7 +147,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="../src/accessControlDescriptor.cpp" />
-    <ClCompile Include="..\src\aes.c" />
+    <ClCompile Include="..\src\aes.cpp" />
     <ClCompile Include="..\src\mpuApplicationProcessor.cpp" />
     <ClCompile Include="../src/aribUtil.cpp" />
     <ClCompile Include="..\src\mpuAudioProcessor.cpp" />

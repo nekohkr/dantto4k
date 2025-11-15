@@ -268,7 +268,7 @@
     <ClCompile Include="../src/aribUtil.cpp">
       <Filter>dantto4k</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\aes.c">
+    <ClCompile Include="..\src\aes.cpp">
       <Filter>dantto4k\cas</Filter>
     </ClCompile>
   </ItemGroup>

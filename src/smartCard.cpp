@@ -160,7 +160,11 @@ void LocalSmartCard::connect() {
 
         if (readers != nullptr) {
             readerName = readers;
+#ifdef WIN32
             pSCardFreeMemory(hContext, readers);
+#else
+            SCardFreeMemory(hContext, readers);
+#endif
         }
     }
     else {

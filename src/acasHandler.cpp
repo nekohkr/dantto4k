@@ -2,10 +2,7 @@
 #include "config.h"
 #include "mmtp.h"
 #include "aesCtrCipher.h"
-
-extern "C" {
 #include "aes.h"
-}
 
 AcasHandler::AcasHandler() {
     acasCard = std::make_unique<AcasCard>();
