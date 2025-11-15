@@ -54,5 +54,6 @@ constexpr uint8_t SPL = 0x99;
 constexpr uint8_t STL = 0x9A;
 constexpr uint8_t CSI = 0x9B;
 constexpr uint8_t TIME = 0x9D;
+constexpr uint8_t ACPS = 0x61;
 
 }

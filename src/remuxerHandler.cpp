@@ -160,39 +160,14 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 }
 
 void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MpuData>& mfuData) {
-    std::list<B24SubtitleOutput> output;
     std::string ttml(mfuData->data.begin(), mfuData->data.end());
+    std::list<B24SubtitleOutput> output;
     B24SubtitleConvertor::convert(ttml, output);
 
     if (output.empty()) {
         return;
     }
     
-    {
-        B24::CaptionManagementData captionManagementData;
-        B24::CaptionManagementData::Langage langage;
-        langage.dmf = 0b1010;
-        langage.languageCode = "jpn";
-        langage.format = 0b1000;
-
-        captionManagementData.langages.push_back(langage);
-
-        B24::DataGroup dataGroup;
-        dataGroup.setGroupData(captionManagementData);
-
-        B24::PESData pesData(dataGroup);
-        pesData.SetPESType(B24::PESData::PESType::Synchronized);
-
-        std::vector<uint8_t> packedPesData;
-        pesData.pack(packedPesData);
-
-        B24SubtitleOutput subtitleOutput;
-        subtitleOutput.pesData = packedPesData;
-        subtitleOutput.begin = output.begin()->begin;
-        writeSubtitle(mmtStream, subtitleOutput);
-    }
-    
-
     for (const auto& pesData : output) {
         writeSubtitle(mmtStream, pesData);
     }
@@ -826,6 +801,34 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
             }
         }
     }
+
+    // Write caption management data for PotPlayer
+    for (const auto& stream : demuxer.mapStream) {
+        if (stream.second->getAssetType() != MmtTlv::AssetType::stpp) {
+            continue;
+        }
+
+        B24::CaptionManagementData captionManagementData;
+        B24::CaptionManagementData::Langage langage;
+        langage.dmf = 0b1010;
+        langage.languageCode = "jpn";
+        langage.format = 0b1000;
+
+        captionManagementData.langages.push_back(langage);
+
+        B24::DataGroup dataGroup;
+        dataGroup.setGroupData(captionManagementData);
+
+        B24::PESData pesData(dataGroup);
+        pesData.SetPESType(B24::PESData::PESType::Synchronized);
+
+        std::vector<uint8_t> packedPesData;
+        pesData.pack(packedPesData);
+
+        B24SubtitleOutput subtitleOutput;
+        subtitleOutput.pesData = packedPesData;
+        writeSubtitle(stream.second, subtitleOutput);
+    }
 }
 
 void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
@@ -949,8 +952,7 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
     mapCC[PCR_PID]++;
 
-    // Add 0.1 seconds to resolve the playback issue in VLC
-    packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
+    packet.setPCR(ntp->transmit_timestamp.toPcrValue() - 90000*150, true);
     if (outputCallback) {
         outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
     }

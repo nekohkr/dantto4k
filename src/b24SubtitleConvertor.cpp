@@ -6,37 +6,37 @@
 
 namespace {
 
-std::vector<std::string> splitByNull(const std::string& data) {
-    std::vector<std::string> tokens;
-    std::string current;
-    for (auto byte : data) {
-        if (byte == 0) {
+    std::vector<std::string> splitByNull(const std::string& data) {
+        std::vector<std::string> tokens;
+        std::string current;
+        for (auto byte : data) {
+            if (byte == 0) {
+                tokens.push_back(current);
+                current.clear();
+            }
+            else {
+                current.push_back(static_cast<char>(byte));
+            }
+        }
+        if (!current.empty()) {
             tokens.push_back(current);
-            current.clear();
         }
-        else {
-            current.push_back(static_cast<char>(byte));
-        }
+        return tokens;
     }
-    if (!current.empty()) {
-        tokens.push_back(current);
-    }
-    return tokens;
-}
 
-void appendNumber(std::vector<uint8_t>& output, int n) {
-    if (n == 0) {
-        output.push_back(0x30);
-        return;
+    void appendNumber(std::vector<uint8_t>& output, int n) {
+        if (n == 0) {
+            output.push_back(0x30);
+            return;
+        }
+        std::vector<uint8_t> temp;
+        while (n > 0) {
+            temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
+            n /= 10;
+        }
+        std::reverse(temp.begin(), temp.end());
+        output.insert(output.end(), temp.begin(), temp.end());
     }
-    std::vector<uint8_t> temp;
-    while (n > 0) {
-        temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
-        n /= 10;
-    }
-    std::reverse(temp.begin(), temp.end());
-    output.insert(output.end(), temp.begin(), temp.end());
-}
 
 }
 
@@ -48,8 +48,8 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
     uint8_t lastBackgroundColorPalette = 0;
     uint8_t lastBackgroundColorIndex = 8;
     uint8_t characterSize = B24ControlSet::NSZ;
-    float fontHeight = 0;
-    
+    double fontHeight = 0;
+
     for (const auto& div : ttml.divTags) {
         B24::CaptionStatementData captionStatementData;
 
@@ -78,7 +78,7 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
             if (p.spanTags.empty()) {
                 continue;
             }
-            
+
             // Set display format
             if (p.region.extent.has_value()) {
                 unitDataByte.push_back(B24ControlSet::CSI);
@@ -120,10 +120,10 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
 
             // Set position
             if (p.region.origin.has_value()) {
-                float offsetY = 0;
+                double offsetY = 0;
                 if (p.spanTags.begin()->style.lineHeight.has_value() &&
                     p.spanTags.begin()->style.fontSize) {
-                    float lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
+                    double lineHeight = p.spanTags.begin()->style.lineHeight->getValue<TTMLCssValueLength>().value;
                     if (p.region.extent.has_value()) {
                         offsetY = (lineHeight - fontHeight) / 2;
                     }
@@ -168,7 +168,7 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
                         }
                     }
                 }
-                
+
                 // Set background color
                 if (span.style.backgroundColor.has_value()) {
                     TTMLCssValueColor color = span.style.backgroundColor->getValue<TTMLCssValueColor>();
