@@ -17,6 +17,7 @@ struct Args {
     std::string casProxyHost;
     uint16_t casProxyPort{0};
     std::string smartCardReaderName;
+    std::string customWinscardDLL;
     bool disableADTSConversion{false};
     bool listSmartCardReader{false};
 };
@@ -34,6 +35,9 @@ Args parseArguments(int argc, char* argv[]) {
             ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
             ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>()->default_value(""))
             ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>()->default_value(""))
+#ifdef WIN32
+            ("customWinscardDLL", "Specify the path to a custom winscard.dll", cxxopts::value<std::string>()->default_value(""))
+#endif
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
@@ -62,6 +66,9 @@ Args parseArguments(int argc, char* argv[]) {
 
         args.smartCardReaderName = result["smartCardReaderName"].as<std::string>();
         args.listSmartCardReader = result["listSmartCardReader"].as<bool>();
+#ifdef WIN32
+        args.customWinscardDLL = result["customWinscardDLL"].as<std::string>();
+#endif
 
         if (!args.listSmartCardReader) {
             if (!result.count("input") || !result.count("output")) {
@@ -88,85 +95,24 @@ Args parseArguments(int argc, char* argv[]) {
 }
 
 void printReaderList(const Args& args) {
-    if (args.casProxyHost.empty()) {
-        SCARDCONTEXT hContext;
-        LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
-
-        DWORD readersSize = 0;
-        result = SCardListReaders(hContext, nullptr, nullptr, &readersSize);
-        if (result != SCARD_S_SUCCESS) {
-            if (result == SCARD_E_NO_READERS_AVAILABLE) {
-                std::cerr << "No smart card readers are available" << std::endl;
-                return;
-            }
-
-            std::cerr << "Failed to list smart card readers: " << std::showbase << std::hex << result << std::endl;
-            return;
+    try {
+        std::unique_ptr<ISmartCard> smartCard;
+        if (args.casProxyHost.empty()) {
+            smartCard = std::make_unique<LocalSmartCard>();
+        }
+        else {
+            smartCard = std::make_unique<RemoteSmartCard>(args.casProxyHost, args.casProxyPort);
         }
 
-        std::vector<char> readersBuffer(readersSize);
-        result = SCardListReaders(hContext, nullptr, readersBuffer.data(), &readersSize);
-        if (result != SCARD_S_SUCCESS) {
-            if (result == SCARD_E_NO_READERS_AVAILABLE) {
-                std::cerr << "No smart card readers are available" << std::endl;
-                return;
-            }
+        smartCard->init();
+        auto list = smartCard->getReaders();
 
-            std::cerr << "Failed to list smart card readers: " << std::showbase << std::hex << result << std::endl;
-            return;
-        }
-
-        const char* reader = readersBuffer.data();
-        while (*reader != L'\0') {
+        for (const auto& reader : list) {
             std::cerr << " - " << reader << std::endl;
-            reader += strlen(reader) + 1;
         }
-
-        SCardReleaseContext(hContext);
     }
-    else {
-        try {
-            CasProxyClient client(args.casProxyHost, args.casProxyPort);
-            client.connect();
-
-            SCARDCONTEXT hContext;
-            LONG result = client.scardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
-
-            DWORD readersSize = 0;
-            result = client.scardListReaders(hContext, nullptr, nullptr, &readersSize);
-            if (result != SCARD_S_SUCCESS) {
-                if (result == SCARD_E_NO_READERS_AVAILABLE) {
-                    std::cerr << "No smart card readers are available" << std::endl;
-                    return;
-                }
-
-                std::cerr << "Failed to list smart card readers: " << std::showbase << std::hex << result << std::endl;
-                return;
-            }
-
-            std::vector<char> readersBuffer(readersSize);
-            result = client.scardListReaders(hContext, nullptr, readersBuffer.data(), &readersSize);
-            if (result != SCARD_S_SUCCESS) {
-                if (result == SCARD_E_NO_READERS_AVAILABLE) {
-                    std::cerr << "No smart card readers are available" << std::endl;
-                    return;
-                }
-
-                std::cerr << "Failed to list smart card readers: " << std::showbase << std::hex << result << std::endl;
-                return;
-            }
-
-            const char* reader = readersBuffer.data();
-            while (*reader != L'\0') {
-                std::cerr << " - " << reader << std::endl;
-                reader += strlen(reader) + 1;
-            }
-
-            client.scardReleaseContext(hContext);
-        }
-        catch (const std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
+    catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
     }
 
 }
@@ -178,6 +124,9 @@ int main(int argc, char* argv[]) {
     constexpr size_t chunkSize = 1024 * 1024 * 5; // 5MB
 
     Args args = parseArguments(argc, argv);
+#ifdef WIN32
+    config.customWinscardDLL = args.customWinscardDLL;
+#endif
     config.disableADTSConversion = args.disableADTSConversion;
 
     bool useStdin = (args.input == "-");
@@ -224,7 +173,7 @@ int main(int argc, char* argv[]) {
     });
     demuxer.setDemuxerHandler(handler);
 
-    {
+    try {
         // Create ACAS handler and initialize the smart card
         std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
         std::unique_ptr<ISmartCard> smartCard;
@@ -238,6 +187,10 @@ int main(int argc, char* argv[]) {
         smartCard->setSmartCardReaderName(args.smartCardReaderName);
         acasHandler->setSmartCard(std::move(smartCard));
         demuxer.setCasHandler(std::move(acasHandler));
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
 
     std::vector<uint8_t> inputBuffer;

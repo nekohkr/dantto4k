@@ -704,8 +704,13 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
         mmtStream->auIndex = 0;
     }
     else if (mpu.mpuSequenceNumber != mmtStream->lastMpuSequenceNumber) {
-        assembler->state = FragmentAssembler::State::Init;
-        return;
+        if (mpu.fragmentationIndicator == FragmentationIndicator::NotFragmented) {
+            assembler->clear();
+        }
+        else {
+            assembler->state = FragmentAssembler::State::Init;
+            return;
+        }
     }
 
     assembler->checkState(mmtp.packetSequenceNumber);

@@ -33,7 +33,7 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
         return nullptr;
     }
 
-    {
+    try {
         std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
         std::unique_ptr<ISmartCard> smartCard;
         if (config.casProxyServer.empty()) {
@@ -51,6 +51,10 @@ extern "C" __declspec(dllexport) IBonDriver* CreateBonDriver() {
         smartCard->setSmartCardReaderName(config.smartCardReaderName);
         acasHandler->setSmartCard(std::move(smartCard));
         g_bonDriverContext.demuxer.setCasHandler(std::move(acasHandler));
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+        return nullptr;
     }
 
     g_bonDriverContext.handler.setOutputCallback([&](const uint8_t* data, size_t size) {
