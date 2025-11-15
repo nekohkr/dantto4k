@@ -21,7 +21,7 @@ public:
         expandKey(key.data());
     }
 
-    bool hasAESNI() {
+    static bool hasAESNI() {
         int info[4];
 #if defined(_MSC_VER)
         __cpuid(info, 1);

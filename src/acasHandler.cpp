@@ -3,6 +3,10 @@
 #include "mmtp.h"
 #include "aesCtrCipher.h"
 
+extern "C" {
+#include "aes.h"
+}
+
 AcasHandler::AcasHandler() {
     acasCard = std::make_unique<AcasCard>();
     workerThread = std::thread(&AcasHandler::worker, this);
@@ -32,6 +36,7 @@ bool AcasHandler::onEcm(const std::vector<uint8_t>& ecm) {
     }
     queueCv.notify_one();
     ecmReady = true;
+
     return true;
 }
 
@@ -47,14 +52,23 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
     memcpy(iv.data(), &packetIdBe, 2);
     memcpy(iv.data() + 2, &packetSequenceNumberBe, 4);
 
-    try {
-        AESCtrCipher aes(*key);
-        aes.setIv(iv);
-        aes.decrypt(mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8), mmtp.payload.data() + 8);
+    static bool hasAESNI = AESCtrCipher::hasAESNI();
+    if (hasAESNI) {
+        try {
+            AESCtrCipher aes(*key);
+            aes.setIv(iv);
+            aes.decrypt(mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8), mmtp.payload.data() + 8);
+        }
+        catch (const std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
     }
-    catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
+    else {
+        struct AES_ctx ctx;
+        AES_init_ctx_iv(&ctx, (*key).data(), iv.data());
+        AES_CTR_xcrypt_buffer(&ctx, mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8));
     }
+
     return true;
 }
 
