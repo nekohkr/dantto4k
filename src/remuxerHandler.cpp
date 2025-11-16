@@ -12,7 +12,6 @@
 #include "mhShortEventDescriptor.h"
 #include "mhSiParameterDescriptor.h"
 #include "mhStreamIdentificationDescriptor.h"
-#include "mmtTableBase.h"
 #include "multimediaServiceInformationDescriptor.h"
 #include "networkNameDescriptor.h"
 #include "relatedBroadcasterDescriptor.h"
@@ -36,7 +35,6 @@
 #include "mpuProcessorBase.h"
 #include "config.h"
 #include "ntp.h"
-#include "pugixml.hpp"
 #include "b24SubtitleConvertor.h"
 
 namespace {
@@ -900,7 +898,9 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
             auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::NetworkNameDescriptor>(descriptor);
             auto tsDescriptor = DescriptorConverter<MmtTlv::NetworkNameDescriptor>::convert(*mmtDescriptor);
 
-            tsNit.descs.add(duck, tsDescriptor);
+            if (tsDescriptor) {
+                tsNit.descs.add(tsDescriptor->data(), tsDescriptor->size());
+            }
             break;
         }
         }
@@ -952,7 +952,8 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
     mapCC[PCR_PID]++;
 
-    packet.setPCR(ntp->transmit_timestamp.toPcrValue() - 90000*150, true);
+    // Add 0.1 seconds to resolve the playback issue in VLC
+    packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
     if (outputCallback) {
         outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
     }
