@@ -952,7 +952,8 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
     packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
     mapCC[PCR_PID]++;
 
-    packet.setPCR(ntp->transmit_timestamp.toPcrValue() - 90000*150, true);
+    // Add 0.1 seconds to resolve the playback issue in VLC
+    packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
     if (outputCallback) {
         outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
     }
