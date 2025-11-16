@@ -484,12 +484,22 @@ struct DescriptorConverter<MmtTlv::AccessControlDescriptor> {
 
 template <>
 struct DescriptorConverter<MmtTlv::NetworkNameDescriptor> {
-    static ts::NetworkNameDescriptor convert(const MmtTlv::NetworkNameDescriptor& mmtDescriptor) {
-        std::string networkNameBlock = aribEncode(mmtDescriptor.networkName);
-        ts::UString networkNameARIB = ts::UString::FromUTF8((char*)networkNameBlock.data(), networkNameBlock.size());
-        ts::NetworkNameDescriptor tsDescriptor(networkNameARIB);
+    static std::optional<std::vector<uint8_t>> convert(const MmtTlv::NetworkNameDescriptor& mmtDescriptor) {
+        std::string networkName = aribEncode(mmtDescriptor.networkName);
+        size_t descriptorLength = networkName.size();
 
-        return tsDescriptor;
+        if (descriptorLength > 255) {
+            return std::nullopt;
+        }
+
+        MmtTlv::Common::WriteStream s;
+        s.put8U(0x40); // descriptor_tag
+        s.put8U(static_cast<uint8_t>(descriptorLength)); // descriptor_length
+        if (networkName.size()) {
+            s.write(networkName);
+        }
+
+        return s.getData();
     }
 };
 
