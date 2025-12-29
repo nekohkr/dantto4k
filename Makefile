@@ -15,7 +15,7 @@ PCSC_LIB = $(shell pkg-config --libs libpcsclite)
 
 CXX = g++
 CXXFLAGS = -std=c++20 -Wall -maes -msse4.1 $(TSDUCK_INC) $(PCSC_INC) -Ithirdparty/asio/asio/include
-LDFLAGS = $(TSDUCK_LIB) $(PCSC_LIB) $(YAML_CPP_LIB)
+LDFLAGS = $(TSDUCK_LIB) $(PCSC_LIB)
 
 EXEC = $(OBJ_DIR)/$(PROJECT_NAME)
 

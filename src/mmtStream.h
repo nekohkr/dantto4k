@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <optional>
 #include "mpuExtendedTimestampDescriptor.h"
 #include "mpuTimestampDescriptor.h"
 
@@ -32,7 +33,6 @@ public:
 	bool Is8KVideo() const;
 	bool Is22_2chAudio() const;
 	uint32_t getSamplingRate() const;
-
 	const std::shared_ptr<VideoComponentDescriptor>& getVideoComponentDescriptor() const { return videoComponentDescriptor; }
 	const std::shared_ptr<MhAudioComponentDescriptor>& getMhAudioComponentDescriptor() const { return mhAudioComponentDescriptor; }
 
@@ -42,22 +42,21 @@ public:
 	};
 
 	struct TimeBase timeBase;
+	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
+	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
 
 private:
 	friend class MmtTlvDemuxer;
 
 	std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> getCurrentTimestamp() const;
-	
+
 	uint16_t packetId = 0;
 	uint32_t assetType = 0;
-	uint32_t lastMpuSequenceNumber = 0;
+	std::optional<uint32_t> lastMpuSequenceNumber;
 	uint32_t auIndex = 0;
 	uint32_t streamIndex = 0;
 	int16_t componentTag = -1;
 	bool rapFlag = false;
-
-	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
-	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
 	std::shared_ptr<MpuProcessorBase> mpuProcessor;
 	std::shared_ptr<VideoComponentDescriptor> videoComponentDescriptor;
 	std::shared_ptr<MhAudioComponentDescriptor> mhAudioComponentDescriptor;

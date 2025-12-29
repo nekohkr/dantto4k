@@ -420,8 +420,7 @@ void MmtTlvDemuxer::processMmtTableStatistics(uint8_t tableId) {
     }
 }
 
-void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
-{
+void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt) {
     // Remove streams that do not exist in the MPT
     std::map<uint16_t, uint32_t> mapMpt; // packetId, assetType
     for (auto& asset : mpt->assets) {
@@ -438,6 +437,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             if (mptIt != mapMpt.end()) {
                 if (mptIt->second != it->second->assetType) {
                     it = mapStream.erase(it);
+                    mapFragmentValidator.erase(mptIt->first);
                 }
                 else {
                     ++it;
@@ -445,11 +445,12 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
             }
             else {
                 it = mapStream.erase(it);
+                mapFragmentValidator.erase(mptIt->first);
             }
         }
     }
 
-    mapStreamByStreamIdx.clear();
+    mapPacketIdByIdx.clear();
 
     int streamIndex = 0;
     for (const auto& asset : mpt->assets) {
@@ -473,7 +474,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt)
                         mmtStream->mpuProcessor = MpuProcessorFactory::create(mmtStream->assetType);
                     }
 
-                    mapStreamByStreamIdx[streamIndex] = mmtStream;
+                    mapPacketIdByIdx[streamIndex] = locationInfo.packetId;
                     statistics.getMmtStat(locationInfo.packetId)->assetType = asset.assetType;
                     ++streamIndex;
                 }
@@ -570,8 +571,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimes
     }
 }
 
-void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream)
-{
+void MmtTlvDemuxer::processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream) {
     if (descriptor->timescaleFlag) {
         mmtStream->timeBase.num = 1;
         mmtStream->timeBase.den = descriptor->timescale;
@@ -638,52 +638,69 @@ void MmtTlvDemuxer::processEcm(std::shared_ptr<Ecm> ecm) {
     casHandler->onEcm(ecm->ecmData);
 }
 
-
 void MmtTlvDemuxer::clear() {
     mapAssembler.clear();
+    mapFragmentValidator.clear();
     mfuData.clear();
     mapStream.clear();
-    mapStreamByStreamIdx.clear();
+    mapPacketIdByIdx.clear();
     statistics.clear();
 }
 
-void MmtTlvDemuxer::printStatistics() const
-{
+void MmtTlvDemuxer::printStatistics() const {
     statistics.print();
 }
 
-std::shared_ptr<FragmentAssembler> MmtTlvDemuxer::getAssembler(uint16_t packetId)
-{
-    if (mapAssembler.find(packetId) == mapAssembler.end()) {
-        auto assembler = std::make_shared<FragmentAssembler>();
-        mapAssembler[packetId] = assembler;
-        return assembler;
+FragmentAssembler* MmtTlvDemuxer::getAssembler(uint16_t packetId) {
+    auto it = mapAssembler.find(packetId);
+    if (it != mapAssembler.end()) {
+        return it->second.get();
     }
-    else {
-        return mapAssembler[packetId];
-    }
+
+    auto validator = std::make_unique<FragmentAssembler>();
+    auto ptr = validator.get();
+    mapAssembler.emplace(packetId, std::move(validator));
+    return ptr;
 }
 
-std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t packetId)
-{
-    if (mapStream.find(packetId) == mapStream.end()) {
+FragmentValidator* MmtTlvDemuxer::getFragmentValidator(uint16_t packetId) {
+    auto it = mapFragmentValidator.find(packetId);
+    if (it != mapFragmentValidator.end()) {
+        return it->second.get();
+    }
+
+    auto validator = std::make_unique<FragmentValidator>();
+    auto ptr = validator.get();
+    mapFragmentValidator.emplace(packetId, std::move(validator));
+    return ptr;
+}
+
+std::shared_ptr<MmtStream> MmtTlvDemuxer::getStream(uint16_t packetId) {
+    auto it = mapStream.find(packetId);
+    if (it == mapStream.end()) {
         return nullptr;
     }
     else {
-        return mapStream[packetId];
+        return it->second;
     }
 }
 
-void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
-{
+std::shared_ptr<MmtStream> MmtTlvDemuxer::getStreamByIdx(uint16_t idx) {
+    auto it = mapPacketIdByIdx.find(idx);
+    if (it == mapPacketIdByIdx.end()) {
+        return nullptr;
+    }
+    else {
+        return getStream(it->second);
+    }
+}
+
+void MmtTlvDemuxer::processMpu(Common::ReadStream& stream) {
     if (!mpu.unpack(stream)) {
         return;
     }
 
-    auto assembler = getAssembler(mmtp.packetId);
-    Common::ReadStream nstream(mpu.payload);
     std::shared_ptr<MmtStream> mmtStream = getStream(mmtp.packetId);
-
     if (!mmtStream) {
         return;
     }
@@ -696,45 +713,41 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
         return;
     }
 
-    if (assembler->state == FragmentAssembler::State::Init) {
+    if (!mmtStream->lastMpuSequenceNumber) {
         mmtStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
     }
-    else if (mpu.mpuSequenceNumber == mmtStream->lastMpuSequenceNumber + 1) {
+
+    if (mpu.mpuSequenceNumber == *mmtStream->lastMpuSequenceNumber + 1) {
         mmtStream->lastMpuSequenceNumber = mpu.mpuSequenceNumber;
         mmtStream->auIndex = 0;
     }
-    else if (mpu.mpuSequenceNumber != mmtStream->lastMpuSequenceNumber) {
+
+    auto validator = getFragmentValidator(mmtp.packetId);
+    auto assembler = getAssembler(mmtp.packetId);
+
+    if (mpu.mpuSequenceNumber != mmtStream->lastMpuSequenceNumber) {
         if (mpu.fragmentationIndicator == FragmentationIndicator::NotFragmented) {
+            validator->clear();
             assembler->clear();
-        }
-        else {
-            assembler->state = FragmentAssembler::State::Init;
-            return;
         }
     }
 
-    assembler->checkState(mmtp.packetSequenceNumber);
-
     mmtStream->rapFlag = mmtp.rapFlag;
 
+    Common::ReadStream nstream(mpu.payload);
     if (mpu.aggregateFlag == 0) {
         if (!dataUnit.unpack(nstream, mpu.timedFlag, mpu.aggregateFlag)) {
             return;
         }
 
-        if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmtp.packetSequenceNumber)) {
-            Common::ReadStream dataStream(assembler->data);
-            processMfuData(dataStream);
-            assembler->clear();
-        }
-    }
-    else
-    {
-        while (!nstream.isEof()) {
-            if (!dataUnit.unpack(nstream, mpu.timedFlag, mpu.aggregateFlag)) {
-                return;
+        if (mmtStream->assetType == AssetType::hev1 ||
+            mmtStream->assetType == AssetType::mp4a) {
+            if (validator->validate(mpu.fragmentationIndicator, mmtp.packetSequenceNumber)) {
+                Common::ReadStream dataStream(dataUnit.data);
+                processMfuData(dataStream);
             }
-
+        }
+        else {
             if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmtp.packetSequenceNumber)) {
                 Common::ReadStream dataStream(assembler->data);
                 processMfuData(dataStream);
@@ -742,13 +755,33 @@ void MmtTlvDemuxer::processMpu(Common::ReadStream& stream)
             }
         }
     }
+    else {
+        while (!nstream.isEof()) {
+            if (!dataUnit.unpack(nstream, mpu.timedFlag, mpu.aggregateFlag)) {
+                return;
+            }
+
+            if (mmtStream->assetType == AssetType::hev1 ||
+                mmtStream->assetType == AssetType::mp4a) {
+                if (validator->validate(mpu.fragmentationIndicator, mmtp.packetSequenceNumber)) {
+                    Common::ReadStream dataStream(dataUnit.data);
+                    processMfuData(dataStream);
+                }
+            }
+            else {
+                if (assembler->assemble(dataUnit.data, mpu.fragmentationIndicator, mmtp.packetSequenceNumber)) {
+                    Common::ReadStream dataStream(assembler->data);
+                    processMfuData(dataStream);
+                    assembler->clear();
+                }
+            }
+        }
+    }
 }
 
 void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
     std::shared_ptr<MmtStream> mmtStream = getStream(mmtp.packetId);
-    if (!mmtStream) {
-        return;
-    }
+    auto validator = getFragmentValidator(mmtp.packetId);
 
     if (!mmtStream->mpuProcessor) {
         return;
@@ -760,32 +793,34 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
     const auto ret = mmtStream->mpuProcessor->process(mmtStream, data);
     if (ret) {
         const auto& mfuData = ret.value();
-        auto it = mapStreamByStreamIdx.find(mfuData.streamIndex);
-        if (it == mapStreamByStreamIdx.end()) {
+        auto mmtStream = getStreamByIdx(mfuData.streamIndex);
+        if (!mmtStream) {
             return;
         }
 
         if(demuxerHandler) {
             switch (mmtStream->assetType) {
             case AssetType::hev1:
-                demuxerHandler->onVideoData(it->second, std::make_shared<MpuData>(mfuData));
+                demuxerHandler->onVideoData(mmtStream, std::make_shared<MfuData>(mfuData));
                 break;
             case AssetType::mp4a:
-                demuxerHandler->onAudioData(it->second, std::make_shared<MpuData>(mfuData));
+                demuxerHandler->onAudioData(mmtStream, std::make_shared<MfuData>(mfuData));
                 break;
             case AssetType::stpp:
-                demuxerHandler->onSubtitleData(it->second, std::make_shared<MpuData>(mfuData));
+                demuxerHandler->onSubtitleData(mmtStream, std::make_shared<MfuData>(mfuData));
                 break;
             case AssetType::aapp:
-                demuxerHandler->onApplicationData(it->second, std::make_shared<MpuData>(mfuData));
+                demuxerHandler->onApplicationData(mmtStream, std::make_shared<MfuData>(mfuData));
                 break;
             }
         }
     }
+    else {
+        validator->clear();
+    }
 }
 
-void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream) {
     SignalingMessage signalingMessage;
     if (!signalingMessage.unpack(stream)) {
         return;
@@ -845,23 +880,23 @@ void MmtTlvDemuxer::processSignalingMessage(Common::ReadStream& stream) {
 }
 
 bool MmtTlvDemuxer::isValidTlv(Common::ReadStream& stream) const {
-    try {
-        uint8_t bytes[2];
-        stream.peek((char*)bytes, 2);
-
-        // syncByte
-        if (bytes[0] != 0x7F) {
-            return false;
-        }
-
-        // packetType
-        if (bytes[1] > 0x04 && bytes[1] < 0xFD) {
-            return false;
-        }
-    }
-    catch (const std::runtime_error&) {
+    if (stream.leftBytes() < 2) {
         return false;
     }
+
+    uint8_t bytes[2];
+    stream.peek((char*)bytes, 2);
+
+    // syncByte
+    if (bytes[0] != 0x7F) {
+        return false;
+    }
+
+    // packetType
+    if (bytes[1] > 0x04 && bytes[1] < 0xFD) {
+        return false;
+    }
+
     return true;
 }
 

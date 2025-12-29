@@ -400,6 +400,7 @@ uint32_t RemoteSmartCard::transmit(const std::vector<uint8_t>& message, ApduResp
     LONG result = client->scardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
     while (result != SCARD_S_SUCCESS && retryCount < 5) {
         if (result == SCARD_W_RESET_CARD || result == SCARD_E_NOT_TRANSACTED) {
+            hContext = 0;
             hCard = 0;
             return SCARD_W_RESET_CARD;
         }

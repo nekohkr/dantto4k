@@ -3,28 +3,22 @@
 
 namespace {
 
-	void writePts(MmtTlv::Common::WriteStream &stream, int fourbits, int64_t pts)
-	{
-		int val;
+void writePts(MmtTlv::Common::WriteStream &stream, int fourbits, int64_t pts) {
+	int val;
 
-		val  = fourbits << 4 | (((pts >> 30) & 0x07) << 1) | 1;
-		stream.put8U(val);
-		val  = (((pts >> 15) & 0x7fff) << 1) | 1;
-		stream.put8U(val >> 8);
-		stream.put8U(val);
-		val  = (((pts) & 0x7fff) << 1) | 1;
-		stream.put8U(val >> 8);
-		stream.put8U(val);
-	}
+	val  = fourbits << 4 | (((pts >> 30) & 0x07) << 1) | 1;
+	stream.put8U(val);
+	val  = (((pts >> 15) & 0x7fff) << 1) | 1;
+	stream.put8U(val >> 8);
+	stream.put8U(val);
+	val  = (((pts) & 0x7fff) << 1) | 1;
+	stream.put8U(val >> 8);
+	stream.put8U(val);
+}
 
 }
 
-bool PESPacket::pack(std::vector<uint8_t>& output)
-{
-	if (!payload) {
-		return false;
-	}
-
+bool PESPacket::pack(std::vector<uint8_t>& output) {
 	MmtTlv::Common::WriteStream stream;
 
 	// packet_start_code_prefix
@@ -44,7 +38,11 @@ bool PESPacket::pack(std::vector<uint8_t>& output)
 		flags |= 0b01000000;
 	}
 
-	size_t length = payload->size() + headerLength + 3;
+	size_t length = 0;
+	if (hasPacketLength) {
+		length = payload ? (payload->size() + headerLength + 3) : 0;
+	}
+
 	if (length > 0xffff) {
 		length = 0;
 	}
@@ -61,7 +59,9 @@ bool PESPacket::pack(std::vector<uint8_t>& output)
 		writePts(stream, 1, dts);
 	}
 
-	stream.write(std::span<const uint8_t>{payload->data(), payload->size()});
+	if (payload) {
+		stream.write(std::span<const uint8_t>{payload->data(), payload->size()});
+	}
 
 	output = stream.getData();
 	return true;

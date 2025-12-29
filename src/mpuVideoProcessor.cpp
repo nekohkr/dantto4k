@@ -1,74 +1,87 @@
 #include "mpuVideoProcessor.h"
 #include "stream.h"
+#include <iostream>
 
 namespace MmtTlv {
 
 constexpr uint8_t CRA_NUT = 0x15;
 constexpr uint8_t NAL_AUD = 0x23;
 
-std::optional<MpuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
+std::optional<MfuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
     Common::ReadStream stream(data);
-    if (stream.leftBytes() < 4) {
-        return std::nullopt;
-    }
+    MfuData mfuData;
 
-    uint32_t size = stream.getBe32U();
-    if (size != stream.leftBytes()) {
-        return std::nullopt;
-    }
+    if (nalUnitSize == 0) {
+        if (stream.leftBytes() < 4) {
+            return std::nullopt;
+        }
 
-    uint8_t uint8 = stream.peek8U();
-    int forbiddenZeroBit = uint8 >> 7;
-    if (forbiddenZeroBit != 0) {
-        return std::nullopt;
-    }
-    
-    int nalUnitType = ((uint8 >> 1) & 0b111111);
-    
-    appendPendingData(stream, size);
+        nalUnitSize = stream.getBe32U();
+        uint8_t uint8 = stream.peek8U();
+        nalUnitType = ((uint8 >> 1) & 0b111111);
 
-    if (nalUnitType < 0x20) {
-        if (sliceSegmentCount >= (mmtStream->Is8KVideo() ? 3 : 0)) {
+        if (nalUnitType == NAL_AUD) {
             std::pair<int64_t, int64_t> ptsDts;
             try {
                 ptsDts = mmtStream->getNextPtsDts();
             }
             catch (const std::out_of_range&) {
-                pendingData.clear();
+                clear();
                 return std::nullopt;
             }
 
-            MpuData mfuData;
-            mfuData.data = std::move(pendingData);
-            mfuData.pts = ptsDts.first;
-            mfuData.dts = ptsDts.second;
-            mfuData.streamIndex = mmtStream->getStreamIndex();
-            
-            if (nalUnitType == CRA_NUT) {
-                mfuData.keyframe = true;
-            }
-
-            return mfuData;
+            pts = ptsDts.first;
+            dts = ptsDts.second;
+            streamIndex = mmtStream->getStreamIndex();
+            sliceSegmentCount = 0;
+            mfuData.isFirstFragment = true;
         }
-        sliceSegmentCount++;
+
+        static const uint8_t startCode[4] = { 0x00, 0x00, 0x00, 0x01 };
+        buffer.insert(buffer.end(), startCode, startCode + 4);
+
+        if (nalUnitType < 0x20) {
+            sliceSegmentCount++;
+        }
+        if (nalUnitType == CRA_NUT) {
+            mfuData.keyframe = true;
+        }
     }
 
-    if (nalUnitType == NAL_AUD){
-        sliceSegmentCount = 0;
+    size_t oldSize = buffer.size();
+    size_t remain = stream.leftBytes();
+    if (nalUnitSize < remain) {
+        clear();
+        return std::nullopt;
     }
 
-	return std::nullopt;
+    nalUnitSize -= remain;
+    buffer.resize(oldSize + remain);
+    stream.read(buffer.data() + oldSize, remain);
+
+    mfuData.pts = pts;
+    mfuData.dts = dts;
+    mfuData.streamIndex = streamIndex;
+
+    if (sliceSegmentCount >= (mmtStream->Is8KVideo() ? 4 : 1)) {
+        if (nalUnitSize == 0) {
+            mfuData.isLastFragment = true;
+        }
+    }
+
+    mfuData.data = std::move(buffer);
+    return mfuData;
 }
 
-void MpuVideoProcessor::appendPendingData(Common::ReadStream& stream, int size)
-{
-    uint32_t nalStartCode = 0x1000000;
-    size_t oldSize = pendingData.size();
+void MpuVideoProcessor::clear() {
+    sliceSegmentCount = 0;
+    nalUnitSize = 0;
+    nalUnitType = 0;
+    pts = 0;
+    dts = 0;
+    streamIndex = 0;
+    buffer.clear();
 
-    pendingData.resize(oldSize + 4 + size);
-
-    memcpy(pendingData.data() + oldSize, &nalStartCode, 4);
-    stream.read(pendingData.data() + oldSize + 4, size);
 }
 
 }
