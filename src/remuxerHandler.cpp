@@ -132,11 +132,11 @@ uint8_t convertTableId(uint8_t mmtTableId) {
 
 } // anonymous namespace
 
-void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) {
+void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
     writeStream(mmtStream, mfuData, mfuData->data);
 }
 
-void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) {
+void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
     // ADTS conversion for 22.2ch is not implemented.
     if (mmtStream->Is22_2chAudio()) {
         writeStream(mmtStream, mfuData, mfuData->data);
@@ -157,7 +157,7 @@ void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     writeStream(mmtStream, mfuData, output);
 }
 
-void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MpuData>& mfuData) {
+void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) {
     std::string ttml(mfuData->data.begin(), mfuData->data.end());
     std::list<B24SubtitleOutput> output;
     B24SubtitleConvertor::convert(ttml, output);
@@ -171,7 +171,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
     }
 }
 
-void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData) {
+void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
 }
 
 void RemuxerHandler::onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream) {
@@ -200,65 +200,88 @@ void RemuxerHandler::setOutputCallback(OutputCallback cb) {
     outputCallback = std::move(cb);
 }
 
-void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MpuData>& mfuData, const std::vector<uint8_t>& streamData) {
-    constexpr AVRational tsTimeBase = { 1, 90000 };
-    const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
-
-    uint64_t tsPts = MmtTlv::NOPTS_VALUE;
-    uint64_t tsDts = MmtTlv::NOPTS_VALUE;
-
-    if ((mfuData->pts != MmtTlv::NOPTS_VALUE && mfuData->dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
-        tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
-        tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
+void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData) {
+    if (mfuData->pts != MmtTlv::NOPTS_VALUE) {
+        writeCaptionManagementData(mfuData->pts);
     }
 
-    std::vector<uint8_t> pesOutput;
-    PESPacket pes;
-    pes.setPts(tsPts);
-    pes.setDts(tsDts);
-    pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
-    if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
-        mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
-        pes.setDataAlignmentIndicator(true);
-    }
-    pes.setPayload(&streamData);
-    pes.pack(pesOutput);
+    if (mfuData->isFirstFragment) {
+        constexpr AVRational tsTimeBase = { 1, 90000 };
+        const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
 
-    size_t payloadLength = pesOutput.size();
-    int i = 0;
-    while (payloadLength > 0) {
+        uint64_t tsPts = MmtTlv::NOPTS_VALUE;
+        uint64_t tsDts = MmtTlv::NOPTS_VALUE;
+
+        if ((mfuData->pts != MmtTlv::NOPTS_VALUE && mfuData->dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
+            tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
+            tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
+        }
+
+        std::vector<uint8_t> pesOutput;
+        PESPacket pes;
+        pes.setPts(tsPts);
+        pes.setDts(tsDts);
+        if (mfuData->isFirstFragment && mfuData->isLastFragment) {
+            pes.setHasPacketLength(true);
+        }
+        pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
+        if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
+            mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
+            pes.setDataAlignmentIndicator(true);
+        }
+        pes.pack(pesOutput);
+
+        mapPendingData[mmtStream->getMpeg2PacketId()] = std::move(pesOutput);
+        mapPesPacketIndex[mmtStream->getMpeg2PacketId()] = 0;
+    }
+
+    mapPendingData[mmtStream->getMpeg2PacketId()].insert(mapPendingData[mmtStream->getMpeg2PacketId()].end(),
+        streamData.begin(),
+        streamData.end()
+    );
+
+    while (mapPendingData[mmtStream->getMpeg2PacketId()].size() > 0) {
         ts::TSPacket packet;
         packet.init(mmtStream->getMpeg2PacketId(), mapCC[mmtStream->getMpeg2PacketId()] & 0xF, 0);
-        ++mapCC[mmtStream->getMpeg2PacketId()];
 
-        if (i == 0) {
+        if (mapPesPacketIndex[mmtStream->getMpeg2PacketId()] == 0) {
             packet.setPUSI();
             if (mfuData->keyframe) {
                 packet.setRandomAccessIndicator(true);
             }
         }
 
-        const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
+        const size_t payloadSize = static_cast<size_t>(188 - packet.getHeaderSize());
+        if (!mfuData->isLastFragment && payloadSize > mapPendingData[mmtStream->getMpeg2PacketId()].size()) {
+            return;
+        }
+
+        ++mapCC[mmtStream->getMpeg2PacketId()];
+
+        const size_t chunkSize = std::min(payloadSize, mapPendingData[mmtStream->getMpeg2PacketId()].size());
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
-        payloadLength -= chunkSize;
+        memcpy(packet.b + packet.getHeaderSize(), mapPendingData[mmtStream->getMpeg2PacketId()].data(), chunkSize);
+        mapPendingData[mmtStream->getMpeg2PacketId()].erase(
+            mapPendingData[mmtStream->getMpeg2PacketId()].begin(),
+            mapPendingData[mmtStream->getMpeg2PacketId()].begin() + chunkSize
+        );
 
         if (outputCallback) {
             outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
         }
-        ++i;
+        mapPesPacketIndex[mmtStream->getMpeg2PacketId()]++;
     }
 }
 
 void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle) {
     std::vector<uint8_t> pesOutput;
-    PESPacket pes;
     uint64_t pts = subtitle.calcPts(programStartTime);
     pts = std::max(pts, lastPcr / 300);
     if (pts == 0) {
         return;
     }
 
+    PESPacket pes;
     pes.setPts(pts);
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     pes.setPayload(&subtitle.pesData);
@@ -284,6 +307,71 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
             outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
         }
         ++i;
+    }
+}
+
+void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
+    // Write CaptionManagementData every 0.5 seconds
+    if (lastCaptionManagementDataPts + 9000 * 5 > pts) {
+        return;
+    }
+
+    if (lastCaptionManagementDataPts == 0) {
+        lastCaptionManagementDataPts = pts;
+    }
+
+    lastCaptionManagementDataPts += 9000 * 5;
+
+    for (const auto& stream : demuxer.mapStream) {
+        if (stream.second->getAssetType() != MmtTlv::AssetType::stpp) {
+            continue;
+        }
+
+        B24::CaptionManagementData captionManagementData;
+        B24::CaptionManagementData::Langage langage;
+        langage.dmf = 0b1010;
+        langage.languageCode = "jpn";
+        langage.format = 0b1000;
+
+        captionManagementData.langages.push_back(langage);
+
+        B24::DataGroup dataGroup;
+        dataGroup.setGroupData(captionManagementData);
+
+        B24::PESData pesData(dataGroup);
+        pesData.SetPESType(B24::PESData::PESType::Synchronized);
+
+        std::vector<uint8_t> packedPesData;
+        pesData.pack(packedPesData);
+
+        std::vector<uint8_t> pesOutput;
+        PESPacket pes;
+        pes.setPts(lastCaptionManagementDataPts);
+        pes.setStreamId(componentTagToStreamId(stream.second->getComponentTag()));
+        pes.setPayload(&packedPesData);
+        pes.pack(pesOutput);
+
+        size_t payloadLength = pesOutput.size();
+        int i = 0;
+        while (payloadLength > 0) {
+            ts::TSPacket packet;
+            packet.init(stream.second->getMpeg2PacketId(), mapCC[stream.second->getMpeg2PacketId()] & 0xF, 0);
+            ++mapCC[stream.second->getMpeg2PacketId()];
+
+            if (i == 0) {
+                packet.setPUSI();
+            }
+
+            const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
+            packet.setPayloadSize(chunkSize);
+            memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
+            payloadLength -= chunkSize;
+
+            if (outputCallback) {
+                outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
+            }
+            ++i;
+        }
     }
 }
 
@@ -417,7 +505,7 @@ void RemuxerHandler::onMhAit(const std::shared_ptr<MmtTlv::MhAit>& mhAit) {
 void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
     tsid = mhEit->tlvStreamId;
 
-    if (mhEit->isPf() && mhEit->sectionNumber == 0) {
+    if (mhEit->isPf() && mhEit->sectionNumber == 0 && mhEit->events.size() > 0) {
         std::tm startTime = EITConvertStartTime((mhEit->events.begin())->get()->startTime);
         programStartTime = static_cast<uint64_t>(std::mktime(&startTime));
     }
@@ -634,8 +722,9 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
 }
 
 void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
-    if (tsid == -1)
+    if (tsid == -1) {
         return;
+    }
 
     ts::PAT pat(plt->version % 32, true, tsid);
     mapService2Pid.clear();
@@ -706,7 +795,10 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
     for (auto& asset : mpt->assets) {
         for (int i = 0; i < asset.locationCount; i++) {
             if (asset.locationInfos[i].locationType == 0) {
-                const auto& mmtStream = demuxer.mapStreamByStreamIdx[streamIndex];
+                const auto mmtStream = demuxer.getStreamByIdx(streamIndex);
+                if (!mmtStream) {
+                    continue;
+                }
 
                 if (mmtStream->getComponentTag() == -1) {
                     streamIndex++;
@@ -798,34 +890,6 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
             }
         }
-    }
-
-    // Write caption management data for PotPlayer
-    for (const auto& stream : demuxer.mapStream) {
-        if (stream.second->getAssetType() != MmtTlv::AssetType::stpp) {
-            continue;
-        }
-
-        B24::CaptionManagementData captionManagementData;
-        B24::CaptionManagementData::Langage langage;
-        langage.dmf = 0b1010;
-        langage.languageCode = "jpn";
-        langage.format = 0b1000;
-
-        captionManagementData.langages.push_back(langage);
-
-        B24::DataGroup dataGroup;
-        dataGroup.setGroupData(captionManagementData);
-
-        B24::PESData pesData(dataGroup);
-        pesData.SetPESType(B24::PESData::PESType::Synchronized);
-
-        std::vector<uint8_t> packedPesData;
-        pesData.pack(packedPesData);
-
-        B24SubtitleOutput subtitleOutput;
-        subtitleOutput.pesData = packedPesData;
-        writeSubtitle(stream.second, subtitleOutput);
     }
 }
 
@@ -965,4 +1029,7 @@ void RemuxerHandler::clear() {
     mapService2Pid.clear();
     mapCC.clear();
     tsid = -1;
+    lastPcr = 0;
+    lastCaptionManagementDataPts = 0;
+    programStartTime = 0;
 }

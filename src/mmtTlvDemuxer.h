@@ -15,10 +15,10 @@
 #include "mmtTlvStatistics.h"
 #include "casHandler.h"
 #include "dataUnit.h"
+#include "fragmentAssembler.h"
 
 namespace MmtTlv {
 
-class FragmentAssembler;
 class TableBase;
 class Plt;
 class Ecm;
@@ -69,13 +69,17 @@ private:
 	void processEcm(std::shared_ptr<Ecm> ecm);
 
 public:
-	std::shared_ptr<MmtStream> getStream(uint16_t pid);
+	std::shared_ptr<MmtStream> getStream(uint16_t packetId);
+	std::shared_ptr<MmtStream> getStreamByIdx(uint16_t idx);
 	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
-	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStreamByStreamIdx;
 
 private:
-	std::shared_ptr<FragmentAssembler> getAssembler(uint16_t pid);
-	std::map<uint16_t, std::shared_ptr<FragmentAssembler>> mapAssembler;
+	FragmentAssembler* getAssembler(uint16_t packetId);
+	FragmentValidator* getFragmentValidator(uint16_t packetId);
+	std::map<uint16_t, std::unique_ptr<FragmentAssembler>> mapAssembler;
+	std::map<uint16_t, std::unique_ptr<FragmentValidator>> mapFragmentValidator;
+	std::map<uint16_t, uint16_t> mapPacketIdByIdx;
+
 	Tlv tlv;
 	CompressedIPPacket compressedIPPacket;
 	Mmtp mmtp;
@@ -84,7 +88,7 @@ private:
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	std::unique_ptr<CasHandler> casHandler;
 	DemuxerHandler* demuxerHandler = nullptr;
-	mmtTlvStatistics statistics;
+	MmtTlvStatistics statistics;
 
 };
 }

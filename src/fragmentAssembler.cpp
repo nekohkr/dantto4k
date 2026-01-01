@@ -3,8 +3,7 @@
 
 namespace MmtTlv {
 
-bool FragmentAssembler::assemble(const std::vector<uint8_t>& fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber)
-{
+bool FragmentAssembler::assemble(const std::vector<uint8_t>& fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber) {
     switch (fragmentationIndicator) {
     case FragmentationIndicator::NotFragmented:
         if (state == State::InFragment)
@@ -63,10 +62,45 @@ void FragmentAssembler::checkState(uint32_t packetSequenceNumber)
     last_seq = packetSequenceNumber;
 }
 
-void FragmentAssembler::clear()
-{
+void FragmentAssembler::clear() {
     state = State::NotStarted;
     data.clear();
+}
+
+bool FragmentValidator::validate(FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber) {
+    switch (fragmentationIndicator) {
+    case FragmentationIndicator::NotFragmented:
+        if (state == State::InFragment) {
+            return false;
+        }
+        state = State::NotStarted;
+        return true;
+
+    case FragmentationIndicator::FirstFragment:
+        if (state == State::InFragment) {
+            return false;
+        }
+        state = State::InFragment;
+        return true;
+
+    case FragmentationIndicator::MiddleFragment:
+        if (state != State::InFragment) {
+            return false;
+        }
+        return true;
+
+    case FragmentationIndicator::LastFragment:
+        if (state != State::InFragment) {
+            return false;
+        }
+        state = State::NotStarted;
+        return true;
+    }
+    return true;
+}
+
+void FragmentValidator::clear() {
+    state = State::NotStarted;
 }
 
 }

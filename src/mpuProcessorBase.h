@@ -22,18 +22,21 @@ namespace AssetType {
 
 constexpr uint64_t NOPTS_VALUE = 0x8000000000000000;
 
-struct MpuData {
+struct MfuData {
 	std::vector<uint8_t> data;
 	uint64_t pts{NOPTS_VALUE};
 	uint64_t dts{NOPTS_VALUE};
 	int streamIndex{};
 	bool keyframe{false};
+	bool isFirstFragment{false};
+	bool isLastFragment{false};
 };
 
 class MpuProcessorBase {
 public:
 	virtual ~MpuProcessorBase() = default;
-	virtual std::optional<MpuData> process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) { return std::nullopt; }
+	virtual std::optional<MfuData> process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) { return std::nullopt; }
+	virtual void clear() {}
 
 };
 

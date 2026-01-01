@@ -5,7 +5,7 @@
 
 namespace MmtTlv {
 
-class mmtTlvStatistics {
+class MmtTlvStatistics {
 public:
 	uint64_t tlvPacketCount{0};
 	uint64_t tlvIpv4PacketCount{0};
