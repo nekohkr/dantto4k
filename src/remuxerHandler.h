@@ -87,7 +87,7 @@ private:
 	OutputCallback outputCallback;
 	std::unordered_map<uint16_t, uint16_t> mapService2Pid;
 	std::unordered_map<uint16_t, uint8_t> mapCC;
-	std::unordered_map<uint16_t, std::vector<uint8_t>> mapPendingData;
+	std::unordered_map<uint16_t, std::vector<uint8_t>> mapPesPendingData;
     std::unordered_map<uint16_t, uint32_t> mapPesPacketIndex;
 	int tsid{-1};
 	uint64_t lastPcr{0};
