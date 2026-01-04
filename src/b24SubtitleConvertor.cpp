@@ -68,6 +68,12 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
         std::vector<uint8_t> unitDataByte;
         unitDataByte.push_back(B24ControlSet::CS);
 
+        // Set writing format 960 x 540
+        unitDataByte.push_back(B24ControlSet::CSI);
+        unitDataByte.push_back(0x37);
+        unitDataByte.push_back(B24ControlSet::SP);
+        unitDataByte.push_back(B24ControlSet::SWF);
+
         for (const auto& p : div.pTags) {
             if (p.spanTags.empty()) {
                 continue;
