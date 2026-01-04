@@ -222,7 +222,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         pes.setPts(tsPts);
         pes.setDts(tsDts);
         if (mfuData->isFirstFragment && mfuData->isLastFragment) {
-            pes.setHasPacketLength(true);
+            pes.setPayloadLength(streamData.size());
         }
         pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
         if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
@@ -231,16 +231,16 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
         pes.pack(pesOutput);
 
-        mapPendingData[mmtStream->getMpeg2PacketId()] = std::move(pesOutput);
+        mapPesPendingData[mmtStream->getMpeg2PacketId()] = std::move(pesOutput);
         mapPesPacketIndex[mmtStream->getMpeg2PacketId()] = 0;
     }
 
-    mapPendingData[mmtStream->getMpeg2PacketId()].insert(mapPendingData[mmtStream->getMpeg2PacketId()].end(),
+    mapPesPendingData[mmtStream->getMpeg2PacketId()].insert(mapPesPendingData[mmtStream->getMpeg2PacketId()].end(),
         streamData.begin(),
         streamData.end()
     );
 
-    while (mapPendingData[mmtStream->getMpeg2PacketId()].size() > 0) {
+    while (mapPesPendingData[mmtStream->getMpeg2PacketId()].size() > 0) {
         ts::TSPacket packet;
         packet.init(mmtStream->getMpeg2PacketId(), mapCC[mmtStream->getMpeg2PacketId()] & 0xF, 0);
 
@@ -252,18 +252,18 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
 
         const size_t payloadSize = static_cast<size_t>(188 - packet.getHeaderSize());
-        if (!mfuData->isLastFragment && payloadSize > mapPendingData[mmtStream->getMpeg2PacketId()].size()) {
+        if (!mfuData->isLastFragment && payloadSize > mapPesPendingData[mmtStream->getMpeg2PacketId()].size()) {
             return;
         }
 
         ++mapCC[mmtStream->getMpeg2PacketId()];
 
-        const size_t chunkSize = std::min(payloadSize, mapPendingData[mmtStream->getMpeg2PacketId()].size());
+        const size_t chunkSize = std::min(payloadSize, mapPesPendingData[mmtStream->getMpeg2PacketId()].size());
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), mapPendingData[mmtStream->getMpeg2PacketId()].data(), chunkSize);
-        mapPendingData[mmtStream->getMpeg2PacketId()].erase(
-            mapPendingData[mmtStream->getMpeg2PacketId()].begin(),
-            mapPendingData[mmtStream->getMpeg2PacketId()].begin() + chunkSize
+        memcpy(packet.b + packet.getHeaderSize(), mapPesPendingData[mmtStream->getMpeg2PacketId()].data(), chunkSize);
+        mapPesPendingData[mmtStream->getMpeg2PacketId()].erase(
+            mapPesPendingData[mmtStream->getMpeg2PacketId()].begin(),
+            mapPesPendingData[mmtStream->getMpeg2PacketId()].begin() + chunkSize
         );
 
         if (outputCallback) {
@@ -1028,6 +1028,8 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
 void RemuxerHandler::clear() {
     mapService2Pid.clear();
     mapCC.clear();
+    mapPesPendingData.clear();
+    mapPesPacketIndex.clear();
     tsid = -1;
     lastPcr = 0;
     lastCaptionManagementDataPts = 0;

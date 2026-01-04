@@ -50,12 +50,12 @@ public:
 	uint8_t setStreamId() const { return streamId; }
 	void setPayload(const std::vector<uint8_t>* payload) { this->payload = payload; }
 	bool getDataAlignmentIndicator() const { return dataAlignmentIndicator; }
-	void setHasPacketLength(bool useExplicitLength) { this->hasPacketLength = hasPacketLength; }
+	void setPayloadLength(size_t payloadLength) { this->payloadLength = payloadLength; }
 
 private:
 	uint8_t streamId{0};
 	bool dataAlignmentIndicator{false};
-	bool hasPacketLength{false};
+	size_t payloadLength{0};
 	const std::vector<uint8_t>* payload{nullptr};
 	uint64_t pts{NOPTS_VALUE};
 	uint64_t dts{NOPTS_VALUE};

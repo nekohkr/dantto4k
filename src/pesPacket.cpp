@@ -39,8 +39,8 @@ bool PESPacket::pack(std::vector<uint8_t>& output) {
 	}
 
 	size_t length = 0;
-	if (hasPacketLength) {
-		length = payload ? (payload->size() + headerLength + 3) : 0;
+	if (payloadLength > 0) {
+		length = payloadLength + headerLength + 3;
 	}
 
 	if (length > 0xffff) {

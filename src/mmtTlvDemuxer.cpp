@@ -175,8 +175,7 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream) {
     return DemuxStatus::Ok;
 }
 
-void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream) {
     PaMessage message;
     if (!message.unpack(stream)) {
         return;
@@ -188,8 +187,7 @@ void MmtTlvDemuxer::processPaMessage(Common::ReadStream& stream)
     }
 }
 
-void MmtTlvDemuxer::processM2SectionMessage(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processM2SectionMessage(Common::ReadStream& stream) {
     M2SectionMessage message;
     if (!message.unpack(stream)) {
         return;
@@ -198,8 +196,7 @@ void MmtTlvDemuxer::processM2SectionMessage(Common::ReadStream& stream)
     processMmtTable(stream);
 }
 
-void MmtTlvDemuxer::processCaMessage(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processCaMessage(Common::ReadStream& stream) {
     CaMessage message;
     if (!message.unpack(stream)) {
         return;
@@ -208,8 +205,7 @@ void MmtTlvDemuxer::processCaMessage(Common::ReadStream& stream)
     processMmtTable(stream);
 }
 
-void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream) {
     M2ShortSectionMessage message;
     if (!message.unpack(stream)) {
         return;
@@ -218,8 +214,7 @@ void MmtTlvDemuxer::processM2ShortSectionMessage(Common::ReadStream& stream)
     processMmtTable(stream);
 }
 
-void MmtTlvDemuxer::processDataTransmissionMessage(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processDataTransmissionMessage(Common::ReadStream& stream) {
     DataTransmissionMessage message;
     if (!message.unpack(stream)) {
         return;
@@ -228,8 +223,7 @@ void MmtTlvDemuxer::processDataTransmissionMessage(Common::ReadStream& stream)
     processMmtTable(stream);
 }
 
-void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream) {
     if (stream.leftBytes() < 2) {
         return;
     }
@@ -253,8 +247,7 @@ void MmtTlvDemuxer::processTlvTable(Common::ReadStream& stream)
     }
 }
 
-void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream)
-{
+void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream) {
     uint8_t tableId = stream.peek8U();
     processMmtTableStatistics(tableId);
 
@@ -526,8 +519,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const std::shared_ptr<Mpt>& mpt) {
     }
 }
 
-void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream)
-{
+void MmtTlvDemuxer::processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream) {
     for (const auto& ts : descriptor->entries) {
         bool find = false;
         for (size_t i = 0; i < mmtStream->mpuTimestamps.size(); i++) {
