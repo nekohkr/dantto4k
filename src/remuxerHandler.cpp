@@ -285,6 +285,7 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
     pes.setPts(pts);
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     pes.setPayload(&subtitle.pesData);
+    pes.setPayloadLength(subtitle.pesData.size());
     pes.pack(pesOutput);
 
     size_t payloadLength = pesOutput.size();
@@ -349,6 +350,7 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         pes.setPts(lastCaptionManagementDataPts);
         pes.setStreamId(componentTagToStreamId(stream.second->getComponentTag()));
         pes.setPayload(&packedPesData);
+        pes.setPayloadLength(packedPesData.size());
         pes.pack(pesOutput);
 
         size_t payloadLength = pesOutput.size();
