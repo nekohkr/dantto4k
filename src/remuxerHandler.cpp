@@ -201,10 +201,6 @@ void RemuxerHandler::setOutputCallback(OutputCallback cb) {
 }
 
 void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData) {
-    if (mfuData->pts != MmtTlv::NOPTS_VALUE) {
-        writeCaptionManagementData(mfuData->pts);
-    }
-
     if (mfuData->isFirstFragment) {
         constexpr AVRational tsTimeBase = { 1, 90000 };
         const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
@@ -215,6 +211,10 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         if ((mfuData->pts != MmtTlv::NOPTS_VALUE && mfuData->dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
             tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
             tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
+
+            if (mfuData->pts != MmtTlv::NOPTS_VALUE) {
+                writeCaptionManagementData(tsPts);
+            }
         }
 
         std::vector<uint8_t> pesOutput;
@@ -322,6 +322,10 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
     }
 
     lastCaptionManagementDataPts += 9000 * 5;
+
+    if (lastCaptionManagementDataPts + 9000 * 5 <= pts) {
+        lastCaptionManagementDataPts = pts;
+    }
 
     for (const auto& stream : demuxer.mapStream) {
         if (stream.second->getAssetType() != MmtTlv::AssetType::stpp) {
