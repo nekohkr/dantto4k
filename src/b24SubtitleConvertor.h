@@ -122,17 +122,17 @@ namespace B24 {
                 output.push_back(static_cast<uint8_t>(otm >> 8));
                 output.push_back(static_cast<uint8_t>((otm & 0b1111) | 0b1111));
             }
-            output.push_back(static_cast<uint8_t>(langages.size()));
+            output.push_back(static_cast<uint8_t>(languages.size()));
 
-            for (auto& langage : langages) {
-                output.push_back(langage.languageTag << 5 | 1 << 4 | langage.dmf);
-                if (langage.dmf == 0b1100 || langage.dmf == 0b1101 || langage.dmf == 0b1110) {
-                    output.push_back(langage.dc);
+            for (auto& language : languages) {
+                output.push_back(language.languageTag << 5 | 1 << 4 | language.dmf);
+                if (language.dmf == 0b1100 || language.dmf == 0b1101 || language.dmf == 0b1110) {
+                    output.push_back(language.dc);
                 }
-                output.push_back(langage.languageCode[0]);
-                output.push_back(langage.languageCode[1]);
-                output.push_back(langage.languageCode[2]);
-                output.push_back(langage.format << 4 | langage.tcs << 2 | langage.rollupMode);
+                output.push_back(language.languageCode[0]);
+                output.push_back(language.languageCode[1]);
+                output.push_back(language.languageCode[2]);
+                output.push_back(language.format << 4 | language.tcs << 2 | language.rollupMode);
             }
 
             std::vector<uint8_t> packedDataUnit;
@@ -147,13 +147,12 @@ namespace B24 {
             output.push_back(static_cast<uint8_t>(dataUnitSize >> 16));
             output.push_back(static_cast<uint8_t>(dataUnitSize >> 8));
             output.push_back(static_cast<uint8_t>(dataUnitSize));
-
             output.insert(output.end(), packedDataUnit.begin(), packedDataUnit.end());
 
             return true;
         }
 
-        std::list<Langage> langages;
+        std::list<Langage> languages;
         std::vector<DataUnit> dataUnits;
 
     private:

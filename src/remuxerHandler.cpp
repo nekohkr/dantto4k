@@ -165,7 +165,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
     if (output.empty()) {
         return;
     }
-    
+
     for (const auto& pesData : output) {
         writeSubtitle(mmtStream, pesData);
     }
@@ -229,6 +229,9 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
             mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
             pes.setDataAlignmentIndicator(true);
         }
+        if (mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
+            pes.setStuffingByteLength(2);
+        }
         pes.pack(pesOutput);
 
         mapPesPendingData[mmtStream->getMpeg2PacketId()] = std::move(pesOutput);
@@ -286,6 +289,10 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     pes.setPayload(&subtitle.pesData);
     pes.setPayloadLength(subtitle.pesData.size());
+    if (mmtStream->getComponentTag() == 0x30) {
+        pes.setPrivateData(&ccis);
+        pes.setStuffingByteLength(1);
+    }
     pes.pack(pesOutput);
 
     size_t payloadLength = pesOutput.size();
@@ -313,18 +320,19 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
 
 void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
     // Write CaptionManagementData every 0.5 seconds
-    if (lastCaptionManagementDataPts + 9000 * 5 > pts) {
+    if (lastCaptionManagementDataPts + 90 * 500 > pts) {
         return;
     }
 
     if (lastCaptionManagementDataPts == 0) {
         lastCaptionManagementDataPts = pts;
     }
+    else {
+        lastCaptionManagementDataPts += 90 * 500;
 
-    lastCaptionManagementDataPts += 9000 * 5;
-
-    if (lastCaptionManagementDataPts + 9000 * 5 <= pts) {
-        lastCaptionManagementDataPts = pts;
+        if (lastCaptionManagementDataPts + 90 * 500 <= pts) {
+            lastCaptionManagementDataPts = pts;
+        }
     }
 
     for (const auto& stream : demuxer.mapStream) {
@@ -338,7 +346,7 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         langage.languageCode = "jpn";
         langage.format = 0b1000;
 
-        captionManagementData.langages.push_back(langage);
+        captionManagementData.languages.push_back(langage);
 
         B24::DataGroup dataGroup;
         dataGroup.setGroupData(captionManagementData);
@@ -351,10 +359,17 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
 
         std::vector<uint8_t> pesOutput;
         PESPacket pes;
-        pes.setPts(lastCaptionManagementDataPts);
+
+        if (stream.second->getComponentTag() == 0x30) {
+            pes.setPts(lastCaptionManagementDataPts);
+        }
         pes.setStreamId(componentTagToStreamId(stream.second->getComponentTag()));
         pes.setPayload(&packedPesData);
         pes.setPayloadLength(packedPesData.size());
+        if (stream.second->getComponentTag() == 0x30) {
+            pes.setPrivateData(&ccis);
+            pes.setStuffingByteLength(1);
+        }
         pes.pack(pesOutput);
 
         size_t payloadLength = pesOutput.size();

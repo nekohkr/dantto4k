@@ -38,6 +38,15 @@ bool PESPacket::pack(std::vector<uint8_t>& output) {
 		flags |= 0b01000000;
 	}
 
+	if (privateData) {
+		flags |= 0b00000001;
+		headerLength += 1 + static_cast<uint8_t>(privateData->size());
+	}
+
+	if (stuffingByteLength) {
+		headerLength += stuffingByteLength;
+	}
+
 	size_t length = 0;
 	if (payloadLength > 0) {
 		length = payloadLength + headerLength + 3;
@@ -57,6 +66,17 @@ bool PESPacket::pack(std::vector<uint8_t>& output) {
 	}
 	if (dts != NOPTS_VALUE && pts != NOPTS_VALUE && dts != pts) {
 		writePts(stream, 1, dts);
+	}
+
+	if (privateData) {
+		stream.put8U(0b10001110);
+		stream.write(std::span<const uint8_t>{privateData->data(), privateData->size()});
+	}
+
+	if (stuffingByteLength) {
+		for (int i = 0; i < stuffingByteLength; i++) {
+			stream.put8U(0xFF);
+		}
 	}
 
 	if (payload) {

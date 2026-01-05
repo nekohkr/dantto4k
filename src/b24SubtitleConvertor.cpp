@@ -6,37 +6,37 @@
 
 namespace {
 
-    std::vector<std::string> splitByNull(const std::string& data) {
-        std::vector<std::string> tokens;
-        std::string current;
-        for (auto byte : data) {
-            if (byte == 0) {
-                tokens.push_back(current);
-                current.clear();
-            }
-            else {
-                current.push_back(static_cast<char>(byte));
-            }
-        }
-        if (!current.empty()) {
+std::vector<std::string> splitByNull(const std::string& data) {
+    std::vector<std::string> tokens;
+    std::string current;
+    for (auto byte : data) {
+        if (byte == 0) {
             tokens.push_back(current);
+            current.clear();
         }
-        return tokens;
+        else {
+            current.push_back(static_cast<char>(byte));
+        }
     }
+    if (!current.empty()) {
+        tokens.push_back(current);
+    }
+    return tokens;
+}
 
-    void appendNumber(std::vector<uint8_t>& output, int n) {
-        if (n == 0) {
-            output.push_back(0x30);
-            return;
-        }
-        std::vector<uint8_t> temp;
-        while (n > 0) {
-            temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
-            n /= 10;
-        }
-        std::reverse(temp.begin(), temp.end());
-        output.insert(output.end(), temp.begin(), temp.end());
+void appendNumber(std::vector<uint8_t>& output, int n) {
+    if (n == 0) {
+        output.push_back(0x30);
+        return;
     }
+    std::vector<uint8_t> temp;
+    while (n > 0) {
+        temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
+        n /= 10;
+    }
+    std::reverse(temp.begin(), temp.end());
+    output.insert(output.end(), temp.begin(), temp.end());
+}
 
 }
 
