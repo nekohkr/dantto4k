@@ -57,9 +57,11 @@ bool PESPacket::pack(std::vector<uint8_t>& output) {
 	}
 
 	stream.putBe16U(static_cast<uint16_t>(length));
-	stream.put8U(2 << 6 /* reserved */ | dataAlignmentIndicator << 2);
-	stream.put8U(flags);
-	stream.put8U(headerLength);
+	if (streamId != 0xBF) {
+		stream.put8U(2 << 6 /* reserved */ | dataAlignmentIndicator << 2);
+		stream.put8U(flags);
+		stream.put8U(headerLength);
+	}
 
 	if (pts != NOPTS_VALUE) {
 		writePts(stream, flags >> 6, pts);

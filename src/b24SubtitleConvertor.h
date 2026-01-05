@@ -94,15 +94,15 @@ namespace B24 {
 
     class CaptionManagementData {
     public:
-        class Langage {
+        class Language {
         public:
-            uint8_t languageTag{ 0 };
-            uint8_t dmf{ 0 };
-            uint8_t dc{ 0 };
+            uint8_t languageTag{0};
+            uint8_t dmf{0};
+            uint8_t dc{0};
             std::string languageCode;
-            uint8_t format{ 0 };
-            uint8_t tcs{ 0 };
-            uint8_t rollupMode{ 0 };
+            uint8_t format{0};
+            uint8_t tcs{0};
+            uint8_t rollupMode{0};
         };
 
         void setTmd(uint8_t tmd) {
@@ -152,12 +152,12 @@ namespace B24 {
             return true;
         }
 
-        std::list<Langage> languages;
+        std::list<Language> languages;
         std::vector<DataUnit> dataUnits;
 
     private:
-        uint8_t tmd{ 0 };
-        uint64_t otm{ 0 };
+        uint8_t tmd{0};
+        uint64_t otm{0};
     };
 
     class DataGroup {
