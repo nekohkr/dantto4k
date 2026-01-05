@@ -6,37 +6,37 @@
 
 namespace {
 
-    std::vector<std::string> splitByNull(const std::string& data) {
-        std::vector<std::string> tokens;
-        std::string current;
-        for (auto byte : data) {
-            if (byte == 0) {
-                tokens.push_back(current);
-                current.clear();
-            }
-            else {
-                current.push_back(static_cast<char>(byte));
-            }
-        }
-        if (!current.empty()) {
+std::vector<std::string> splitByNull(const std::string& data) {
+    std::vector<std::string> tokens;
+    std::string current;
+    for (auto byte : data) {
+        if (byte == 0) {
             tokens.push_back(current);
+            current.clear();
         }
-        return tokens;
+        else {
+            current.push_back(static_cast<char>(byte));
+        }
     }
+    if (!current.empty()) {
+        tokens.push_back(current);
+    }
+    return tokens;
+}
 
-    void appendNumber(std::vector<uint8_t>& output, int n) {
-        if (n == 0) {
-            output.push_back(0x30);
-            return;
-        }
-        std::vector<uint8_t> temp;
-        while (n > 0) {
-            temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
-            n /= 10;
-        }
-        std::reverse(temp.begin(), temp.end());
-        output.insert(output.end(), temp.begin(), temp.end());
+void appendNumber(std::vector<uint8_t>& output, int n) {
+    if (n == 0) {
+        output.push_back(0x30);
+        return;
     }
+    std::vector<uint8_t> temp;
+    while (n > 0) {
+        temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
+        n /= 10;
+    }
+    std::reverse(temp.begin(), temp.end());
+    output.insert(output.end(), temp.begin(), temp.end());
+}
 
 }
 
@@ -67,6 +67,12 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
 
         std::vector<uint8_t> unitDataByte;
         unitDataByte.push_back(B24ControlSet::CS);
+
+        // Set writing format 960 x 540
+        unitDataByte.push_back(B24ControlSet::CSI);
+        unitDataByte.push_back(0x37);
+        unitDataByte.push_back(B24ControlSet::SP);
+        unitDataByte.push_back(B24ControlSet::SWF);
 
         for (const auto& p : div.pTags) {
             if (p.spanTags.empty()) {

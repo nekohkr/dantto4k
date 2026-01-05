@@ -165,7 +165,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
     if (output.empty()) {
         return;
     }
-    
+
     for (const auto& pesData : output) {
         writeSubtitle(mmtStream, pesData);
     }
@@ -201,10 +201,6 @@ void RemuxerHandler::setOutputCallback(OutputCallback cb) {
 }
 
 void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData) {
-    if (mfuData->pts != MmtTlv::NOPTS_VALUE) {
-        writeCaptionManagementData(mfuData->pts);
-    }
-
     if (mfuData->isFirstFragment) {
         constexpr AVRational tsTimeBase = { 1, 90000 };
         const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
@@ -228,6 +224,9 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
             mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
             pes.setDataAlignmentIndicator(true);
+        }
+        if (mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
+            pes.setStuffingByteLength(2);
         }
         pes.pack(pesOutput);
 
@@ -275,16 +274,24 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 
 void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle) {
     std::vector<uint8_t> pesOutput;
-    uint64_t pts = subtitle.calcPts(programStartTime);
-    pts = std::max(pts, lastPcr / 300);
-    if (pts == 0) {
-        return;
-    }
 
     PESPacket pes;
-    pes.setPts(pts);
+    if (mmtStream->getComponentTag() == 0x30) {
+        uint64_t pts = subtitle.calcPts(programStartTime);
+        pts = std::max(pts, lastPcr / 300);
+        if (pts == 0) {
+            return;
+        }
+        pes.setPts(pts);
+    }
+
     pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
     pes.setPayload(&subtitle.pesData);
+    pes.setPayloadLength(subtitle.pesData.size());
+    if (mmtStream->getComponentTag() == 0x30) {
+        pes.setPrivateData(&ccis);
+        pes.setStuffingByteLength(1);
+    }
     pes.pack(pesOutput);
 
     size_t payloadLength = pesOutput.size();
@@ -312,15 +319,20 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
 
 void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
     // Write CaptionManagementData every 0.5 seconds
-    if (lastCaptionManagementDataPts + 9000 * 5 > pts) {
+    if (lastCaptionManagementDataPts + 90 * 500 > pts) {
         return;
     }
 
     if (lastCaptionManagementDataPts == 0) {
         lastCaptionManagementDataPts = pts;
     }
+    else {
+        lastCaptionManagementDataPts += 90 * 500;
 
-    lastCaptionManagementDataPts += 9000 * 5;
+        if (lastCaptionManagementDataPts + 90 * 500 <= pts) {
+            lastCaptionManagementDataPts = pts;
+        }
+    }
 
     for (const auto& stream : demuxer.mapStream) {
         if (stream.second->getAssetType() != MmtTlv::AssetType::stpp) {
@@ -328,27 +340,44 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         }
 
         B24::CaptionManagementData captionManagementData;
-        B24::CaptionManagementData::Langage langage;
-        langage.dmf = 0b1010;
-        langage.languageCode = "jpn";
-        langage.format = 0b1000;
+        B24::CaptionManagementData::Language language;
+        language.languageCode = "jpn";
+        language.format = 0b1000;
+        if (stream.second->getComponentTag() == 0x30) {
+            language.dmf = 0b1010;
+        }
+        else {
+            language.dmf = 0;
+        }
 
-        captionManagementData.langages.push_back(langage);
-
+        captionManagementData.languages.push_back(language);
         B24::DataGroup dataGroup;
         dataGroup.setGroupData(captionManagementData);
 
         B24::PESData pesData(dataGroup);
-        pesData.SetPESType(B24::PESData::PESType::Synchronized);
+        if (stream.second->getComponentTag() == 0x30) {
+            pesData.SetPESType(B24::PESData::PESType::Synchronized);
+        }
+        else {
+            pesData.SetPESType(B24::PESData::PESType::Asynchronous);
+        }
 
         std::vector<uint8_t> packedPesData;
+
         pesData.pack(packedPesData);
 
         std::vector<uint8_t> pesOutput;
         PESPacket pes;
-        pes.setPts(lastCaptionManagementDataPts);
+        if (stream.second->getComponentTag() == 0x30) {
+            pes.setPts(lastCaptionManagementDataPts);
+        }
         pes.setStreamId(componentTagToStreamId(stream.second->getComponentTag()));
         pes.setPayload(&packedPesData);
+        pes.setPayloadLength(packedPesData.size());
+        if (stream.second->getComponentTag() == 0x30) {
+            pes.setPrivateData(&ccis);
+            pes.setStuffingByteLength(1);
+        }
         pes.pack(pesOutput);
 
         size_t payloadLength = pesOutput.size();
@@ -827,7 +856,12 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
                 else if (asset.assetType == MmtTlv::AssetType::stpp) {
                     ts::DataComponentDescriptor descriptor;
                     descriptor.data_component_id = 0x0008;
-                    descriptor.additional_data_component_info.push_back(0x3D);
+                    if (mmtStream->getComponentTag() == 0x30) {
+                        descriptor.additional_data_component_info.push_back(0x3D);
+                    }
+                    else {
+                        descriptor.additional_data_component_info.push_back(0x3C);
+                    }
                     stream.descs.add(duck, descriptor);
                 }
 
@@ -1023,6 +1057,8 @@ void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
     }
 
     lastPcr = ntp->transmit_timestamp.toPcrValue();
+
+    writeCaptionManagementData(ntp->transmit_timestamp.toPcrValue() / 300);
 }
 
 void RemuxerHandler::clear() {

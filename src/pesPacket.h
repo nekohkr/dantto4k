@@ -49,15 +49,19 @@ public:
 	uint64_t getDts() const { return dts; }
 	uint8_t setStreamId() const { return streamId; }
 	void setPayload(const std::vector<uint8_t>* payload) { this->payload = payload; }
+	void setPrivateData(const std::vector<uint8_t>* privateData) { this->privateData = privateData; }
 	bool getDataAlignmentIndicator() const { return dataAlignmentIndicator; }
 	void setPayloadLength(size_t payloadLength) { this->payloadLength = payloadLength; }
+	void setStuffingByteLength(uint8_t stuffingByteLength) { this->stuffingByteLength = stuffingByteLength; }
 
 private:
 	uint8_t streamId{0};
 	bool dataAlignmentIndicator{false};
 	size_t payloadLength{0};
-	const std::vector<uint8_t>* payload{nullptr};
+	const std::vector<uint8_t>* payload{ nullptr };
+	const std::vector<uint8_t>* privateData{nullptr};
 	uint64_t pts{NOPTS_VALUE};
 	uint64_t dts{NOPTS_VALUE};
+	uint8_t stuffingByteLength{0};
 
 };
