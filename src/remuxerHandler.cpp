@@ -317,12 +317,15 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
     }
     pes.pack(pesOutput);
 
+    const auto pid = mmtStream->getMpeg2PacketId();
+    auto& cc = mapCC[pid];
+
     size_t payloadLength = pesOutput.size();
     int i = 0;
     while (payloadLength > 0) {
         ts::TSPacket packet;
-        packet.init(mmtStream->getMpeg2PacketId(), mapCC[mmtStream->getMpeg2PacketId()] & 0xF, 0);
-        ++mapCC[mmtStream->getMpeg2PacketId()];
+        packet.init(pid, cc & 0xF, 0);
+        ++cc;
 
         if (i == 0) {
             packet.setPUSI();
@@ -405,12 +408,15 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         }
         pes.pack(pesOutput);
 
+        const auto pid = stream.second->getMpeg2PacketId();
+        auto& cc = mapCC[pid];
+
         size_t payloadLength = pesOutput.size();
         int i = 0;
         while (payloadLength > 0) {
             ts::TSPacket packet;
-            packet.init(stream.second->getMpeg2PacketId(), mapCC[stream.second->getMpeg2PacketId()] & 0xF, 0);
-            ++mapCC[stream.second->getMpeg2PacketId()];
+            packet.init(pid, cc & 0xF, 0);
+            ++cc;
 
             if (i == 0) {
                 packet.setPUSI();
@@ -534,6 +540,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
     ts::BinaryTable table;
     tsBit.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_BIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_BIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
@@ -544,8 +551,8 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_BIT] & 0xF);
-            mapCC[ts::PID_BIT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -688,6 +695,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_EIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_EIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
@@ -704,8 +712,8 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_EIT] & 0xF);
-            mapCC[ts::PID_EIT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -757,6 +765,7 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
     ts::BinaryTable table;
     tsSdt.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_SDT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_SDT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
@@ -767,8 +776,8 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_SDT] & 0xF);
-            mapCC[ts::PID_SDT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -805,6 +814,7 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
     ts::BinaryTable table;
     pat.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_PAT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_PAT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -814,8 +824,8 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_PAT] & 0xF);
-            mapCC[ts::PID_PAT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -935,6 +945,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
     ts::BinaryTable table;
     tsPmt.serialize(duck, table);
 
+    auto& cc = mapCC[pid];
     ts::OneShotPacketizer packetizer(duck, pid);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -944,8 +955,8 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[pid] & 0xF);
-            mapCC[pid]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -962,6 +973,8 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
 
     ts::BinaryTable table;
     tot.serialize(duck, table);
+
+    auto& cc = mapCC[ts::PID_TOT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_TOT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -972,8 +985,8 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_TOT] & 0xF);
-            mapCC[ts::PID_TOT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -992,6 +1005,8 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
 
     ts::BinaryTable table;
     cdt.serialize(duck, table);
+
+    auto& cc = mapCC[ts::PID_CDT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_CDT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -1003,8 +1018,8 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_CDT] & 0xF);
-            mapCC[ts::PID_CDT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -1051,6 +1066,8 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
 
     ts::BinaryTable table;
     tsNit.serialize(duck, table);
+
+    auto& cc = mapCC[ts::PID_NIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_NIT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -1062,8 +1079,8 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_NIT] & 0xF);
-            mapCC[ts::PID_NIT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -1073,9 +1090,10 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
 }
 
 void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
+    auto& cc = mapCC[PCR_PID];
     ts::TSPacket packet;
-    packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
-    mapCC[PCR_PID]++;
+    packet.init(PCR_PID, cc & 0xF, 0);
+    cc++;
 
     // Add 0.1 seconds to resolve the playback issue in VLC
     packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
