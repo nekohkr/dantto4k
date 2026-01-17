@@ -129,7 +129,7 @@ constexpr Gaiji jisX0201KatakanaTable[] = {
     { u8"ﾟ", u8"゜" }
 };
 
-void replaceSequence(std::string& str, const std::string& sequence, const char* replacement) {
+void replaceSequence(std::string& str, std::string_view sequence, const char* replacement) {
     std::size_t pos = 0;
 
     while ((pos = str.find(sequence, pos)) != std::string::npos) {
@@ -145,15 +145,56 @@ void convertGaiji(std::string& str) {
 }
 
 void jisX0201KatakanaToKatakana(std::string& str) {
-    for (const auto& jisX0201 : jisX0201KatakanaTable) {
-        replaceSequence(str, reinterpret_cast<const char*>(jisX0201.find), reinterpret_cast<const char*>(jisX0201.replacement));
+    // Half-width Katakana (JIS X 0201) in UTF-8 ranges from EF BD A1 to EF BE 9F.
+    static const auto KatakanaReplacementTable = [] {
+        std::array<const char*, 95> table{};
+        for (const auto& item : jisX0201KatakanaTable) {
+            const char* find = reinterpret_cast<const char*>(item.find);
+            const unsigned char c1 = find[0];
+            const unsigned char c2 = find[1];
+            const unsigned char c3 = find[2];
+            if (c1 == 0xEF && c2 == 0xBD && c3 >= 0xA1 && c3 <= 0xBF) {
+                table[c3 - 0xA1] = reinterpret_cast<const char*>(item.replacement);
+            } else if (c1 == 0xEF && c2 == 0xBE && c3 >= 0x80 && c3 <= 0x9F) {
+                table[c3 - 0x80 + 31] = reinterpret_cast<const char*>(item.replacement);
+            }
+        }
+        return table;
+    }();
+
+    thread_local std::string buffer;
+    buffer.clear();
+    buffer.reserve(str.length());
+
+    for (size_t i = 0; i < str.length(); ) {
+        const unsigned char c1 = str[i];
+        if (c1 == 0xEF && i + 2 < str.length()) {
+            const unsigned char c2 = str[i + 1];
+            const unsigned char c3 = str[i + 2];
+            if (c2 == 0xBD && c3 >= 0xA1 && c3 <= 0xBF) {
+                if (KatakanaReplacementTable[c3 - 0xA1]) {
+                    buffer.append(KatakanaReplacementTable[c3 - 0xA1]);
+                    i += 3;
+                    continue;
+                }
+            } else if (c2 == 0xBE && c3 >= 0x80 && c3 <= 0x9F) {
+                if (KatakanaReplacementTable[c3 - 0x80 + 31]) {
+                    buffer.append(KatakanaReplacementTable[c3 - 0x80 + 31]);
+                    i += 3;
+                    continue;
+                }
+            }
+        }
+        buffer.push_back(c1);
+        i++;
     }
+    str = buffer;
 }
 
 }
 
-const std::string aribEncode(const std::string& input, bool isCaption) {
-    std::string converted = input;
+const std::string aribEncode(std::string_view input, bool isCaption) {
+    std::string converted{ input };
     convertGaiji(converted);
 
     // Convert JIS X 0201 Katakana to Katakana for Mirakurun
@@ -164,7 +205,6 @@ const std::string aribEncode(const std::string& input, bool isCaption) {
     return AribEncoder::encode(converted, isCaption);
 }
 
-
 const std::string aribEncode(const char* input, size_t size, bool isCaption) {
-    return aribEncode(std::string{ input, size }, isCaption);
+    return aribEncode({ input, size }, isCaption);
 }
