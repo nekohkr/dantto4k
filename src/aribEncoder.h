@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <set>
 #include <vector>
+#include <mutex>
 
 class AribEncoder {
 public:
@@ -487,97 +488,129 @@ private:
         uint8_t col;
     };
 
-    std::optional<findResult> findCharInCharset(char32_t c, const Charset* charset) {
-        for (uint8_t row = 0; row < charset->rowCount; row++) {
-            if (charset->rowIndex) {
-                if (charset->rowIndex[row] == -1) {
-                    continue;
-                }
-            }
+    // Cache map for O(1) character lookup. Maps Unicode character to a list of possible positions in ARIB charsets.
+    // O(1)文字検索用のキャッシュマップ。Unicode文字をARIB文字セット内の可能な位置のリストにマッピングします。
+    static inline std::unordered_map<char32_t, std::vector<findResult>> charToAribMap;
+    static inline std::once_flag initFlag;
 
-            for (uint8_t col = 0; col < 94; col++) {
-                const uint8_t actualRow = charset->rowIndex ? charset->rowIndex[row] : row;
-                if (charset->rows[actualRow][col] == c) {
+    // Initializes the lookup map. Iterates through charsets in default priority order.
+    // 検索マップを初期化します。デフォルトの優先順位で文字セットを反復処理します。
+    static void initializeCharToAribMap() {
+        const Charset* charsets[] = { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1, &jisKanjiPlane2 };
+
+        for (const auto* charset : charsets) {
+            for (uint8_t row = 0; row < charset->rowCount; row++) {
+                if (charset->rowIndex) {
+                    if (charset->rowIndex[row] == -1) {
+                        continue;
+                    }
+                }
+
+                for (uint8_t col = 0; col < 94; col++) {
+                    const uint8_t actualRow = charset->rowIndex ? charset->rowIndex[row] : row;
+                    char32_t c = charset->rows[actualRow][col];
+                    
                     findResult result = {
                         charset,
                         static_cast<uint8_t>(row + charset->rowStart),
                         col
                     };
-                    return result;
+                    charToAribMap[c].push_back(result);
                 }
             }
         }
-
-        return std::nullopt;
     }
 
+    // Finds a character in ARIB charsets using the cached map. Respects candidate priority.
+    // キャッシュされたマップを使用して、ARIB文字セット内の文字を検索します。候補の優先順位を尊重します。
     std::optional<findResult> findChar(char32_t c, CharsetCode candidate1, CharsetCode candidate2) {
-        std::vector<const Charset*> charsets;
-        std::set<const Charset*> seen;
+        std::call_once(initFlag, initializeCharToAribMap);
+
+        auto it = charToAribMap.find(c);
+        if (it == charToAribMap.end()) {
+            return std::nullopt;
+        }
+
+        const auto& results = it->second;
+        if (results.empty()) {
+            return std::nullopt;
+        }
+
+        if (results.size() == 1) {
+            return results[0];
+        }
+
         if (candidate1 != CharsetCode::None &&
             candidate1 != CharsetCode::JISKanjiPlane1 &&
             candidate1 != CharsetCode::JISKanjiPlane2) {
-            if (seen.insert(mapCharset.at(candidate1)).second) {
-                charsets.push_back(mapCharset.at(candidate1));
+            for (const auto& res : results) {
+                if (res.charset->code == candidate1) return res;
             }
         }
+
         if (candidate2 != CharsetCode::None &&
             candidate2 != CharsetCode::JISKanjiPlane1 &&
             candidate2 != CharsetCode::JISKanjiPlane2) {
-            if (seen.insert(mapCharset.at(candidate2)).second) {
-                charsets.push_back(mapCharset.at(candidate2));
+            for (const auto& res : results) {
+                if (res.charset->code == candidate2) return res;
             }
         }
 
-        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1, &jisKanjiPlane2 }) {
-            if (seen.insert(charset).second) {
-                charsets.push_back(charset);
-            }
-        }
-
-        for (const auto* charset : charsets) {
-            auto result = findCharInCharset(c, charset);
-            if (result) {
-                return result;
-            }
-        }
-        return std::nullopt;
+        return results[0];
     }
 
+    // Finds a common charset for two characters using the cached map.
+    // キャッシュされたマップを使用して、2つの文字に共通する文字セットを検索します。
     std::optional<findResult> findCharsetBy2Char(char32_t c1, char32_t c2, CharsetCode candidate1, CharsetCode candidate2) {
-        std::vector<const Charset*> charsets;
-        std::set<const Charset*> seen;
+        std::call_once(initFlag, initializeCharToAribMap);
+
+        auto it1 = charToAribMap.find(c1);
+        if (it1 == charToAribMap.end()) return std::nullopt;
+        const auto& results1 = it1->second;
+
+        auto it2 = charToAribMap.find(c2);
+        if (it2 == charToAribMap.end()) return std::nullopt;
+        const auto& results2 = it2->second;
+
+        auto hasCharset = [](const std::vector<findResult>& list, const Charset* target) {
+            for (const auto& res : list) {
+                if (res.charset == target) return true;
+            }
+            return false;
+        };
 
         if (candidate1 != CharsetCode::None &&
             candidate1 != CharsetCode::JISKanjiPlane1 &&
             candidate1 != CharsetCode::JISKanjiPlane2) {
-            if (seen.insert(mapCharset.at(candidate1)).second) {
-                charsets.push_back(mapCharset.at(candidate1));
+            const Charset* cs = mapCharset.at(candidate1);
+            bool found1 = false;
+            findResult res1;
+            for(const auto& r : results1) { if(r.charset == cs) { found1 = true; res1 = r; break; } }
+            
+            if (found1 && hasCharset(results2, cs)) {
+                return res1;
             }
         }
+
         if (candidate2 != CharsetCode::None &&
             candidate2 != CharsetCode::JISKanjiPlane1 &&
             candidate2 != CharsetCode::JISKanjiPlane2) {
-            if (seen.insert(mapCharset.at(candidate2)).second) {
-                charsets.push_back(mapCharset.at(candidate2));
+            const Charset* cs = mapCharset.at(candidate2);
+            bool found1 = false;
+            findResult res1;
+            for(const auto& r : results1) { if(r.charset == cs) { found1 = true; res1 = r; break; } }
+            
+            if (found1 && hasCharset(results2, cs)) {
+                return res1;
             }
         }
 
-        for (const auto* charset : { &alphanumeric, &hiragana, &katakana, &jisX0201Katakana, &additionalSymbols, &jisKanjiPlane1, &jisKanjiPlane2 }) {
-            if (seen.insert(charset).second) {
-                charsets.push_back(charset);
-            }
+        for (const auto& res1 : results1) {
+             if (hasCharset(results2, res1.charset)) {
+                 return res1;
+             }
         }
 
-        for (const auto* charset : charsets) {
-            auto result1 = findCharInCharset(c1, charset);
-            if (result1) {
-                auto result2 = findCharInCharset(c2, charset);
-                if (result2) {
-                    return result1;
-                }
-            }
-        }
         return std::nullopt;
     }
 };
