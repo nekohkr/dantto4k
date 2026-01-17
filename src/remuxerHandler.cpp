@@ -201,6 +201,11 @@ void RemuxerHandler::setOutputCallback(OutputCallback cb) {
 }
 
 void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData) {
+    const auto pid = mmtStream->getMpeg2PacketId();
+    auto& pendingData = mapPesPendingData[pid];
+    auto& cc = mapCC[pid];
+    auto& packetIndex = mapPesPacketIndex[pid];
+
     if (mfuData->isFirstFragment) {
         constexpr AVRational tsTimeBase = { 1, 90000 };
         const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
@@ -230,20 +235,20 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
         pes.pack(pesOutput);
 
-        mapPesPendingData[mmtStream->getMpeg2PacketId()] = std::move(pesOutput);
-        mapPesPacketIndex[mmtStream->getMpeg2PacketId()] = 0;
+        pendingData = std::move(pesOutput);
+        packetIndex = 0;
     }
 
-    mapPesPendingData[mmtStream->getMpeg2PacketId()].insert(mapPesPendingData[mmtStream->getMpeg2PacketId()].end(),
+    pendingData.insert(pendingData.end(),
         streamData.begin(),
         streamData.end()
     );
 
-    while (mapPesPendingData[mmtStream->getMpeg2PacketId()].size() > 0) {
+    while (pendingData.size() > 0) {
         ts::TSPacket packet;
-        packet.init(mmtStream->getMpeg2PacketId(), mapCC[mmtStream->getMpeg2PacketId()] & 0xF, 0);
+        packet.init(pid, cc & 0xF, 0);
 
-        if (mapPesPacketIndex[mmtStream->getMpeg2PacketId()] == 0) {
+        if (packetIndex == 0) {
             packet.setPUSI();
             if (mfuData->keyframe) {
                 packet.setRandomAccessIndicator(true);
@@ -251,24 +256,24 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
 
         const size_t payloadSize = static_cast<size_t>(188 - packet.getHeaderSize());
-        if (!mfuData->isLastFragment && payloadSize > mapPesPendingData[mmtStream->getMpeg2PacketId()].size()) {
+        if (!mfuData->isLastFragment && payloadSize > pendingData.size()) {
             return;
         }
 
-        ++mapCC[mmtStream->getMpeg2PacketId()];
+        ++cc;
 
-        const size_t chunkSize = std::min(payloadSize, mapPesPendingData[mmtStream->getMpeg2PacketId()].size());
+        const size_t chunkSize = std::min(payloadSize, pendingData.size());
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), mapPesPendingData[mmtStream->getMpeg2PacketId()].data(), chunkSize);
-        mapPesPendingData[mmtStream->getMpeg2PacketId()].erase(
-            mapPesPendingData[mmtStream->getMpeg2PacketId()].begin(),
-            mapPesPendingData[mmtStream->getMpeg2PacketId()].begin() + chunkSize
+        memcpy(packet.b + packet.getHeaderSize(), pendingData.data(), chunkSize);
+        pendingData.erase(
+            pendingData.begin(),
+            pendingData.begin() + chunkSize
         );
 
         if (outputCallback) {
             outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
         }
-        mapPesPacketIndex[mmtStream->getMpeg2PacketId()]++;
+        packetIndex++;
     }
 }
 
