@@ -205,6 +205,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     auto& pendingData = mapPesPendingData[pid];
     auto& cc = mapCC[pid];
     auto& packetIndex = mapPesPacketIndex[pid];
+    size_t offset = 0;
 
     if (mfuData->isFirstFragment) {
         constexpr AVRational tsTimeBase = { 1, 90000 };
@@ -235,16 +236,16 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
         pes.pack(pesOutput);
 
-        pendingData = std::move(pesOutput);
+        // Reuse existing capacity to avoid reallocation.
+        pendingData.clear();
+        pendingData.insert(pendingData.end(), pesOutput.begin(), pesOutput.end());
         packetIndex = 0;
     }
 
-    pendingData.insert(pendingData.end(),
-        streamData.begin(),
-        streamData.end()
-    );
+    pendingData.insert(pendingData.end(), streamData.begin(), streamData.end());
 
-    while (pendingData.size() > 0) {
+    // Process pending data using the offset
+    while (offset < pendingData.size()) {
         ts::TSPacket packet;
         packet.init(pid, cc & 0xF, 0);
 
@@ -256,24 +257,41 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
 
         const size_t payloadSize = static_cast<size_t>(188 - packet.getHeaderSize());
-        if (!mfuData->isLastFragment && payloadSize > pendingData.size()) {
-            return;
+        const size_t remainingDataSize = pendingData.size() - offset;
+
+        if (!mfuData->isLastFragment && payloadSize > remainingDataSize) {
+            break;
         }
 
         ++cc;
 
-        const size_t chunkSize = std::min(payloadSize, pendingData.size());
+        const size_t chunkSize = std::min(payloadSize, remainingDataSize);
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), pendingData.data(), chunkSize);
-        pendingData.erase(
-            pendingData.begin(),
-            pendingData.begin() + chunkSize
-        );
+
+        // Copy data from buffer + offset to packet buffer.
+        auto source_view = std::span{ pendingData }.subspan(offset, chunkSize);
+        auto dest_view = std::span{ packet.b }.subspan(packet.getHeaderSize(), chunkSize);
+        std::ranges::copy(source_view, dest_view.begin());
+
+        offset += chunkSize;
 
         if (outputCallback) {
             outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
         }
         packetIndex++;
+    }
+
+    // Cleanup consumed data if any.
+    if (offset > 0) {
+        if (offset == pendingData.size()) {
+            pendingData.clear();
+        }
+        else {
+            // Remove consumed part from front.
+            // Since we only do this when the buffer is not fully consumed (which typically means wait for more data),
+            // and usually remaining data is small (less than a TS payload), this move is cheap.
+            pendingData.erase(pendingData.begin(), pendingData.begin() + offset);
+        }
     }
 }
 
@@ -312,7 +330,9 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
 
         const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
+        auto source_view = std::span{ pesOutput }.subspan(pesOutput.size() - payloadLength, chunkSize);
+        auto dest_view = std::span{ packet.b }.subspan(packet.getHeaderSize(), chunkSize);
+        std::ranges::copy(source_view, dest_view.begin());
         payloadLength -= chunkSize;
 
         if (outputCallback) {
@@ -398,7 +418,9 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
 
             const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
             packet.setPayloadSize(chunkSize);
-            memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
+            auto source_view = std::span{ pesOutput }.subspan(pesOutput.size() - payloadLength, chunkSize);
+            auto dest_view = std::span{ packet.b }.subspan(packet.getHeaderSize(), chunkSize);
+            std::ranges::copy(source_view, dest_view.begin());
             payloadLength -= chunkSize;
 
             if (outputCallback) {
@@ -496,7 +518,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
                     }
 
                     tsEntry.table_description.resize(entry.tableDescriptionByte.size());
-                    memcpy(tsEntry.table_description.data(), entry.tableDescriptionByte.data(), entry.tableDescriptionByte.size());
+                    std::copy(entry.tableDescriptionByte.begin(), entry.tableDescriptionByte.end(), tsEntry.table_description.begin());
                     tsDescriptor.entries.push_back(tsEntry);
                 }
 
@@ -966,7 +988,7 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
     cdt.download_data_id = mhCdt->downloadDataId;
     cdt.data_type = mhCdt->dataType;
     cdt.data_module.resize(mhCdt->dataModuleByte.size());
-    memcpy(cdt.data_module.data(), mhCdt->dataModuleByte.data(), mhCdt->dataModuleByte.size());
+    std::copy(mhCdt->dataModuleByte.begin(), mhCdt->dataModuleByte.end(), cdt.data_module.begin());
 
     ts::BinaryTable table;
     cdt.serialize(duck, table);
