@@ -71,54 +71,54 @@ public:
     }
 
     uint8_t get8U() {
-        uint8_t value;
-        read(&value, sizeof(value));
+        auto value = peek8U();
+        skip(sizeof(value));
         return value;
     }
 
     uint16_t getBe16U() {
-        uint16_t value;
-        read(&value, sizeof(value));
-        return swapEndian16(value);
-    }
-
-    uint32_t getBe32U() {
-        uint32_t value;
-        read(&value, sizeof(value));
-        return swapEndian32(value);
-    }
-
-    uint64_t getBe64U() {
-        uint64_t value;
-        read(&value, sizeof(value));
-        return swapEndian64(value);
-    }
-
-    uint8_t peek8U() {
-        uint8_t value;
-        peek(&value, sizeof(value));
+        auto value = peekBe16U();
+        skip(sizeof(value));
         return value;
     }
 
+    uint32_t getBe32U() {
+        auto value = peekBe32U();
+        skip(sizeof(value));
+        return value;
+    }
+
+    uint64_t getBe64U() {
+        auto value = peekBe64U();
+        skip(sizeof(value));
+        return value;
+    }
+
+    uint8_t peek8U() {
+        return peekObject<uint8_t>();
+    }
+
     uint16_t peekBe16U() {
-        uint16_t value;
-        peek(&value, sizeof(value));
-        return swapEndian16(value);
+        return swapEndian16(peekObject<uint16_t>());
     }
 
     uint32_t peekBe32U() {
-        uint32_t value;
-        peek(&value, sizeof(value));
-        return swapEndian32(value);
+        return swapEndian32(peekObject<uint32_t>());
     }
 
     uint64_t peekBe64U() {
-        uint64_t value;
-        peek(&value, sizeof(value));
-        return swapEndian64(value);
+        return swapEndian64(peekObject<uint64_t>());
     }
 
 private:
+    template<typename T>
+    T peekObject() {
+        if (size < pos + sizeof(T)) {
+            throw std::out_of_range("Access out of bounds");
+        }
+        return *reinterpret_cast<const T*>(buffer.data() + pos);
+    }
+
     const std::vector<uint8_t>& buffer;
     bool hasSize = false;
     mutable size_t size = 0;
