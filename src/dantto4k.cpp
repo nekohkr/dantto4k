@@ -9,6 +9,7 @@
 #include "acasHandler.h"
 #include "smartCard.h"
 #include "bufferedOutput.h"
+#include "progressReporter.h"
 
 namespace {
 
@@ -21,6 +22,7 @@ struct Args {
     std::string customWinscardDLL;
     bool disableADTSConversion{false};
     bool listSmartCardReader{false};
+    bool progress{false};
 };
 
 
@@ -40,6 +42,7 @@ Args parseArguments(int argc, char* argv[]) {
             ("customWinscardDLL", "Specify the path to a winscard.dll", cxxopts::value<std::string>()->default_value(""))
 #endif
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
+            ("progress", "Show progress", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
         options.parse_positional({ "input", "output" });
@@ -86,6 +89,7 @@ Args parseArguments(int argc, char* argv[]) {
         }
 
         args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
+        args.progress = result["progress"].as<bool>();
     }
     catch (const cxxopts::exceptions::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -151,6 +155,15 @@ int main(int argc, char* argv[]) {
         }
         inputStream = inputFs.get();
     }
+
+    uint64_t fileSize = 0;
+    if (!useStdin) {
+        auto currentPos = inputFs->tellg();
+        inputFs->seekg(0, std::ios::end);
+        fileSize = inputFs->tellg();
+        inputFs->seekg(currentPos);
+    }
+    ProgressReporter progressReporter(fileSize, args.progress);
 
     std::ostream* outputStream;
     std::unique_ptr<std::ofstream> outputFs;
@@ -231,10 +244,15 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
-
-        inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (inputBuffer.size() - stream.leftBytes()));
+        
+        auto consumed = inputBuffer.size() - stream.leftBytes();
+        if (consumed > 0) {
+            progressReporter.update(consumed);
+        }
+        inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + consumed);
     }
 
+    progressReporter.finish();
     demuxer.printStatistics();
     demuxer.clear();
 
