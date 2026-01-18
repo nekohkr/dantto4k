@@ -226,14 +226,13 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        if (inputBuffer.size() < chunkSize) {
-            std::vector<uint8_t> buffer(chunkSize);
-            inputStream->read(reinterpret_cast<char*>(buffer.data()), chunkSize);
-            std::streamsize bytes = inputStream->gcount();
-
-            if (bytes > 0) {
-                inputBuffer.insert(inputBuffer.end(), buffer.begin(), buffer.begin() + bytes);
-            }
+        size_t oldSize = inputBuffer.size();
+        size_t bytesToRead = chunkSize;
+        if (oldSize < chunkSize) {
+            inputBuffer.resize(oldSize + bytesToRead);
+            inputStream->read(reinterpret_cast<char*>(inputBuffer.data() + oldSize), chunkSize);
+            std::streamsize bytesRead = inputStream->gcount();
+            inputBuffer.resize(oldSize + bytesRead);
         }
 
         MmtTlv::Common::ReadStream stream(inputBuffer);
