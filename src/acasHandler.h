@@ -6,6 +6,7 @@
 #include "acasCard.h"
 #include "smartCard.h"
 #include "casHandler.h"
+#include "aesCtrCipher.h"
 
 class AcasHandler : public MmtTlv::CasHandler {
 public:
@@ -32,4 +33,7 @@ private:
     std::thread workerThread;
     std::string acasServerUrl;
 
+    AESCtrCipher aes;
+    std::array<uint8_t, 16> lastKey{};
+    bool hasAESNI = false;
 };
