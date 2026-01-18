@@ -205,6 +205,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     auto& pendingData = mapPesPendingData[pid];
     auto& cc = mapCC[pid];
     auto& packetIndex = mapPesPacketIndex[pid];
+    size_t offset = 0;
 
     if (mfuData->isFirstFragment) {
         constexpr AVRational tsTimeBase = { 1, 90000 };
@@ -235,16 +236,16 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
         pes.pack(pesOutput);
 
-        pendingData = std::move(pesOutput);
+        // Reuse existing capacity to avoid reallocation.
+        pendingData.clear();
+        pendingData.insert(pendingData.end(), pesOutput.begin(), pesOutput.end());
         packetIndex = 0;
     }
 
-    pendingData.insert(pendingData.end(),
-        streamData.begin(),
-        streamData.end()
-    );
+    pendingData.insert(pendingData.end(), streamData.begin(), streamData.end());
 
-    while (pendingData.size() > 0) {
+    // Process pending data using the offset
+    while (offset < pendingData.size()) {
         ts::TSPacket packet;
         packet.init(pid, cc & 0xF, 0);
 
@@ -256,24 +257,41 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         }
 
         const size_t payloadSize = static_cast<size_t>(188 - packet.getHeaderSize());
-        if (!mfuData->isLastFragment && payloadSize > pendingData.size()) {
-            return;
+        const size_t remainingDataSize = pendingData.size() - offset;
+
+        if (!mfuData->isLastFragment && payloadSize > remainingDataSize) {
+            break;
         }
 
         ++cc;
 
-        const size_t chunkSize = std::min(payloadSize, pendingData.size());
+        const size_t chunkSize = std::min(payloadSize, remainingDataSize);
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), pendingData.data(), chunkSize);
-        pendingData.erase(
-            pendingData.begin(),
-            pendingData.begin() + chunkSize
-        );
+
+        // Copy data from buffer + offset to packet buffer.
+        auto source_view = std::span{ pendingData }.subspan(offset, chunkSize);
+        auto dest_view = std::span{ packet.b }.subspan(packet.getHeaderSize(), chunkSize);
+        std::ranges::copy(source_view, dest_view.begin());
+
+        offset += chunkSize;
 
         if (outputCallback) {
             outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
         }
         packetIndex++;
+    }
+
+    // Cleanup consumed data if any.
+    if (offset > 0) {
+        if (offset == pendingData.size()) {
+            pendingData.clear();
+        }
+        else {
+            // Remove consumed part from front.
+            // Since we only do this when the buffer is not fully consumed (which typically means wait for more data),
+            // and usually remaining data is small (less than a TS payload), this move is cheap.
+            pendingData.erase(pendingData.begin(), pendingData.begin() + offset);
+        }
     }
 }
 
@@ -299,12 +317,15 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
     }
     pes.pack(pesOutput);
 
+    const auto pid = mmtStream->getMpeg2PacketId();
+    auto& cc = mapCC[pid];
+
     size_t payloadLength = pesOutput.size();
     int i = 0;
     while (payloadLength > 0) {
         ts::TSPacket packet;
-        packet.init(mmtStream->getMpeg2PacketId(), mapCC[mmtStream->getMpeg2PacketId()] & 0xF, 0);
-        ++mapCC[mmtStream->getMpeg2PacketId()];
+        packet.init(pid, cc & 0xF, 0);
+        ++cc;
 
         if (i == 0) {
             packet.setPUSI();
@@ -312,7 +333,9 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
 
         const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
         packet.setPayloadSize(chunkSize);
-        memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
+        auto source_view = std::span{ pesOutput }.subspan(pesOutput.size() - payloadLength, chunkSize);
+        auto dest_view = std::span{ packet.b }.subspan(packet.getHeaderSize(), chunkSize);
+        std::ranges::copy(source_view, dest_view.begin());
         payloadLength -= chunkSize;
 
         if (outputCallback) {
@@ -385,12 +408,15 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         }
         pes.pack(pesOutput);
 
+        const auto pid = stream.second->getMpeg2PacketId();
+        auto& cc = mapCC[pid];
+
         size_t payloadLength = pesOutput.size();
         int i = 0;
         while (payloadLength > 0) {
             ts::TSPacket packet;
-            packet.init(stream.second->getMpeg2PacketId(), mapCC[stream.second->getMpeg2PacketId()] & 0xF, 0);
-            ++mapCC[stream.second->getMpeg2PacketId()];
+            packet.init(pid, cc & 0xF, 0);
+            ++cc;
 
             if (i == 0) {
                 packet.setPUSI();
@@ -398,7 +424,9 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
 
             const size_t chunkSize = std::min(payloadLength, static_cast<size_t>(188 - packet.getHeaderSize()));
             packet.setPayloadSize(chunkSize);
-            memcpy(packet.b + packet.getHeaderSize(), pesOutput.data() + (pesOutput.size() - payloadLength), chunkSize);
+            auto source_view = std::span{ pesOutput }.subspan(pesOutput.size() - payloadLength, chunkSize);
+            auto dest_view = std::span{ packet.b }.subspan(packet.getHeaderSize(), chunkSize);
+            std::ranges::copy(source_view, dest_view.begin());
             payloadLength -= chunkSize;
 
             if (outputCallback) {
@@ -496,7 +524,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
                     }
 
                     tsEntry.table_description.resize(entry.tableDescriptionByte.size());
-                    memcpy(tsEntry.table_description.data(), entry.tableDescriptionByte.data(), entry.tableDescriptionByte.size());
+                    std::copy(entry.tableDescriptionByte.begin(), entry.tableDescriptionByte.end(), tsEntry.table_description.begin());
                     tsDescriptor.entries.push_back(tsEntry);
                 }
 
@@ -512,6 +540,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
     ts::BinaryTable table;
     tsBit.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_BIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_BIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
@@ -522,8 +551,8 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_BIT] & 0xF);
-            mapCC[ts::PID_BIT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -666,6 +695,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_EIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_EIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
@@ -682,8 +712,8 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_EIT] & 0xF);
-            mapCC[ts::PID_EIT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -735,6 +765,7 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
     ts::BinaryTable table;
     tsSdt.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_SDT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_SDT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
@@ -745,8 +776,8 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_SDT] & 0xF);
-            mapCC[ts::PID_SDT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -783,6 +814,7 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
     ts::BinaryTable table;
     pat.serialize(duck, table);
 
+    auto& cc = mapCC[ts::PID_PAT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_PAT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -792,8 +824,8 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_PAT] & 0xF);
-            mapCC[ts::PID_PAT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -913,6 +945,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
     ts::BinaryTable table;
     tsPmt.serialize(duck, table);
 
+    auto& cc = mapCC[pid];
     ts::OneShotPacketizer packetizer(duck, pid);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -922,8 +955,8 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[pid] & 0xF);
-            mapCC[pid]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -940,6 +973,8 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
 
     ts::BinaryTable table;
     tot.serialize(duck, table);
+
+    auto& cc = mapCC[ts::PID_TOT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_TOT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -950,8 +985,8 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_TOT] & 0xF);
-            mapCC[ts::PID_TOT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -966,10 +1001,12 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
     cdt.download_data_id = mhCdt->downloadDataId;
     cdt.data_type = mhCdt->dataType;
     cdt.data_module.resize(mhCdt->dataModuleByte.size());
-    memcpy(cdt.data_module.data(), mhCdt->dataModuleByte.data(), mhCdt->dataModuleByte.size());
+    std::copy(mhCdt->dataModuleByte.begin(), mhCdt->dataModuleByte.end(), cdt.data_module.begin());
 
     ts::BinaryTable table;
     cdt.serialize(duck, table);
+
+    auto& cc = mapCC[ts::PID_CDT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_CDT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -981,8 +1018,8 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_CDT] & 0xF);
-            mapCC[ts::PID_CDT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -1029,6 +1066,8 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
 
     ts::BinaryTable table;
     tsNit.serialize(duck, table);
+
+    auto& cc = mapCC[ts::PID_NIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_NIT);
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -1040,8 +1079,8 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
         ts::TSPacketVector packets;
         packetizer.getPackets(packets);
         for (auto& packet : packets) {
-            packet.setCC(mapCC[ts::PID_NIT] & 0xF);
-            mapCC[ts::PID_NIT]++;
+            packet.setCC(cc & 0xF);
+            cc++;
 
             if (outputCallback) {
                 outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
@@ -1051,9 +1090,10 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
 }
 
 void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
+    auto& cc = mapCC[PCR_PID];
     ts::TSPacket packet;
-    packet.init(PCR_PID, mapCC[PCR_PID] & 0xF, 0);
-    mapCC[PCR_PID]++;
+    packet.init(PCR_PID, cc & 0xF, 0);
+    cc++;
 
     // Add 0.1 seconds to resolve the playback issue in VLC
     packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
