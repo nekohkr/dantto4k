@@ -193,7 +193,20 @@ void jisX0201KatakanaToKatakana(std::string& str) {
 
 }
 
+static std::unordered_map<std::string, std::string> aribEncodeCache;
+static std::mutex aribEncodeCacheMutex;
+constexpr size_t ARIB_ENCODE_CACHE_MAX_SIZE = 4096;
+
 const std::string aribEncode(std::string_view input, bool isCaption) {
+    std::string input_str{ input };
+    {
+        std::lock_guard<std::mutex> lock(aribEncodeCacheMutex);
+        auto it = aribEncodeCache.find(input_str);
+        if (it != aribEncodeCache.end()) {
+            return it->second;
+        }
+    }
+
     std::string converted{ input };
     convertGaiji(converted);
 
@@ -202,7 +215,16 @@ const std::string aribEncode(std::string_view input, bool isCaption) {
         jisX0201KatakanaToKatakana(converted);
     }
 
-    return AribEncoder::encode(converted, isCaption);
+    auto result = AribEncoder::encode(converted, isCaption);
+
+    {
+        std::lock_guard<std::mutex> lock(aribEncodeCacheMutex);
+        if (aribEncodeCache.size() >= ARIB_ENCODE_CACHE_MAX_SIZE) {
+            aribEncodeCache.clear();
+        }
+        aribEncodeCache.emplace(std::move(input_str), result);
+    }
+    return result;
 }
 
 const std::string aribEncode(const char* input, size_t size, bool isCaption) {
