@@ -8,6 +8,7 @@
 #include "casProxyClient.h"
 #include "acasHandler.h"
 #include "smartCard.h"
+#include "bufferedOutput.h"
 
 namespace {
 
@@ -167,10 +168,22 @@ int main(int argc, char* argv[]) {
 
     MmtTlv::MmtTlvDemuxer demuxer;
     RemuxerHandler handler(demuxer);
-    handler.setOutputCallback([&](const uint8_t* data, size_t size) {
-        assert(size == 188);
-        outputStream->write(reinterpret_cast<const char*>(data), size);
-    });
+    std::unique_ptr<BufferedOutput> bufferedOutput;
+
+    if (useStdout) {
+        handler.setOutputCallback([&](const uint8_t* data, size_t size) {
+            assert(size == 188);
+            outputStream->write(reinterpret_cast<const char*>(data), size);
+        });
+    }
+    else {
+        bufferedOutput = std::make_unique<BufferedOutput>(*outputStream);
+        handler.setOutputCallback([&, bo = bufferedOutput.get()](const uint8_t* data, size_t size) {
+            assert(size == 188);
+            bo->write(data, size);
+        });
+    }
+
     demuxer.setDemuxerHandler(handler);
 
     try {
