@@ -1,12 +1,12 @@
 #include "acasHandler.h"
 #include "config.h"
 #include "mmtp.h"
-#include "aesCtrCipher.h"
 #include "aes.h"
 
 AcasHandler::AcasHandler() {
     acasCard = std::make_unique<AcasCard>();
     workerThread = std::thread(&AcasHandler::worker, this);
+    hasAESNI = AESCtrCipher::hasAESNI();
 }
 
 AcasHandler::~AcasHandler() {
@@ -49,16 +49,13 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
     memcpy(iv.data(), &packetIdBe, 2);
     memcpy(iv.data() + 2, &packetSequenceNumberBe, 4);
 
-    static bool hasAESNI = AESCtrCipher::hasAESNI();
-    if (hasAESNI) {
-        try {
-            AESCtrCipher aes(*key);
-            aes.setIv(iv);
-            aes.decrypt(mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8), mmtp.payload.data() + 8);
+    if (hasAESNI) { [[likely]]
+        if (lastKey != *key) { [[unlikely]]
+            aes.setKey(*key);
+            lastKey = *key;
         }
-        catch (const std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
+        aes.setIv(iv);
+        aes.decrypt(mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8), mmtp.payload.data() + 8);
     }
     else {
         struct AES_ctx ctx;

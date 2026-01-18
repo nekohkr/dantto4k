@@ -13,24 +13,29 @@
 
 class AESCtrCipher {
 public:
-    AESCtrCipher(const std::array<uint8_t, 16>& key)
-        : key(key) {
+    AESCtrCipher() = default;
+
+    void setKey(const std::array<uint8_t, 16>& newKey) {
         if (!hasAESNI()) {
             throw std::runtime_error("CPU does not support AES-NI instructions");
         }
+        key = newKey;
         expandKey(key.data());
     }
 
     static bool hasAESNI() {
-        int info[4];
+        static bool result = []() {
+            int info[4];
 #if defined(_MSC_VER)
-        __cpuid(info, 1);
+            __cpuid(info, 1);
 #else
-        __asm__ __volatile__("cpuid"
-            : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3])
-            : "a"(1));
+            __asm__ __volatile__("cpuid"
+                : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3])
+                : "a"(1));
 #endif
-        return (info[2] & (1 << 25)) != 0;
+            return (info[2] & (1 << 25)) != 0;
+        }();
+        return result;
     }
 
     void setIv(std::array<uint8_t, 16> iv) {
@@ -188,7 +193,7 @@ private:
         c3 = _mm_aesenclast_si128(c3, k);
     }
 
-    std::array<uint8_t, 16> key;
+    std::array<uint8_t, 16> key{};
     std::array<uint8_t, 16> iv;
     __m128i roundKeys[11];
 };
