@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhAit::unpack(Common::ReadStream& stream)
-{
+bool MhAit::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtTableBase::unpack(stream)) {
             return false;
@@ -25,7 +24,6 @@ bool MhAit::unpack(Common::ReadStream& stream)
         commonDescriptorLength = uint16 & 0b0000111111111111;
         
         Common::ReadStream nstream(stream, commonDescriptorLength);
-
         if (!descriptors.unpack(nstream)) {
             return false;
         }
@@ -35,14 +33,16 @@ bool MhAit::unpack(Common::ReadStream& stream)
         uint16 = stream.getBe16U();
         applicationLoopLength = uint16 & 0b0000111111111111;
 
-        while (stream.leftBytes() - 4 > 0) {
-            ApplicationIdentifier applicationIdentifier;
-            if (!applicationIdentifier.unpack(stream)) {
+        Common::ReadStream applicationStream(stream, applicationLoopLength);
+        while (applicationStream.leftBytes() > 0) {
+            Application applicationIdentifier;
+            if (!applicationIdentifier.unpack(applicationStream)) {
                 return false;
             }
 
-            applicationIdentifiers.push_back(applicationIdentifier);
+            applications.push_back(std::move(applicationIdentifier));
         }
+        stream.skip(applicationLoopLength);
 
         crc32 = stream.getBe32U();
     }
@@ -53,9 +53,12 @@ bool MhAit::unpack(Common::ReadStream& stream)
     return true;
 }
 
-bool MhAit::ApplicationIdentifier::unpack(Common::ReadStream& stream)
-{
+bool MhAit::Application::unpack(Common::ReadStream& stream) {
     try {
+        if (!applicationIdentifier.unpack(stream)) {
+            return false;
+        }
+
         applicationControlCode = stream.get8U();
 
         uint16_t uint16 = stream.getBe16U();
@@ -67,6 +70,18 @@ bool MhAit::ApplicationIdentifier::unpack(Common::ReadStream& stream)
         }
 
         stream.skip(applicationDescriptorLoopLength);
+    }
+    catch (const std::out_of_range&) {
+        return false;
+    }
+
+    return true;
+}
+
+bool MhAit::ApplicationIdentifier::unpack(Common::ReadStream& stream) {
+    try {
+        organizationId = stream.getBe16U();
+        applicationId = stream.getBe32U();
     }
     catch (const std::out_of_range&) {
         return false;

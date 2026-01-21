@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-std::optional<MfuData> MpuSubtitleProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
+std::optional<MfuData> MpuSubtitleProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data) {
     Common::ReadStream stream(data);
 
     uint16_t subsampleNumber = stream.getBe16U();
@@ -44,7 +44,7 @@ std::optional<MfuData> MpuSubtitleProcessor::process(const std::shared_ptr<MmtSt
     mfuData.data.resize(dataSize);
     stream.read(mfuData.data.data(), dataSize);
 
-    mfuData.streamIndex = mmtStream->getStreamIndex();
+    mfuData.streamIndex = mmtStream.getStreamIndex();
 
     return mfuData;
 }

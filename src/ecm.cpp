@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool Ecm::unpack(Common::ReadStream& stream)
-{
+bool Ecm::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtTableBase::unpack(stream)) {
             return false;

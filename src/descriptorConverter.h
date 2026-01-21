@@ -13,6 +13,7 @@
 #include "mhShortEventDescriptor.h"
 #include "mhSiParameterDescriptor.h"
 #include "mhStreamIdentificationDescriptor.h"
+#include "mhApplicationBoundaryAndPermissionDescriptor.h"
 #include "mmtTableBase.h"
 #include "multimediaServiceInformationDescriptor.h"
 #include "networkNameDescriptor.h"
@@ -22,6 +23,7 @@
 #include "mhServiceDescriptor.h"
 #include "aribUtil.h"
 #include "timeUtil.h"
+#include "mhApplicationDescriptor.h"
 
 constexpr uint8_t convertAudioComponentType(uint8_t componentType) {
     uint8_t audioMode = componentType & 0b00011111;
@@ -513,4 +515,3 @@ struct DescriptorConverter<MmtTlv::ServiceListDescriptor> {
         return tsDescriptor;
     }
 };
-

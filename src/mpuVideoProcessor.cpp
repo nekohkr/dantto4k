@@ -7,7 +7,7 @@ namespace MmtTlv {
 constexpr uint8_t CRA_NUT = 0x15;
 constexpr uint8_t NAL_AUD = 0x23;
 
-std::optional<MfuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
+std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data) {
     Common::ReadStream stream(data);
     MfuData mfuData;
 
@@ -23,7 +23,7 @@ std::optional<MfuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStrea
         if (nalUnitType == NAL_AUD) {
             std::pair<int64_t, int64_t> ptsDts;
             try {
-                ptsDts = mmtStream->getNextPtsDts();
+                ptsDts = mmtStream.getNextPtsDts();
             }
             catch (const std::out_of_range&) {
                 clear();
@@ -32,7 +32,7 @@ std::optional<MfuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStrea
 
             pts = ptsDts.first;
             dts = ptsDts.second;
-            streamIndex = mmtStream->getStreamIndex();
+            streamIndex = mmtStream.getStreamIndex();
             sliceSegmentCount = 0;
             mfuData.isFirstFragment = true;
         }
@@ -63,7 +63,7 @@ std::optional<MfuData> MpuVideoProcessor::process(const std::shared_ptr<MmtStrea
     mfuData.dts = dts;
     mfuData.streamIndex = streamIndex;
 
-    if (sliceSegmentCount >= (mmtStream->Is8KVideo() ? 4 : 1)) {
+    if (sliceSegmentCount >= (mmtStream.is8KVideo() ? 4 : 1)) {
         if (nalUnitSize == 0) {
             mfuData.isLastFragment = true;
         }

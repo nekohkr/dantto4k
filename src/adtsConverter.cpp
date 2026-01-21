@@ -14,7 +14,7 @@ constexpr int convertAdtsAudioObjectType(int aot) {
 
 }
 
-bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& output) {
+bool ADTSConverter::convert(const uint8_t* input, size_t size, std::vector<uint8_t>& output) {
     if (size < 3) {
         return false;
     }
@@ -29,7 +29,7 @@ bool ADTSConverter::convert(uint8_t* input, size_t size, std::vector<uint8_t>& o
         return false;
     }
 
-    if (!unpackStreamMuxConfig(input + 3, size - 3)) {
+    if (!unpackStreamMuxConfig(const_cast<uint8_t*>(input + 3), size - 3)) {
         return false;
     }
 

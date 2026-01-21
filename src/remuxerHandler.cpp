@@ -12,6 +12,9 @@
 #include "mhShortEventDescriptor.h"
 #include "mhSiParameterDescriptor.h"
 #include "mhStreamIdentificationDescriptor.h"
+#include "mhTransportProtocolDescriptor.h"
+#include "mhSimpleApplicationLocationDescriptor.h"
+#include "mhApplicationBoundaryAndPermissionDescriptor.h"
 #include "multimediaServiceInformationDescriptor.h"
 #include "networkNameDescriptor.h"
 #include "relatedBroadcasterDescriptor.h"
@@ -40,25 +43,6 @@
 namespace {
 
 int convertRunningStatus(int runningStatus) {
-    /*
-        MMT
-        0 undefined
-        1 In non-operation
-        2 It will start within several seconds
-        (ex: video recording use)
-        3 Out of operation
-        4 In operation
-        5 – 7 Reserved for use in the future
-
-        MPEG2 TS
-        GST_MPEGTS_RUNNING_STATUS_UNDEFINED (0)
-        GST_MPEGTS_RUNNING_STATUS_NOT_RUNNING (1)
-        GST_MPEGTS_RUNNING_STATUS_STARTS_IN_FEW_SECONDS (2)
-        GST_MPEGTS_RUNNING_STATUS_PAUSING (3)
-        GST_MPEGTS_RUNNING_STATUS_RUNNING (4)
-        GST_MPEGTS_RUNNING_STATUS_OFF_AIR (5)
-    */
-
     switch (runningStatus) {
     case 0:
         return 0;
@@ -67,7 +51,7 @@ int convertRunningStatus(int runningStatus) {
     case 2:
         return 2;
     case 3:
-        return 5;
+        return 3;
     case 4:
         return 4;
     default:
@@ -132,33 +116,33 @@ uint8_t convertTableId(uint8_t mmtTableId) {
 
 } // anonymous namespace
 
-void RemuxerHandler::onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
-    writeStream(mmtStream, mfuData, mfuData->data);
+void RemuxerHandler::onVideoData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) {
+    writeStream(mmtStream, mfuData, mfuData.data);
 }
 
-void RemuxerHandler::onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
+void RemuxerHandler::onAudioData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) {
     // ADTS conversion for 22.2ch is not implemented.
-    if (mmtStream->Is22_2chAudio()) {
-        writeStream(mmtStream, mfuData, mfuData->data);
+    if (mmtStream.is22_2chAudio()) {
+        writeStream(mmtStream, mfuData, mfuData.data);
         return;
     }
 
     if (config.disableADTSConversion) {
-        writeStream(mmtStream, mfuData, mfuData->data);
+        writeStream(mmtStream, mfuData, mfuData.data);
         return;
     }
 
     ADTSConverter converter;
     std::vector<uint8_t> output;
-    if (!converter.convert(mfuData->data.data(), mfuData->data.size(), output)) {
+    if (!converter.convert(mfuData.data.data(), mfuData.data.size(), output)) {
         return;
     }
 
     writeStream(mmtStream, mfuData, output);
 }
 
-void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<struct MmtTlv::MfuData>& mfuData) {
-    std::string ttml(mfuData->data.begin(), mfuData->data.end());
+void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const struct MmtTlv::MfuData& mfuData) {
+    std::string ttml(mfuData.data.begin(), mfuData.data.end());
     std::list<B24SubtitleOutput> output;
     B24SubtitleConvertor::convert(ttml, output);
 
@@ -171,10 +155,7 @@ void RemuxerHandler::onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mm
     }
 }
 
-void RemuxerHandler::onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) {
-}
-
-void RemuxerHandler::onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream) {
+void RemuxerHandler::onPacketDrop(uint16_t packetId, const MmtTlv::MmtStream* mmtStream) {
     if (mmtStream) {
         ++mapCC[mmtStream->getMpeg2PacketId()];
         return;
@@ -200,38 +181,39 @@ void RemuxerHandler::setOutputCallback(OutputCallback cb) {
     outputCallback = std::move(cb);
 }
 
-void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& streamData) {
-    const auto pid = mmtStream->getMpeg2PacketId();
+void RemuxerHandler::writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& streamData) {
+    const auto pid = mmtStream.getMpeg2PacketId();
     auto& pendingData = mapPesPendingData[pid];
     auto& cc = mapCC[pid];
     auto& packetIndex = mapPesPacketIndex[pid];
     size_t offset = 0;
 
-    if (mfuData->isFirstFragment) {
+    if (mfuData.isFirstFragment) {
         constexpr AVRational tsTimeBase = { 1, 90000 };
-        const AVRational timeBase = { mmtStream->timeBase.num, mmtStream->timeBase.den };
+        const auto& mmtTimeBase = mmtStream.getTimeBase();
+        const AVRational timeBase = { mmtTimeBase.num, mmtTimeBase.den };
 
         uint64_t tsPts = MmtTlv::NOPTS_VALUE;
         uint64_t tsDts = MmtTlv::NOPTS_VALUE;
 
-        if ((mfuData->pts != MmtTlv::NOPTS_VALUE && mfuData->dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
-            tsPts = av_rescale_q(mfuData->pts, timeBase, tsTimeBase);
-            tsDts = av_rescale_q(mfuData->dts, timeBase, tsTimeBase);
+        if ((mfuData.pts != MmtTlv::NOPTS_VALUE && mfuData.dts != MmtTlv::NOPTS_VALUE) && timeBase.den > 0) {
+            tsPts = av_rescale_q(mfuData.pts, timeBase, tsTimeBase);
+            tsDts = av_rescale_q(mfuData.dts, timeBase, tsTimeBase);
         }
 
         std::vector<uint8_t> pesOutput;
         PESPacket pes;
         pes.setPts(tsPts);
         pes.setDts(tsDts);
-        if (mfuData->isFirstFragment && mfuData->isLastFragment) {
+        if (mfuData.isFirstFragment && mfuData.isLastFragment) {
             pes.setPayloadLength(streamData.size());
         }
-        pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
-        if (mmtStream->getAssetType() == MmtTlv::AssetType::hev1 ||
-            mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
+        pes.setStreamId(componentTagToStreamId(mmtStream.getComponentTag()));
+        if (mmtStream.getAssetType() == MmtTlv::AssetType::hev1 ||
+            mmtStream.getAssetType() == MmtTlv::AssetType::mp4a) {
             pes.setDataAlignmentIndicator(true);
         }
-        if (mmtStream->getAssetType() == MmtTlv::AssetType::mp4a) {
+        if (mmtStream.getAssetType() == MmtTlv::AssetType::mp4a) {
             pes.setStuffingByteLength(2);
         }
         pes.pack(pesOutput);
@@ -251,7 +233,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
 
         if (packetIndex == 0) {
             packet.setPUSI();
-            if (mfuData->keyframe) {
+            if (mfuData.keyframe) {
                 packet.setRandomAccessIndicator(true);
             }
         }
@@ -259,7 +241,7 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
         const size_t payloadSize = static_cast<size_t>(188 - packet.getHeaderSize());
         const size_t remainingDataSize = pendingData.size() - offset;
 
-        if (!mfuData->isLastFragment && payloadSize > remainingDataSize) {
+        if (!mfuData.isLastFragment && payloadSize > remainingDataSize) {
             break;
         }
 
@@ -295,11 +277,11 @@ void RemuxerHandler::writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtSt
     }
 }
 
-void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle) {
+void RemuxerHandler::writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle) {
     std::vector<uint8_t> pesOutput;
 
     PESPacket pes;
-    if (mmtStream->getComponentTag() == 0x30) {
+    if (mmtStream.getComponentTag() == 0x30) {
         uint64_t pts = subtitle.calcPts(programStartTime);
         pts = std::max(pts, lastPcr / 300);
         if (pts == 0) {
@@ -308,16 +290,16 @@ void RemuxerHandler::writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmt
         pes.setPts(pts);
     }
 
-    pes.setStreamId(componentTagToStreamId(mmtStream->getComponentTag()));
+    pes.setStreamId(componentTagToStreamId(mmtStream.getComponentTag()));
     pes.setPayload(&subtitle.pesData);
     pes.setPayloadLength(subtitle.pesData.size());
-    if (mmtStream->getComponentTag() == 0x30) {
+    if (mmtStream.getComponentTag() == 0x30) {
         pes.setPrivateData(&ccis);
         pes.setStuffingByteLength(1);
     }
     pes.pack(pesOutput);
 
-    const auto pid = mmtStream->getMpeg2PacketId();
+    const auto pid = mmtStream.getMpeg2PacketId();
     auto& cc = mapCC[pid];
 
     size_t payloadLength = pesOutput.size();
@@ -363,7 +345,7 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
     }
 
     for (const auto& stream : demuxer.mapStream) {
-        if (stream.second->getAssetType() != MmtTlv::AssetType::stpp) {
+        if (stream.second.getAssetType() != MmtTlv::AssetType::stpp) {
             continue;
         }
 
@@ -371,7 +353,7 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         B24::CaptionManagementData::Language language;
         language.languageCode = "jpn";
         language.format = 0b1000;
-        if (stream.second->getComponentTag() == 0x30) {
+        if (stream.second.getComponentTag() == 0x30) {
             language.dmf = 0b1010;
         }
         else {
@@ -383,7 +365,7 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         dataGroup.setGroupData(captionManagementData);
 
         B24::PESData pesData(dataGroup);
-        if (stream.second->getComponentTag() == 0x30) {
+        if (stream.second.getComponentTag() == 0x30) {
             pesData.SetPESType(B24::PESData::PESType::Synchronized);
         }
         else {
@@ -396,19 +378,19 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
 
         std::vector<uint8_t> pesOutput;
         PESPacket pes;
-        if (stream.second->getComponentTag() == 0x30) {
+        if (stream.second.getComponentTag() == 0x30) {
             pes.setPts(lastCaptionManagementDataPts);
         }
-        pes.setStreamId(componentTagToStreamId(stream.second->getComponentTag()));
+        pes.setStreamId(componentTagToStreamId(stream.second.getComponentTag()));
         pes.setPayload(&packedPesData);
         pes.setPayloadLength(packedPesData.size());
-        if (stream.second->getComponentTag() == 0x30) {
+        if (stream.second.getComponentTag() == 0x30) {
             pes.setPrivateData(&ccis);
             pes.setStuffingByteLength(1);
         }
         pes.pack(pesOutput);
 
-        const auto pid = stream.second->getMpeg2PacketId();
+        const auto pid = stream.second.getMpeg2PacketId();
         auto& cc = mapCC[pid];
 
         size_t payloadLength = pesOutput.size();
@@ -437,15 +419,15 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
     }
 }
 
-void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
-    ts::BIT tsBit(mhBit->versionNumber, mhBit->currentNextIndicator);
-    tsBit.original_network_id = mhBit->originalNetworkId;
+void RemuxerHandler::onMhBit(const MmtTlv::MhBit& mhBit) {
+    ts::BIT tsBit(mhBit.versionNumber, mhBit.currentNextIndicator);
+    tsBit.original_network_id = mhBit.originalNetworkId;
 
-    for (const auto& descriptor : mhBit->descriptors.list) {
+    for (const auto& descriptor : mhBit.descriptors.list) {
         switch (descriptor->getDescriptorTag()) {
         case MmtTlv::MhSiParameterDescriptor::kDescriptorTag:
         {
-            auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhSiParameterDescriptor>(descriptor);
+            const auto* mmtDescriptor = static_cast<const MmtTlv::MhSiParameterDescriptor*>(descriptor.get());
             ts::SIParameterDescriptor tsDescriptor;
             tsDescriptor.parameter_version = mmtDescriptor->parameterVersion;
 
@@ -477,17 +459,17 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
         }
     }
 
-    for (const auto& broadcaster : mhBit->broadcasters) {
+    for (const auto& broadcaster : mhBit.broadcasters) {
         auto& tsBroadcaster = tsBit.broadcasters[broadcaster.broadcasterId];
 
         for (const auto& descriptor : broadcaster.descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
             case MmtTlv::RelatedBroadcasterDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::RelatedBroadcasterDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::RelatedBroadcasterDescriptor*>(descriptor.get());
                 ts::ExtendedBroadcasterDescriptor tsDescriptor;
                 tsDescriptor.broadcaster_type = 1;
-                tsDescriptor.terrestrial_broadcaster_id = mhBit->originalNetworkId;
+                tsDescriptor.terrestrial_broadcaster_id = mhBit.originalNetworkId;
 
                 for (const auto affiliationId : mmtDescriptor->affiliationIds) {
                     tsDescriptor.affiliation_ids.emplace_back(affiliationId);
@@ -502,7 +484,7 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
             }
             case MmtTlv::MhSiParameterDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhSiParameterDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhSiParameterDescriptor*>(descriptor.get());
                 ts::SIParameterDescriptor tsDescriptor;
                 tsDescriptor.parameter_version = mmtDescriptor->parameterVersion;
 
@@ -544,8 +526,8 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
     ts::OneShotPacketizer packetizer(duck, ts::PID_BIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
-        section->setSectionNumber(mhBit->sectionNumber);
-        section->setLastSectionNumber(mhBit->lastSectionNumber);
+        section->setSectionNumber(mhBit.sectionNumber);
+        section->setLastSectionNumber(mhBit.lastSectionNumber);
 
         packetizer.addSection(section);
         ts::TSPacketVector packets;
@@ -561,20 +543,16 @@ void RemuxerHandler::onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhBit) {
     }
 }
 
-void RemuxerHandler::onMhAit(const std::shared_ptr<MmtTlv::MhAit>& mhAit) {
-    // Not implemented
-}
+void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
+    tsid = mhEit.tlvStreamId;
 
-void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
-    tsid = mhEit->tlvStreamId;
-
-    if (mhEit->isPf() && mhEit->sectionNumber == 0 && mhEit->events.size() > 0) {
-        std::tm startTime = EITConvertStartTime((mhEit->events.begin())->get()->startTime);
+    if (mhEit.isPf() && mhEit.sectionNumber == 0 && mhEit.events.size() > 0) {
+        std::tm startTime = EITConvertStartTime((mhEit.events.begin())->get()->startTime);
         programStartTime = static_cast<uint64_t>(std::mktime(&startTime));
     }
 
-    ts::EIT tsEit(true, mhEit->isPf(), 0, mhEit->versionNumber, true, mhEit->serviceId, mhEit->tlvStreamId, mhEit->originalNetworkId);
-    for (const auto& mhEvent : mhEit->events) {
+    ts::EIT tsEit(true, mhEit.isPf(), 0, mhEit.versionNumber, true, mhEit.serviceId, mhEit.tlvStreamId, mhEit.originalNetworkId);
+    for (const auto& mhEvent : mhEit.events) {
         ts::EIT::Event tsEvent(&tsEit);
 
         tm startTime = EITConvertStartTime(mhEvent->startTime);
@@ -594,7 +572,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             switch (descriptor->getDescriptorTag()) {
             case MmtTlv::MhShortEventDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhShortEventDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhShortEventDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhShortEventDescriptor>::convert(*mmtDescriptor);
                 if (tsDescriptor) {
                     tsEvent.descs.add(tsDescriptor->data(), tsDescriptor->size());
@@ -603,7 +581,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhExtendedEventDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhExtendedEventDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhExtendedEventDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhExtendedEventDescriptor>::convert(*mmtDescriptor);
                 if (tsDescriptor) {
                     tsEvent.descs.add(tsDescriptor->data(), tsDescriptor->size());
@@ -612,7 +590,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhAudioComponentDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhAudioComponentDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhAudioComponentDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhAudioComponentDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -620,7 +598,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::VideoComponentDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::VideoComponentDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::VideoComponentDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::VideoComponentDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -628,7 +606,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhContentDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhContentDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhContentDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhContentDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -636,7 +614,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhLinkageDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhLinkageDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhLinkageDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhLinkageDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -644,7 +622,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhEventGroupDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhEventGroupDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhEventGroupDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhEventGroupDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -652,7 +630,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhParentalRatingDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhParentalRatingDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhParentalRatingDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhParentalRatingDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -660,7 +638,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MhSeriesDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhSeriesDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhSeriesDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhSeriesDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -668,7 +646,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::ContentCopyControlDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::ContentCopyControlDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::ContentCopyControlDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::ContentCopyControlDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -676,7 +654,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
             }
             case MmtTlv::MultimediaServiceInformationDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MultimediaServiceInformationDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MultimediaServiceInformationDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MultimediaServiceInformationDescriptor>::convert(*mmtDescriptor);
 
                 tsEvent.descs.add(duck, tsDescriptor);
@@ -690,7 +668,7 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
 
     // EITs table ID range in MMT/TLV:   0x8C ~ 0x9B
     // EITs table ID range in MPEG-2 TS: 0x50 ~ 0x5F
-    tsEit.last_table_id = mhEit->lastTableId - 0x8C + 0x50;
+    tsEit.last_table_id = mhEit.lastTableId - 0x8C + 0x50;
 
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
@@ -699,14 +677,14 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
     ts::OneShotPacketizer packetizer(duck, ts::PID_EIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
-        if (mhEit->isPf()) {
+        if (mhEit.isPf()) {
             section.get()->setTableId(0x4E);
         }
         else {
-            section.get()->setTableId(mhEit->getTableId() - 0x8C + 0x50);
+            section.get()->setTableId(mhEit.getTableId() - 0x8C + 0x50);
         }
-        section.get()->setSectionNumber(mhEit->sectionNumber);
-        section.get()->setLastSectionNumber(mhEit->lastSectionNumber);
+        section.get()->setSectionNumber(mhEit.sectionNumber);
+        section.get()->setLastSectionNumber(mhEit.lastSectionNumber);
 
         packetizer.addSection(section);
         ts::TSPacketVector packets;
@@ -722,15 +700,15 @@ void RemuxerHandler::onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) {
     }
 }
 
-void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) {
-    if (mhSdt->services.size() == 0) {
+void RemuxerHandler::onMhSdtActual(const MmtTlv::MhSdt& mhSdt) {
+    if (mhSdt.services.size() == 0) {
         return;
     }
 
-    tsid = mhSdt->tlvStreamId;
+    tsid = mhSdt.tlvStreamId;
 
-    ts::SDT tsSdt(true, mhSdt->versionNumber, mhSdt->currentNextIndicator, mhSdt->tlvStreamId, mhSdt->originalNetworkId);
-    for (const auto& service : mhSdt->services) {
+    ts::SDT tsSdt(true, mhSdt.versionNumber, mhSdt.currentNextIndicator, mhSdt.tlvStreamId, mhSdt.originalNetworkId);
+    for (const auto& service : mhSdt.services) {
         ts::SDT::ServiceEntry tsService(&tsSdt);
         tsService.EITs_present = service->eitScheduleFlag;
         tsService.EITpf_present = service->eitPresentFollowingFlag;
@@ -741,7 +719,7 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
             switch (descriptor->getDescriptorTag()) {
             case MmtTlv::MhServiceDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhServiceDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhServiceDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhServiceDescriptor>::convert(*mmtDescriptor);
 
                 if (tsDescriptor) {
@@ -751,7 +729,7 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
             }
             case MmtTlv::MhLogoTransmissionDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhLogoTransmissionDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::MhLogoTransmissionDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::MhLogoTransmissionDescriptor>::convert(*mmtDescriptor);
 
                 tsService.descs.add(duck, tsDescriptor);
@@ -769,8 +747,8 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
     ts::OneShotPacketizer packetizer(duck, ts::PID_SDT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
-        section.get()->setSectionNumber(mhSdt->sectionNumber);
-        section.get()->setLastSectionNumber(mhSdt->lastSectionNumber);
+        section.get()->setSectionNumber(mhSdt.sectionNumber);
+        section.get()->setLastSectionNumber(mhSdt.lastSectionNumber);
 
         packetizer.addSection(section);
         ts::TSPacketVector packets;
@@ -786,16 +764,16 @@ void RemuxerHandler::onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) 
     }
 }
 
-void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
+void RemuxerHandler::onPlt(const MmtTlv::Plt& plt) {
     if (tsid == -1) {
         return;
     }
 
-    ts::PAT pat(plt->version % 32, true, tsid);
+    ts::PAT pat(plt.version % 32, true, tsid);
     mapService2Pid.clear();
 
     int i = 0;
-    for (auto& item : plt->entries) {
+    for (auto& item : plt.entries) {
         if (item.mmtPackageIdLength != 2) {
             return;
         }
@@ -834,15 +812,15 @@ void RemuxerHandler::onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) {
     }
 }
 
-void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
+void RemuxerHandler::onMpt(const MmtTlv::Mpt& mpt) {
     uint16_t serviceId;
     uint16_t pid;
 
-    if (mpt->mmtPackageIdLength != 2) {
+    if (mpt.mmtPackageIdLength != 2) {
         return;
     }
 
-    serviceId = MmtTlv::Common::swapEndian16(*(uint16_t*)mpt->mmtPackageIdByte.data());
+    serviceId = MmtTlv::Common::swapEndian16(*(uint16_t*)mpt.mmtPackageIdByte.data());
 
     auto it = mapService2Pid.find(serviceId);
     if (it == mapService2Pid.end()) {
@@ -851,17 +829,17 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
 
     pid = it->second;
 
-    ts::PMT tsPmt(mpt->version % 32, true, serviceId, PCR_PID);
+    ts::PMT tsPmt(mpt.version % 32, true, serviceId, PCR_PID);
 
     // For VLC to recognize as ARIB standard
     ts::CADescriptor caDescriptor(5, 0x0901);
     tsPmt.descs.add(duck, caDescriptor);
 
     int streamIndex = 0;
-    for (auto& asset : mpt->assets) {
+    for (auto& asset : mpt.assets) {
         for (int i = 0; i < asset.locationCount; i++) {
             if (asset.locationInfos[i].locationType == 0) {
-                const auto mmtStream = demuxer.getStreamByIdx(streamIndex);
+                const MmtTlv::MmtStream* mmtStream = demuxer.getStreamByIdx(streamIndex);
                 if (!mmtStream) {
                     continue;
                 }
@@ -878,7 +856,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
 
                 if (streamType == StreamType::AUDIO_AAC) {
                     // ADTS conversion for 22.2ch is not implemented.
-                    if (mmtStream->Is22_2chAudio()) {
+                    if (mmtStream->is22_2chAudio()) {
                         streamType = StreamType::AUDIO_AAC_LATM;
                     }
                 }
@@ -906,7 +884,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
                     switch (descriptor->getDescriptorTag()) {
                     case MmtTlv::MhStreamIdentificationDescriptor::kDescriptorTag:
                     {
-                        auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::MhStreamIdentificationDescriptor>(descriptor);
+                        const auto* mmtDescriptor = static_cast<const MmtTlv::MhStreamIdentificationDescriptor*>(descriptor.get());
                         auto tsDescriptor = DescriptorConverter<MmtTlv::MhStreamIdentificationDescriptor>::convert(*mmtDescriptor);
 
                         stream.descs.add(duck, tsDescriptor);
@@ -921,11 +899,11 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
         }
     }
 
-    for (const auto& descriptor : mpt->descriptors.list) {
+    for (const auto& descriptor : mpt.descriptors.list) {
         switch (descriptor->getDescriptorTag()) {
         case MmtTlv::AccessControlDescriptor::kDescriptorTag:
         {
-            auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::AccessControlDescriptor>(descriptor);
+            const auto* mmtDescriptor = static_cast<const MmtTlv::AccessControlDescriptor*>(descriptor.get());
             auto tsDescriptor = DescriptorConverter<MmtTlv::AccessControlDescriptor>::convert(*mmtDescriptor);
 
             tsPmt.descs.add(duck, tsDescriptor);
@@ -933,7 +911,7 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
         }
         case MmtTlv::ContentCopyControlDescriptor::kDescriptorTag:
         {
-            auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::ContentCopyControlDescriptor>(descriptor);
+            const auto* mmtDescriptor = static_cast<const MmtTlv::ContentCopyControlDescriptor*>(descriptor.get());
             auto tsDescriptor = DescriptorConverter<MmtTlv::ContentCopyControlDescriptor>::convert(*mmtDescriptor);
 
             tsPmt.descs.add(duck, tsDescriptor);
@@ -965,8 +943,8 @@ void RemuxerHandler::onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) {
     }
 }
 
-void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
-    struct tm startTime = EITConvertStartTime(mhTot->jstTime);
+void RemuxerHandler::onMhTot(const MmtTlv::MhTot& mhTot) {
+    struct tm startTime = EITConvertStartTime(mhTot.jstTime);
     ts::Time time = ts::Time(startTime.tm_year + 1900, startTime.tm_mon + 1, startTime.tm_mday,
         startTime.tm_hour, startTime.tm_min, startTime.tm_sec);
     ts::TOT tot(time);
@@ -995,13 +973,13 @@ void RemuxerHandler::onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) {
     }
 }
 
-void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
-    ts::CDT cdt(mhCdt->versionNumber, mhCdt->currentNextIndicator);
-    cdt.original_network_id = mhCdt->originalNetworkId;
-    cdt.download_data_id = mhCdt->downloadDataId;
-    cdt.data_type = mhCdt->dataType;
-    cdt.data_module.resize(mhCdt->dataModuleByte.size());
-    std::copy(mhCdt->dataModuleByte.begin(), mhCdt->dataModuleByte.end(), cdt.data_module.begin());
+void RemuxerHandler::onMhCdt(const MmtTlv::MhCdt& mhCdt) {
+    ts::CDT cdt(mhCdt.versionNumber, mhCdt.currentNextIndicator);
+    cdt.original_network_id = mhCdt.originalNetworkId;
+    cdt.download_data_id = mhCdt.downloadDataId;
+    cdt.data_type = mhCdt.dataType;
+    cdt.data_module.resize(mhCdt.dataModuleByte.size());
+    std::copy(mhCdt.dataModuleByte.begin(), mhCdt.dataModuleByte.end(), cdt.data_module.begin());
 
     ts::BinaryTable table;
     cdt.serialize(duck, table);
@@ -1011,8 +989,8 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
-        section.get()->setSectionNumber(mhCdt->sectionNumber);
-        section.get()->setLastSectionNumber(mhCdt->lastSectionNumber);
+        section.get()->setSectionNumber(mhCdt.sectionNumber);
+        section.get()->setLastSectionNumber(mhCdt.lastSectionNumber);
         packetizer.addSection(section);
 
         ts::TSPacketVector packets;
@@ -1028,14 +1006,14 @@ void RemuxerHandler::onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) {
     }
 }
 
-void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
-    ts::NIT tsNit(true, nit->versionNumber, nit->currentNextIndicator, nit->networkId);
+void RemuxerHandler::onNit(const MmtTlv::Nit& nit) {
+    ts::NIT tsNit(true, nit.versionNumber, nit.currentNextIndicator, nit.networkId);
 
-    for (const auto& descriptor : nit->descriptors.list) {
+    for (const auto& descriptor : nit.descriptors.list) {
         switch (descriptor->getDescriptorTag()) {
         case MmtTlv::NetworkNameDescriptor::kDescriptorTag:
         {
-            auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::NetworkNameDescriptor>(descriptor);
+            const auto* mmtDescriptor = static_cast<const MmtTlv::NetworkNameDescriptor*>(descriptor.get());
             auto tsDescriptor = DescriptorConverter<MmtTlv::NetworkNameDescriptor>::convert(*mmtDescriptor);
 
             if (tsDescriptor) {
@@ -1046,7 +1024,7 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
         }
     }
 
-    for (const auto& item : nit->entries) {
+    for (const auto& item : nit.entries) {
         ts::TransportStreamId tsid(item.tlvStreamId, item.originalNetworkId);
         tsNit.transports[tsid];
 
@@ -1054,7 +1032,7 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
             switch (descriptor->getDescriptorTag()) {
             case MmtTlv::ServiceListDescriptor::kDescriptorTag:
             {
-                auto mmtDescriptor = std::dynamic_pointer_cast<MmtTlv::ServiceListDescriptor>(descriptor);
+                const auto* mmtDescriptor = static_cast<const MmtTlv::ServiceListDescriptor*>(descriptor.get());
                 auto tsDescriptor = DescriptorConverter<MmtTlv::ServiceListDescriptor>::convert(*mmtDescriptor);
 
                 tsNit.transports[tsid].descs.add(duck, tsDescriptor);
@@ -1072,8 +1050,8 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
 
     for (size_t i = 0; i < table.sectionCount(); i++) {
         const ts::SectionPtr& section = table.sectionAt(i);
-        section->setSectionNumber(nit->sectionNumber);
-        section->setLastSectionNumber(nit->lastSectionNumber);
+        section->setSectionNumber(nit.sectionNumber);
+        section->setLastSectionNumber(nit.lastSectionNumber);
         packetizer.addSection(section);
 
         ts::TSPacketVector packets;
@@ -1089,21 +1067,21 @@ void RemuxerHandler::onNit(const std::shared_ptr<MmtTlv::Nit>& nit) {
     }
 }
 
-void RemuxerHandler::onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) {
+void RemuxerHandler::onNtp(const MmtTlv::NTPv4& ntp) {
     auto& cc = mapCC[PCR_PID];
     ts::TSPacket packet;
     packet.init(PCR_PID, cc & 0xF, 0);
     cc++;
 
     // Add 0.1 seconds to resolve the playback issue in VLC
-    packet.setPCR(ntp->transmit_timestamp.toPcrValue() + 2700000, true);
+    packet.setPCR(ntp.transmit_timestamp.toPcrValue() + 2700000, true);
     if (outputCallback) {
         outputCallback(packet.b, packet.getHeaderSize() + packet.getPayloadSize());
     }
 
-    lastPcr = ntp->transmit_timestamp.toPcrValue();
+    lastPcr = ntp.transmit_timestamp.toPcrValue();
 
-    writeCaptionManagementData(ntp->transmit_timestamp.toPcrValue() / 300);
+    writeCaptionManagementData(ntp.transmit_timestamp.toPcrValue() / 300);
 }
 
 void RemuxerHandler::clear() {

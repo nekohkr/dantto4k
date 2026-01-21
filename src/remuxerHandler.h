@@ -1,6 +1,7 @@
 #pragma once
 #include "demuxerHandler.h"
 #include "b24SubtitleConvertor.h"
+#include "damt.h"
 #include <tsduck.h>
 #include <unordered_map>
 #include <functional>
@@ -48,40 +49,37 @@ public:
 		: demuxer(demuxer) {
 	}
 
-	// MPU data
-	void onVideoData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
-	void onAudioData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
-	void onSubtitleData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
-	void onApplicationData(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData) override;
+	// MPU
+	void onVideoData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) override;
+	void onAudioData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) override;
+	void onSubtitleData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) override;
 
-	void onPacketDrop(uint16_t packetId, const std::shared_ptr<MmtTlv::MmtStream>& mmtStream) override;
+	// MMT-SI
+	void onMhBit(const MmtTlv::MhBit& mhCdt) override;
+	void onEcm(const MmtTlv::Ecm& ecm) override {}
+	void onMhCdt(const MmtTlv::MhCdt& mhCdt) override;
+	void onMhEit(const MmtTlv::MhEit& mhEit) override;
+	void onMhSdtActual(const MmtTlv::MhSdt& mhSdt) override;
+	void onMhTot(const MmtTlv::MhTot& mhTot) override;
+	void onMpt(const MmtTlv::Mpt& mpt) override;
+	void onPlt(const MmtTlv::Plt& plt) override;
 
-	// MMT message
-	void onMhBit(const std::shared_ptr<MmtTlv::MhBit>& mhCdt) override;
-	void onMhAit(const std::shared_ptr<MmtTlv::MhAit>& mhBit) override;
-	void onEcm(const std::shared_ptr<MmtTlv::Ecm>& ecm) override {}
-	void onMhCdt(const std::shared_ptr<MmtTlv::MhCdt>& mhCdt) override;
-	void onMhEit(const std::shared_ptr<MmtTlv::MhEit>& mhEit) override;
-	void onMhSdtActual(const std::shared_ptr<MmtTlv::MhSdt>& mhSdt) override;
-	void onMhTot(const std::shared_ptr<MmtTlv::MhTot>& mhTot) override;
-	void onMpt(const std::shared_ptr<MmtTlv::Mpt>& mpt) override;
-	void onPlt(const std::shared_ptr<MmtTlv::Plt>& plt) override;
-
-	// TLV message
-	void onNit(const std::shared_ptr<MmtTlv::Nit>& nit) override;
+	// TLV-SI
+	void onNit(const MmtTlv::Nit& nit) override;
 
 	// IPv6
-	void onNtp(const std::shared_ptr<MmtTlv::NTPv4>& ntp) override;
+	void onNtp(const MmtTlv::NTPv4& ntp) override;
 
-	void clear();
+	void onPacketDrop(uint16_t packetId, const MmtTlv::MmtStream* mmtStream) override;
 
 public:
 	using OutputCallback = std::function<void(const uint8_t*, size_t)>;
 	void setOutputCallback(OutputCallback cb);
+	void clear();
 
 private:
-	void writeStream(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const std::shared_ptr<MmtTlv::MfuData>& mfuData, const std::vector<uint8_t>& data);
-	void writeSubtitle(const std::shared_ptr<MmtTlv::MmtStream>& mmtStream, const B24SubtitleOutput& subtitle);
+	void writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& data);
+	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle);
 	void writeCaptionManagementData(uint64_t pts);
 	MmtTlv::MmtTlvDemuxer& demuxer;
 	OutputCallback outputCallback;
@@ -90,10 +88,10 @@ private:
 	std::unordered_map<uint16_t, std::vector<uint8_t>> mapPesPendingData;
     std::unordered_map<uint16_t, uint32_t> mapPesPacketIndex;
 	int tsid{-1};
-	uint64_t lastPcr{0};
-	uint64_t lastCaptionManagementDataPts{0};
-	uint64_t programStartTime{0};
+	uint64_t lastPcr{};
+	uint64_t lastCaptionManagementDataPts{};
+	uint64_t programStartTime{};
+	inline static const std::vector<uint8_t> ccis = { 0x43, 0x43, 0x49, 0x53, 0x01, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, };
 	ts::DuckContext duck;
-	const std::vector<uint8_t> ccis = { 0x43, 0x43, 0x49, 0x53, 0x01, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, };
 
 };

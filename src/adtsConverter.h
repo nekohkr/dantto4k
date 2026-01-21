@@ -4,7 +4,7 @@
 
 class ADTSConverter {
 public:
-	bool convert(uint8_t* input, size_t size, std::vector<uint8_t>& output);
+	bool convert(const uint8_t* input, size_t size, std::vector<uint8_t>& output);
 
 private:
 	bool unpackStreamMuxConfig(uint8_t* input, size_t size);

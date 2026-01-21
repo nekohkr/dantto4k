@@ -12,8 +12,8 @@ namespace Common {
 class ReadStream final {
 public:
     explicit ReadStream(const std::vector<uint8_t>& data);
-    explicit ReadStream(const std::vector<uint8_t>& data, uint32_t size);
-    explicit ReadStream(ReadStream& stream, uint32_t size);
+    explicit ReadStream(const std::vector<uint8_t>& data, size_t size);
+    explicit ReadStream(ReadStream& stream, size_t size);
     explicit ReadStream(ReadStream& stream);
 
     ReadStream(const ReadStream&) = delete;

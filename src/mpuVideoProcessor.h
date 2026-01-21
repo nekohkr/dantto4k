@@ -5,7 +5,7 @@ namespace MmtTlv {
 
 class MpuVideoProcessor : public MpuProcessorTemplate<AssetType::hev1> {
 public:
-	std::optional<MfuData> process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) override;
+	std::optional<MfuData> process(MmtStream& mmtStream, const std::vector<uint8_t>& data) override;
 	void clear();
 
 private:

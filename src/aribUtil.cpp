@@ -1,5 +1,4 @@
 ﻿#include "aribUtil.h"
-#include "tsARIBCharset.h"
 #include "aribEncoder.h"
 
 namespace {

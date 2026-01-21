@@ -6,8 +6,7 @@
 
 namespace MmtTlv {
 
-std::pair<int64_t, int64_t> MmtStream::getNextPtsDts()
-{
+std::pair<int64_t, int64_t> MmtStream::getNextPtsDts() {
     const auto timestamp = getCurrentTimestamp();
 
     int64_t ptime = av_rescale(timestamp.first.mpuPresentationTime, timeBase.den,
@@ -29,8 +28,7 @@ std::pair<int64_t, int64_t> MmtStream::getNextPtsDts()
     return std::pair<int64_t, int64_t>(pts, dts);
 }
 
-std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> MmtStream::getCurrentTimestamp() const
-{
+std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescriptor::Entry> MmtStream::getCurrentTimestamp() const {
     auto mpuTimestampIt = std::find_if(mpuTimestamps.begin(), mpuTimestamps.end(),
         [this](const auto& entry) { return entry.mpuSequenceNumber == lastMpuSequenceNumber; });
 
@@ -44,26 +42,23 @@ std::pair<const MpuTimestampDescriptor::Entry, const MpuExtendedTimestampDescrip
     return { *mpuTimestampIt, *extendedTimestampIt };
 }
 
-bool MmtStream::Is8KVideo() const
-{
+bool MmtStream::is8KVideo() const {
     if (!videoComponentDescriptor) {
         return false;
     }
 
-    return videoComponentDescriptor->Is8KVideo();
+    return videoComponentDescriptor->is8KVideo();
 }
 
-bool MmtStream::Is22_2chAudio() const
-{
+bool MmtStream::is22_2chAudio() const {
     if (!mhAudioComponentDescriptor) {
         return false;
     }
 
-    return mhAudioComponentDescriptor->Is22_2chAudio();
+    return mhAudioComponentDescriptor->is22_2chAudio();
 }
 
-uint32_t MmtStream::getSamplingRate() const
-{
+uint32_t MmtStream::getSamplingRate() const {
     if (!mhAudioComponentDescriptor) {
         return 0;
     }

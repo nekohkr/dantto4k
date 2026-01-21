@@ -2,13 +2,13 @@
 
 namespace MmtTlv {
 
-std::optional<MfuData> MpuAudioProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
+std::optional<MfuData> MpuAudioProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data) {
     Common::ReadStream stream(data);
     size_t size = stream.leftBytes();
 
     std::pair<int64_t, int64_t> ptsDts;
     try {
-        ptsDts = mmtStream->getNextPtsDts();
+        ptsDts = mmtStream.getNextPtsDts();
     }
     catch (const std::out_of_range&) {
         return std::nullopt;
@@ -26,7 +26,7 @@ std::optional<MfuData> MpuAudioProcessor::process(const std::shared_ptr<MmtStrea
 
     mfuData.pts = ptsDts.first;
     mfuData.dts = ptsDts.second;
-    mfuData.streamIndex = mmtStream->getStreamIndex();
+    mfuData.streamIndex = mmtStream.getStreamIndex();
 
 	return mfuData;
 }
