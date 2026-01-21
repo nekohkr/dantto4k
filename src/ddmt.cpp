@@ -51,7 +51,8 @@ bool Ddmt::unpack(Common::ReadStream& stream) {
         sectionSyntaxIndicator = (uint16 & 0b1000000000000000) >> 15;
         sectionLength = uint16 & 0b0000111111111111;
         dataTransmissionSessionId = stream.get8U();
-        uint8_t reservedFutureUse1 = stream.get8U();
+        stream.skip(1); // reserved
+
         uint8_t uint8 = stream.get8U();
         versionNumber = (uint8 & 0b00111110) >> 1;
         currentNextIndicator = uint8 & 1;

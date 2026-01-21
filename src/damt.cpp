@@ -37,7 +37,6 @@ bool Damt::Mpu::unpack(Common::ReadStream& stream) {
         indexItemFlag = (uint8 & 0b10000000) >> 7;
         indexItemIdFlag = (uint8 & 0b01000000) >> 6;
         indexItemCompressionFlag = (uint8 & 0b00110000) >> 4;
-        uint8_t reservedFutureUse = uint8 & 0b1111;
 
         if (indexItemFlag && indexItemIdFlag) {
             indexItemId = stream.getBe32U();
@@ -54,9 +53,7 @@ bool Damt::Mpu::unpack(Common::ReadStream& stream) {
 
         uint8_t mpuInfoLength = stream.get8U();
         if (mpuInfoLength == 0x5) {
-            uint16_t descriptorTag = stream.getBe16U();
-            uint8_t descriptorLength = stream.get8U();
-
+            stream.skip(3); // skip descriptor_tag and descriptor_length
             nodeTag = stream.getBe16U();
         }
         else {
@@ -82,7 +79,7 @@ bool Damt::unpack(Common::ReadStream& stream) {
         sectionLength = uint16 & 0b0000111111111111;
 
         dataTransmissionSessionId = stream.get8U();
-        uint8_t reserved_future_use1 = stream.get8U();
+        stream.skip(1); // reserved
         
         uint8_t uint8 = stream.get8U();
         versionNumber = (uint8 & 0b00111110) >> 1;
