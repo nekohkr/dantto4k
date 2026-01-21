@@ -14,7 +14,7 @@ Usage:
                                 Specify the smart card reader to use
       --customWinscardDLL arg   Specify the path to a winscard.dll
       --disableADTSConversion   Disable ADTS conversion
-      --no-progress             Disable progress
+      --no-progress             Disable progress display
       --no-stats                Disable packet statistics
       --help                    Show help
 ```
@@ -26,7 +26,7 @@ dantto4kは64bitで配布しており、BonRecTestおよびBonDriver_BDAは64bit
 
 #### Mirakurunでの動作
 PT4Kで動作する場合、チャンネル再生まで15～20秒かかるため、Mirakurunのtimeout(20秒)を超える場合があります。
-mirakurunのソースコードを修正してtimeoutを30秒以上に変更する必要があります。
+Mirakurunのソースコードを修正してtimeoutを30秒以上に変更する必要があります。
 
 https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts
 
@@ -37,7 +37,7 @@ https://github.com/nekohkr/casproxyserver
 ## ビルド
 ### Windows
 /thirdpartyフォルダにtsduckとasio(v1.32.0)を準備します。
-下記のURLからbinaryをダウンロードすることができます。
+下記のURLからtsduckのbinaryをダウンロードすることができます。
 
 - https://github.com/tsduck/tsduck/
 ### Ubuntu

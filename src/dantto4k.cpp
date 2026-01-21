@@ -42,7 +42,7 @@ Args parseArguments(int argc, char* argv[]) {
             ("customWinscardDLL", "Specify the path to a winscard.dll", cxxopts::value<std::string>()->default_value(""))
 #endif
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
-            ("no-progress", "Disable progress", cxxopts::value<bool>()->default_value("false"))
+            ("no-progress", "Disable progress display", cxxopts::value<bool>()->default_value("false"))
             ("no-stats", "Disable packet statistics", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
