@@ -47,8 +47,7 @@ bool FragmentAssembler::assemble(const std::vector<uint8_t>& fragment, Fragmenta
     return false;
 }
 
-void FragmentAssembler::checkState(uint32_t packetSequenceNumber)
-{
+void FragmentAssembler::checkState(uint32_t packetSequenceNumber) {
     if (state == State::Init) {
         state = State::Skip;
     }

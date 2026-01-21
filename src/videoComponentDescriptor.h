@@ -8,7 +8,7 @@ class VideoComponentDescriptor
 public:
 	bool unpack(Common::ReadStream& stream) override;
 
-    bool Is8KVideo() const { return videoResolution == 7; }
+    bool is8KVideo() const { return videoResolution == 7; }
 
     uint8_t videoResolution;
     uint8_t videoAspectRatio;

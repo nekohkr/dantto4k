@@ -1,8 +1,8 @@
-#include "mhStreamIdentificationDescriptor.h"
+#include "mhSimpleApplicationLocationDescriptor.h"
 
 namespace MmtTlv {
 
-bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream) {
+bool MhSimpleApplicationLocationDescriptor::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
@@ -10,7 +10,8 @@ bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream) {
 
         Common::ReadStream nstream(stream, descriptorLength);
 
-        componentTag = nstream.getBe16U();
+        initialPath.resize(nstream.leftBytes());
+        nstream.read(initialPath.data(), nstream.leftBytes());
 
         stream.skip(descriptorLength);
     }

@@ -21,21 +21,17 @@ public:
 
     uint16_t sectionSyntaxIndicator;
     uint16_t sectionLength;
-
     uint16_t originalNetworkId;
     uint8_t versionNumber;
     bool currentNextIndicator;
     uint8_t sectionNumber;
     uint8_t lastSectionNumber;
-
     bool broadcastViewPropriety;
     uint16_t firstDescriptorsLength;
-
     MmtDescriptors descriptors;
-
-
     std::vector<Broadcaster> broadcasters;
     uint32_t crc32;
+
 };
 
 }

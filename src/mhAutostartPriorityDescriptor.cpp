@@ -1,8 +1,8 @@
-#include "mhStreamIdentificationDescriptor.h"
+#include "mhAutostartPriorityDescriptor.h"
 
 namespace MmtTlv {
 
-bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream) {
+bool MhAutostartPriorityDescriptor::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
@@ -10,7 +10,7 @@ bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream) {
 
         Common::ReadStream nstream(stream, descriptorLength);
 
-        componentTag = nstream.getBe16U();
+        autostartPriority = nstream.get8U();
 
         stream.skip(descriptorLength);
     }

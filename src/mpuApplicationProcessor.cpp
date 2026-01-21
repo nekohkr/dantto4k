@@ -2,7 +2,7 @@
 
 namespace MmtTlv {
 
-std::optional<MfuData> MpuApplicationProcessor::process(const std::shared_ptr<MmtStream>& mmtStream, const std::vector<uint8_t>& data) {
+std::optional<MfuData> MpuApplicationProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data) {
     Common::ReadStream stream(data);
     size_t size = stream.leftBytes();
     if (size == 0) {
@@ -13,7 +13,7 @@ std::optional<MfuData> MpuApplicationProcessor::process(const std::shared_ptr<Mm
     mfuData.data.resize(size);
     stream.read(mfuData.data.data(), size);
 
-    mfuData.streamIndex = mmtStream->getStreamIndex();
+    mfuData.streamIndex = mmtStream.getStreamIndex();
 
     return mfuData;
 }

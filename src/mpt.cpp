@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool Mpt::unpack(Common::ReadStream& stream)
-{
+bool Mpt::unpack(Common::ReadStream& stream) {
 	try {
 		if (!MmtTableBase::unpack(stream)) {
 			return false;
@@ -37,7 +36,7 @@ bool Mpt::unpack(Common::ReadStream& stream)
 			if (!asset.unpack(stream)) {
 				return false;
 			}
-			assets.push_back(asset);
+			assets.push_back(std::move(asset));
 		}
 	}
 	catch (const std::out_of_range&) {
@@ -47,8 +46,7 @@ bool Mpt::unpack(Common::ReadStream& stream)
 	return true;
 }
 
-bool Mpt::Asset::unpack(Common::ReadStream& stream)
-{
+bool Mpt::Asset::unpack(Common::ReadStream& stream) {
 	try {
 		identifierType = stream.get8U();
 		assetIdScheme = stream.getBe32U();

@@ -63,15 +63,15 @@ private:
 	void processTlvTable(Common::ReadStream& stream);
 	void processMmtTable(Common::ReadStream& stream);
 	void processMmtTableStatistics(uint8_t tableId);
-	void processMmtPackageTable(const std::shared_ptr<Mpt>& mpt);
-	void processMpuTimestampDescriptor(const std::shared_ptr<MpuTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
-	void processMpuExtendedTimestampDescriptor(const std::shared_ptr<MpuExtendedTimestampDescriptor>& descriptor, std::shared_ptr<MmtStream>& mmtStream);
-	void processEcm(std::shared_ptr<Ecm> ecm);
+	void processMmtPackageTable(const Mpt& mpt);
+	void processMpuTimestampDescriptor(const MpuTimestampDescriptor& descriptor, MmtStream& mmtStream);
+	void processMpuExtendedTimestampDescriptor(const MpuExtendedTimestampDescriptor& descriptor, MmtStream& mmtStream);
+	void processEcm(const Ecm& ecm);
 
 public:
-	std::shared_ptr<MmtStream> getStream(uint16_t packetId);
-	std::shared_ptr<MmtStream> getStreamByIdx(uint16_t idx);
-	std::map<uint16_t, std::shared_ptr<MmtStream>> mapStream;
+	MmtStream* getStream(uint16_t packetId);
+	MmtStream* getStreamByIdx(uint16_t idx);
+	std::map<uint16_t, MmtStream> mapStream;
 
 private:
 	FragmentAssembler* getAssembler(uint16_t packetId);

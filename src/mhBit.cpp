@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhBit::unpack(Common::ReadStream& stream)
-{
+bool MhBit::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtTableBase::unpack(stream)) {
             return false;
@@ -39,7 +38,7 @@ bool MhBit::unpack(Common::ReadStream& stream)
                 return false;
             }
 
-            broadcasters.push_back(entry);
+            broadcasters.push_back(std::move(entry));
         }
 
         crc32 = stream.getBe32U();
@@ -51,8 +50,7 @@ bool MhBit::unpack(Common::ReadStream& stream)
     return true;
 }
 
-bool MhBit::Broadcaster::unpack(Common::ReadStream& stream)
-{
+bool MhBit::Broadcaster::unpack(Common::ReadStream& stream) {
     try {
         broadcasterId = stream.get8U();
 

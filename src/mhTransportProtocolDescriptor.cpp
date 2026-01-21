@@ -1,8 +1,8 @@
-#include "mhStreamIdentificationDescriptor.h"
+#include "mhTransportProtocolDescriptor.h"
 
 namespace MmtTlv {
 
-bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream) {
+bool MhTransportProtocolDescriptor::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;
@@ -10,7 +10,10 @@ bool MhStreamIdentificationDescriptor::unpack(Common::ReadStream& stream) {
 
         Common::ReadStream nstream(stream, descriptorLength);
 
-        componentTag = nstream.getBe16U();
+        protocolId = nstream.getBe16U();
+        transportProtocolLabel = nstream.get8U();
+        selector.resize(nstream.leftBytes());
+        nstream.read(selector.data(), nstream.leftBytes());
 
         stream.skip(descriptorLength);
     }

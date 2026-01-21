@@ -13,6 +13,7 @@
 #include "mhShortEventDescriptor.h"
 #include "mhSiParameterDescriptor.h"
 #include "mhStreamIdentificationDescriptor.h"
+#include "mhApplicationBoundaryAndPermissionDescriptor.h"
 #include "mmtTableBase.h"
 #include "multimediaServiceInformationDescriptor.h"
 #include "networkNameDescriptor.h"
@@ -22,6 +23,7 @@
 #include "mhServiceDescriptor.h"
 #include "aribUtil.h"
 #include "timeUtil.h"
+#include "mhApplicationDescriptor.h"
 
 constexpr uint8_t convertAudioComponentType(uint8_t componentType) {
     uint8_t audioMode = componentType & 0b00011111;
@@ -513,4 +515,72 @@ struct DescriptorConverter<MmtTlv::ServiceListDescriptor> {
         return tsDescriptor;
     }
 };
+
+template <>
+struct DescriptorConverter<MmtTlv::MhApplicationDescriptor> {
+    static ts::ApplicationDescriptor convert(const MmtTlv::MhApplicationDescriptor& mmtDescriptor) {
+        ts::ApplicationDescriptor tsDescriptor;
+        tsDescriptor.application_priority = mmtDescriptor.applicationPriority;
+        
+        for (auto const& profile : mmtDescriptor.applicationProfiles) {
+            ts::ApplicationDescriptor::Profile tsProfile;
+            tsProfile.application_profile = profile.applicationProfile;
+            tsProfile.version_major = profile.versionMajor;
+            tsProfile.version_minor = profile.versionMinor;
+            tsProfile.version_micro = profile.versionMicro;
+            tsDescriptor.profiles.push_back(tsProfile);
+        }
+
+        tsDescriptor.service_bound = mmtDescriptor.serviceBoundFlag;
+        tsDescriptor.visibility = mmtDescriptor.visibility;
+        tsDescriptor.application_priority = mmtDescriptor.applicationPriority;
+        tsDescriptor.transport_protocol_labels.assign(
+            mmtDescriptor.transportProtocolLabel.begin(),
+            mmtDescriptor.transportProtocolLabel.end()
+        );
+
+        return tsDescriptor;
+    }
+};
+
+template <>
+struct DescriptorConverter<MmtTlv::MhTransportProtocolDescriptor> {
+    static ts::TransportProtocolDescriptor convert(const MmtTlv::MhTransportProtocolDescriptor& mmtDescriptor) {
+        ts::TransportProtocolDescriptor tsDescriptor;
+        tsDescriptor.protocol_id = mmtDescriptor.protocolId;
+        tsDescriptor.transport_protocol_label = mmtDescriptor.transportProtocolLabel;
+        tsDescriptor.selector.assign(
+            mmtDescriptor.selector.begin(),
+            mmtDescriptor.selector.end()
+        );
+
+        return tsDescriptor;
+    }
+};
+
+template <>
+struct DescriptorConverter<MmtTlv::MhSimpleApplicationLocationDescriptor> {
+    static ts::SimpleApplicationLocationDescriptor convert(const MmtTlv::MhSimpleApplicationLocationDescriptor& mmtDescriptor) {
+        ts::SimpleApplicationLocationDescriptor tsDescriptor;
+        tsDescriptor.initial_path = ts::UString::FromUTF8(mmtDescriptor.initialPath);
+
+        return tsDescriptor;
+    }
+};
+
+template <>
+struct DescriptorConverter<MmtTlv::MhApplicationBoundaryAndPermissionDescriptor> {
+    static ts::SimpleApplicationBoundaryDescriptor convert(const MmtTlv::MhApplicationBoundaryAndPermissionDescriptor& mmtDescriptor) {
+        ts::SimpleApplicationBoundaryDescriptor tsDescriptor;
+        for (const auto& entry : mmtDescriptor.entires) {
+            for (const auto& managedUrlentry : entry.managedUrl) {
+                tsDescriptor.boundary_extension.push_back(entry.managedUrl);
+            }
+        }
+
+        return tsDescriptor;
+    }
+};
+
+
 

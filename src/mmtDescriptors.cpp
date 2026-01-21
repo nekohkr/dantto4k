@@ -3,8 +3,7 @@
 
 namespace MmtTlv {
 
-bool MmtDescriptors::unpack(Common::ReadStream& stream)
-{
+bool MmtDescriptors::unpack(Common::ReadStream& stream) {
 	list.clear();
 	while (!stream.isEof()) {
 		uint16_t descriptorTag = stream.peekBe16U();
@@ -23,6 +22,7 @@ bool MmtDescriptors::unpack(Common::ReadStream& stream)
 			list.push_back(std::move(it));
 		}
 	}
+
 	return true;
 }
 

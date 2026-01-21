@@ -26,7 +26,8 @@ public:
     uint8_t visibility;
     bool presentApplicationPriority;
     uint8_t applicationPriority;
-    std::string transportProtocolLabel;
+    std::vector<uint8_t> transportProtocolLabel;
+
 };
 
 }
