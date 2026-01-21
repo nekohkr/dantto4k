@@ -18,6 +18,7 @@ public:
         uint8_t puSize;
         std::list<uint16_t> nodeTags;
         std::vector<uint8_t> descriptor;
+
     };
 
     bool sectionSyntaxIndicator;

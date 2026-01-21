@@ -5,6 +5,7 @@
 
 namespace MmtTlv {
 
+// Data Asset Management Table
 class Damt : public MmtTableBase {
 public:
     bool unpack(Common::ReadStream& stream);

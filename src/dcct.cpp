@@ -18,7 +18,8 @@ bool Dcct::PU::unpack(Common::ReadStream& stream) {
     catch (const std::out_of_range&) {
         return false;
     }
-    return false;
+
+    return true;
 }
 
 bool Dcct::unpack(Common::ReadStream& stream) {
@@ -75,7 +76,7 @@ bool Dcct::unpack(Common::ReadStream& stream) {
         return false;
     }
 
-    return false;
+    return true;
 }
 
 }

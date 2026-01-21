@@ -49,17 +49,13 @@ public:
 		: demuxer(demuxer) {
 	}
 
-	// MPU data
+	// MPU
 	void onVideoData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) override;
 	void onAudioData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) override;
 	void onSubtitleData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData) override;
-	void onApplicationData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::Mpu& mpu, const MmtTlv::DataUnit& dataUnit, const MmtTlv::MfuData& mfuData) override;
 
-	void onPacketDrop(uint16_t packetId, const MmtTlv::MmtStream* mmtStream) override;
-
-	// MMT message
+	// MMT-SI
 	void onMhBit(const MmtTlv::MhBit& mhCdt) override;
-	void onMhAit(const MmtTlv::MhAit& mhBit) override;
 	void onEcm(const MmtTlv::Ecm& ecm) override {}
 	void onMhCdt(const MmtTlv::MhCdt& mhCdt) override;
 	void onMhEit(const MmtTlv::MhEit& mhEit) override;
@@ -67,19 +63,19 @@ public:
 	void onMhTot(const MmtTlv::MhTot& mhTot) override;
 	void onMpt(const MmtTlv::Mpt& mpt) override;
 	void onPlt(const MmtTlv::Plt& plt) override;
-	void onDamt(const MmtTlv::Damt& damt) override;
 
-	// TLV message
+	// TLV-SI
 	void onNit(const MmtTlv::Nit& nit) override;
 
 	// IPv6
 	void onNtp(const MmtTlv::NTPv4& ntp) override;
 
-	void clear();
+	void onPacketDrop(uint16_t packetId, const MmtTlv::MmtStream* mmtStream) override;
 
 public:
 	using OutputCallback = std::function<void(const uint8_t*, size_t)>;
 	void setOutputCallback(OutputCallback cb);
+	void clear();
 
 private:
 	void writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& data);
@@ -95,11 +91,7 @@ private:
 	uint64_t lastPcr{};
 	uint64_t lastCaptionManagementDataPts{};
 	uint64_t programStartTime{};
-	ts::DuckContext duck;
 	inline static const std::vector<uint8_t> ccis = { 0x43, 0x43, 0x49, 0x53, 0x01, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, };
-	
-    uint8_t damtVersion{};
-    bool damtReceivedSection[255]{};
-	std::vector<MmtTlv::Damt::Mpu> damtMpus;
+	ts::DuckContext duck;
 
 };

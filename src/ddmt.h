@@ -27,6 +27,7 @@ public:
         uint8_t directoryNodeVersion;
         std::string directoryNodePath;
         std::list <File> files;
+
     };
 
     bool sectionSyntaxIndicator;
@@ -36,10 +37,8 @@ public:
     bool currentNextIndicator;
     uint8_t sectionNumber;
     uint8_t lastSectionNumber;
-
     std::string baseDirectoryPath;
     std::list<Node> nodes;
-
     uint32_t crc32;
 
 };

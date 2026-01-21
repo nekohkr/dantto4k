@@ -22,9 +22,9 @@ struct Args {
     std::string customWinscardDLL;
     bool disableADTSConversion{false};
     bool listSmartCardReader{false};
-    bool progress{false};
+    bool noProgress{false};
+    bool noStats{false};
 };
-
 
 Args parseArguments(int argc, char* argv[]) {
     Args args;
@@ -36,13 +36,14 @@ Args parseArguments(int argc, char* argv[]) {
             ("input", "Input file ('-' for stdin)", cxxopts::value<std::string>()->default_value(""))
             ("output", "Output file ('-' for stdout)", cxxopts::value<std::string>()->default_value(""))
             ("listSmartCardReader", "List available smart card readers", cxxopts::value<bool>()->default_value("false"))
-            ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>()->default_value(""))
-            ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>()->default_value(""))
+            ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>())
+            ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>())
 #ifdef WIN32
             ("customWinscardDLL", "Specify the path to a winscard.dll", cxxopts::value<std::string>()->default_value(""))
 #endif
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
-            ("progress", "Show progress", cxxopts::value<bool>()->default_value("false"))
+            ("no-progress", "Disable progress", cxxopts::value<bool>()->default_value("false"))
+            ("no-stats", "Disable packet statistics", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
 
         options.parse_positional({ "input", "output" });
@@ -57,21 +58,29 @@ Args parseArguments(int argc, char* argv[]) {
         args.input = result["input"].as<std::string>();
         args.output = result["output"].as<std::string>();
 
-        std::string casProxyServer = result["casProxyServer"].as<std::string>();
-        if (!casProxyServer.empty()) {
-            auto parsed = casproxy::parseAddress(casProxyServer);
-            if (!parsed) {
-                std::cerr << "Invalid CasProxyServer address" << std::endl;
-                std::exit(1);
+        if (result["casProxyServer"].count()) {
+            std::string casProxyServer = result["casProxyServer"].as<std::string>();
+            if (!casProxyServer.empty()) {
+                auto parsed = casproxy::parseAddress(casProxyServer);
+                if (!parsed) {
+                    std::cerr << "Invalid CasProxyServer address" << std::endl;
+                    std::exit(1);
+                }
+                args.casProxyHost = parsed->first;
+                args.casProxyPort = parsed->second;
             }
-            args.casProxyHost = parsed->first;
-            args.casProxyPort = parsed->second;
         }
 
-        args.smartCardReaderName = result["smartCardReaderName"].as<std::string>();
-        args.listSmartCardReader = result["listSmartCardReader"].as<bool>();
+        if (result["smartCardReaderName"].count()) {
+            args.smartCardReaderName = result["smartCardReaderName"].as<std::string>();
+        }
+        if (result["listSmartCardReader"].count()) {
+            args.listSmartCardReader = result["listSmartCardReader"].as<bool>();
+        }
 #ifdef WIN32
-        args.customWinscardDLL = result["customWinscardDLL"].as<std::string>();
+        if (result["customWinscardDLL"].count()) {
+            args.customWinscardDLL = result["customWinscardDLL"].as<std::string>();
+        }
 #endif
 
         if (!args.listSmartCardReader) {
@@ -88,8 +97,21 @@ Args parseArguments(int argc, char* argv[]) {
             }
         }
 
-        args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
-        args.progress = result["progress"].as<bool>();
+        if (result["disableADTSConversion"].count()) {
+            args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
+        }
+        if (result["no-progress"].count()) {
+            args.noProgress = result["no-progress"].as<bool>();
+        }
+        if (result["no-stats"].count()) {
+            args.noStats = result["no-stats"].as<bool>();
+        }
+
+        // Disable progress and stats when using stdin/stdout
+        if (args.input == "-" || args.output == "-") {
+            args.noProgress = true;
+            args.noStats = true;
+        }
     }
     catch (const cxxopts::exceptions::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -119,13 +141,11 @@ void printReaderList(const Args& args) {
     catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
     }
-
 }
 
 }
 
 int main(int argc, char* argv[]) {
-    const auto startTime = std::chrono::high_resolution_clock::now();
     constexpr size_t chunkSize = 1024 * 1024 * 5; // 5MB
 
     Args args = parseArguments(argc, argv);
@@ -163,7 +183,7 @@ int main(int argc, char* argv[]) {
         fileSize = inputFs->tellg();
         inputFs->seekg(currentPos);
     }
-    ProgressReporter progressReporter(fileSize, args.progress);
+    ProgressReporter progressReporter(fileSize, !args.noProgress);
 
     std::ostream* outputStream;
     std::unique_ptr<std::ofstream> outputFs;
@@ -252,12 +272,10 @@ int main(int argc, char* argv[]) {
     }
 
     progressReporter.finish();
-    demuxer.printStatistics();
+    if (!args.noStats) {
+        demuxer.printStatistics();
+    }
     demuxer.clear();
-
-    auto endTime = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = endTime - startTime;
-    std::cerr << "Elapsed time: " << elapsed.count() << " seconds\n";
 
     return 0;
 }

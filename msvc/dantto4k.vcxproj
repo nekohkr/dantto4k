@@ -147,10 +147,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="../src/accessControlDescriptor.cpp" />
-    <ClCompile Include="..\src\aes.cpp" />
-    <ClCompile Include="..\src\mpuApplicationProcessor.cpp" />
+    <ClCompile Include="../src/aes.cpp" />
+    <ClCompile Include="../src/damt.cpp" />
+    <ClCompile Include="../src/dcct.cpp" />
+    <ClCompile Include="../src/ddmt.cpp" />
+    <ClCompile Include="../src/emt.cpp" />
+    <ClCompile Include="../src/indexItem.cpp" />
+    <ClCompile Include="../src/mhApplicationBoundaryAndPermissionDescriptor.cpp" />
+    <ClCompile Include="../src/mhAutostartPriorityDescriptor.cpp" />
+    <ClCompile Include="../src/mhCacheControlInfoDescriptor.cpp" />
+    <ClCompile Include="../src/mhExternalApplicationControlDescriptor.cpp" />
+    <ClCompile Include="../src/mhRandomizedLatencyDescriptor.cpp" />
+    <ClCompile Include="../src/mhSimpleApplicationLocationDescriptor.cpp" />
+    <ClCompile Include="../src/mhTransportProtocolDescriptor.cpp" />
+    <ClCompile Include="../src/mpuApplicationProcessor.cpp" />
     <ClCompile Include="../src/aribUtil.cpp" />
-    <ClCompile Include="..\src\mpuAudioProcessor.cpp" />
+    <ClCompile Include="../src/mpuAudioProcessor.cpp" />
     <ClCompile Include="../src/acasCard.cpp" />
     <ClCompile Include="../src/adtsConverter.cpp" />
     <ClCompile Include="../src/b24Color.cpp" />
@@ -188,7 +200,7 @@
     <ClCompile Include="../src/tlvDescriptorFactory.cpp" />
     <ClCompile Include="../src/tlvTableFactory.cpp" />
     <ClCompile Include="../src/ttml.cpp" />
-    <ClCompile Include="..\src\mpuVideoProcessor.cpp" />
+    <ClCompile Include="../src/mpuVideoProcessor.cpp" />
     <ClCompile Include="../src/m2SectionMessage.cpp" />
     <ClCompile Include="../src/m2ShortSectionMessage.cpp" />
     <ClCompile Include="../src/mhAudioComponentDescriptor.cpp" />
@@ -209,7 +221,7 @@
     <ClCompile Include="../src/mhShortEventDescriptor.cpp" />
     <ClCompile Include="../src/mhStreamIdentificationDescriptor.cpp" />
     <ClCompile Include="../src/mhTot.cpp" />
-    <ClCompile Include="..\src\mmtp.cpp" />
+    <ClCompile Include="../src/mmtp.cpp" />
     <ClCompile Include="../src/mmtDescriptors.cpp" />
     <ClCompile Include="../src/mmtGeneralLocationInfo.cpp" />
     <ClCompile Include="../src/remuxerHandler.cpp" />
@@ -218,7 +230,7 @@
     <ClCompile Include="../src/mpt.cpp" />
     <ClCompile Include="../src/mpu.cpp" />
     <ClCompile Include="../src/fragmentAssembler.cpp" />
-    <ClCompile Include="..\src\mpuProcessorFactory.cpp" />
+    <ClCompile Include="../src/mpuProcessorFactory.cpp" />
     <ClCompile Include="../src/mpuExtendedTimestampDescriptor.cpp" />
     <ClCompile Include="../src/mpuTimestampDescriptor.cpp" />
     <ClCompile Include="../src/networkNameDescriptor.cpp" />
@@ -233,16 +245,28 @@
     <ClCompile Include="../src/smartCard.cpp" />
     <ClCompile Include="../src/tlvDescriptors.cpp" />
     <ClCompile Include="../src/transmissionControlSignal.cpp" />
-    <ClCompile Include="..\src\mpuSubtitleProcessor.cpp" />
+    <ClCompile Include="../src/mpuSubtitleProcessor.cpp" />
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
-    <ClCompile Include="..\src\aribEncoder.cpp" />
+    <ClCompile Include="../src/aribEncoder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/accessControlDescriptor.h" />
-    <ClInclude Include="..\src\aes.h" />
-    <ClInclude Include="..\src\mpuApplicationProcessor.h" />
+    <ClInclude Include="../src/aes.h" />
+    <ClInclude Include="../src/damt.h" />
+    <ClInclude Include="../src/dcct.h" />
+    <ClInclude Include="../src/ddmt.h" />
+    <ClInclude Include="../src/emt.h" />
+    <ClInclude Include="../src/indexItem.h" />
+    <ClInclude Include="../src/mhApplicationBoundaryAndPermissionDescriptor.h" />
+    <ClInclude Include="../src/mhAutostartPriorityDescriptor.h" />
+    <ClInclude Include="../src/mhCacheControlInfoDescriptor.h" />
+    <ClInclude Include="../src/mhExternalApplicationControlDescriptor.h" />
+    <ClInclude Include="../src/mhRandomizedLatencyDescriptor.h" />
+    <ClInclude Include="../src/mhSimpleApplicationLocationDescriptor.h" />
+    <ClInclude Include="../src/mhTransportProtocolDescriptor.h" />
+    <ClInclude Include="../src/mpuApplicationProcessor.h" />
     <ClInclude Include="../src/aribUtil.h" />
-    <ClInclude Include="..\src\mpuAudioProcessor.h" />
+    <ClInclude Include="../src/mpuAudioProcessor.h" />
     <ClInclude Include="../src/acasCard.h" />
     <ClInclude Include="../src/adtsConverter.h" />
     <ClInclude Include="../src/b24Color.h" />
@@ -288,7 +312,7 @@
     <ClInclude Include="../src/tlvDescriptorFactory.h" />
     <ClInclude Include="../src/tlvTableFactory.h" />
     <ClInclude Include="../src/ttml.h" />
-    <ClInclude Include="..\src\mpuVideoProcessor.h" />
+    <ClInclude Include="../src/mpuVideoProcessor.h" />
     <ClInclude Include="../src/IBonDriver.h" />
     <ClInclude Include="../src/ip.h" />
     <ClInclude Include="../src/m2SectionMessage.h" />
@@ -310,7 +334,7 @@
     <ClInclude Include="../src/mhShortEventDescriptor.h" />
     <ClInclude Include="../src/mhStreamIdentificationDescriptor.h" />
     <ClInclude Include="../src/mhTot.h" />
-    <ClInclude Include="..\src\mmtp.h" />
+    <ClInclude Include="../src/mmtp.h" />
     <ClInclude Include="../src/mmtDescriptors.h" />
     <ClInclude Include="../src/mmtGeneralLocationInfo.h" />
     <ClInclude Include="../src/remuxerHandler.h" />
@@ -318,8 +342,8 @@
     <ClInclude Include="../src/mpt.h" />
     <ClInclude Include="../src/mpu.h" />
     <ClInclude Include="../src/fragmentAssembler.h" />
-    <ClInclude Include="..\src\mpuProcessorBase.h" />
-    <ClInclude Include="..\src\mpuProcessorFactory.h" />
+    <ClInclude Include="../src/mpuProcessorBase.h" />
+    <ClInclude Include="../src/mpuProcessorFactory.h" />
     <ClInclude Include="../src/mpuExtendedTimestampDescriptor.h" />
     <ClInclude Include="../src/mpuTimestampDescriptor.h" />
     <ClInclude Include="../src/networkNameDescriptor.h" />
@@ -338,14 +362,15 @@
     <ClInclude Include="../src/tlvDescriptors.h" />
     <ClInclude Include="../src/tlvTableBase.h" />
     <ClInclude Include="../src/transmissionControlSignal.h" />
-    <ClInclude Include="..\src\mpuSubtitleProcessor.h" />
+    <ClInclude Include="../src/mpuSubtitleProcessor.h" />
     <ClInclude Include="../src/videoComponentDescriptor.h" />
     <ClInclude Include="../src/IBonDriver2.h" />
     <ClInclude Include="../src/mmtDescriptorBase.h" />
     <ClInclude Include="../src/mmtTlvDemuxer.h" />
-    <ClInclude Include="..\src\aesCtrCipher.h" />
-    <ClInclude Include="..\src\aribEncoder.h" />
-    <ClInclude Include="..\src\sha256.h" />
+    <ClInclude Include="../src/aesCtrCipher.h" />
+    <ClInclude Include="../src/aribEncoder.h" />
+    <ClInclude Include="../src/progressReporter.h" />
+    <ClInclude Include="../src/sha256.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

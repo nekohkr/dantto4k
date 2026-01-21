@@ -22,6 +22,7 @@ namespace MmtTlv {
 class TableBase;
 class Plt;
 class Ecm;
+class Damt;
 class TlvTableBase;
 class DemuxerHandler;
 
@@ -67,6 +68,7 @@ private:
 	void processMpuTimestampDescriptor(const MpuTimestampDescriptor& descriptor, MmtStream& mmtStream);
 	void processMpuExtendedTimestampDescriptor(const MpuExtendedTimestampDescriptor& descriptor, MmtStream& mmtStream);
 	void processEcm(const Ecm& ecm);
+	void processDamt(const Damt& ecm);
 
 public:
 	MmtStream* getStream(uint16_t packetId);

@@ -3,20 +3,19 @@
 ## 使用方法
 
 ### dantto4k.exe
-mmtsから復号化およびMPEG-2 TSへの変換を行います。
+MMTSから復号化およびMPEG-2 TSへの変換を行います。
 ```
 Usage:
   dantto4k [OPTION...] input output ('-' for stdin/stdout)
 
       --listSmartCardReader     List available smart card readers
       --casProxyServer arg      Specify the address of a CasProxyServer
-                                (default: "")
       --smartCardReaderName arg
                                 Specify the smart card reader to use
-                                (default: "")
       --customWinscardDLL arg   Specify the path to a winscard.dll
-                                (default: "")
       --disableADTSConversion   Disable ADTS conversion
+      --no-progress             Disable progress
+      --no-stats                Disable packet statistics
       --help                    Show help
 ```
 
@@ -25,11 +24,11 @@ Usage:
 BonDriver_dantto4k.iniで設定されたBonDriverをロードして、復号化とMPEG-2 TSへの変換を行います。
 dantto4kは64bitで配布しており、BonRecTestおよびBonDriver_BDAは64bitである必要があります。
 
-#### mirakurunでの動作
-PT4Kで動作する場合、チャンネル再生まで15～20秒かかるため、mirakurunのtimeout(20秒)を超える場合があります。
+#### Mirakurunでの動作
+PT4Kで動作する場合、チャンネル再生まで15～20秒かかるため、Mirakurunのtimeout(20秒)を超える場合があります。
 mirakurunのソースコードを修正してtimeoutを30秒以上に変更する必要があります。
 
-https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts#L175C13-L175C55
+https://github.com/Chinachu/Mirakurun/blob/master/src/Mirakurun/Tuner.ts
 
 ### CasProxyServer
 スマートカードのプロキシサーバーが必要な場合、以下のリポジトリから構築できます。
@@ -37,7 +36,7 @@ https://github.com/nekohkr/casproxyserver
 
 ## ビルド
 ### Windows
-/thirdpartyフォルダにtsduckを準備します。
+/thirdpartyフォルダにtsduckとasio(v1.32.0)を準備します。
 下記のURLからbinaryをダウンロードすることができます。
 
 - https://github.com/tsduck/tsduck/

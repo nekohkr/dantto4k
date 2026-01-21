@@ -25,14 +25,12 @@ class DemuxerHandler {
 public:
 	virtual ~DemuxerHandler() = default;
 
-	// MPU data
+	// MPU
 	virtual void onVideoData(const MmtStream& mmtStream, const MfuData& mfuData) {}
 	virtual void onAudioData(const MmtStream& mmtStream, const MfuData& mfuData) {}
 	virtual void onSubtitleData(const MmtStream& mmtStream, const MfuData& mfuData) {}
 	virtual void onApplicationData(const MmtStream& mmtStream, const Mpu& mpu, const DataUnit& dataUnit, const MfuData& mfuData) {}
-
-	virtual void onPacketDrop(uint16_t packetId, const MmtTlv::MmtStream* mmtStream) {}
-
+	
 	// MMT-SI
 	virtual void onEcm(const Ecm& ecm) {}
 	virtual void onMhBit(const MhBit& mhBit) {}
@@ -53,6 +51,8 @@ public:
 	// IPv6
 	virtual void onNtp(const NTPv4& ntp) {}
 	
+	virtual void onPacketDrop(uint16_t packetId, const MmtTlv::MmtStream* mmtStream) {}
+
 };
 
 }

@@ -59,12 +59,12 @@ private:
 
         std::cerr << std::fixed << std::setprecision(2) << speed << " MiB/s, ";
 
-        auto formatTime = [](long seconds) {
-            long h = seconds / 3600;
-            long m = (seconds % 3600) / 60;
-            long s = seconds % 60;
+        auto formatTime = [](long long seconds) {
+            long long h = seconds / 3600;
+            long long m = (seconds % 3600) / 60;
+            long long s = seconds % 60;
             char buf[32];
-            snprintf(buf, sizeof(buf), "%ld:%02ld:%02ld", h, m, s);
+            snprintf(buf, sizeof(buf), "%lld:%02lld:%02lld", h, m, s);
             return std::string(buf);
         };
 

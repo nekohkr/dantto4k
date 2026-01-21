@@ -39,8 +39,6 @@
 #include "config.h"
 #include "ntp.h"
 #include "b24SubtitleConvertor.h"
-#include "damt.h"
-#include "dsmcc.h"
 
 namespace {
 
@@ -154,24 +152,6 @@ void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const st
 
     for (const auto& pesData : output) {
         writeSubtitle(mmtStream, pesData);
-    }
-}
-
-void RemuxerHandler::onApplicationData(const MmtTlv::MmtStream& mmtStream, const MmtTlv::Mpu& mpu, const MmtTlv::DataUnit& dataUnit, const MmtTlv::MfuData& mfuData) {
-    int a = 1;
-    // IndexItem
-    for (const auto& damtMpu : damtMpus) {
-        if (damtMpu.mpuSequenceNumber == mpu.mpuSequenceNumber && damtMpu.indexItemFlag && damtMpu.indexItemId == dataUnit.itemId) {
-            int a = 1;
-
-        }
-    }
-    if (mfuData.data.size() > 0x1000) {
-        FILE* fp = fopen("C:\\dd\\out", "wb");
-        fwrite(mfuData.data.data(), 1, mfuData.data.size(), fp);
-        fclose(fp);
-
-        int b = 1;
     }
 }
 
@@ -563,51 +543,6 @@ void RemuxerHandler::onMhBit(const MmtTlv::MhBit& mhBit) {
     }
 }
 
-void RemuxerHandler::onMhAit(const MmtTlv::MhAit& mhAit) {
-    ts::AIT tsAit(mhAit.versionNumber, mhAit.currentNextIndicator, mhAit.applicationType, false);
-
-    for (const auto& application : mhAit.applications) {
-        ts::AIT::Application tsApplication(&tsAit);
-        tsApplication.control_code = application.applicationControlCode;
-        for (const auto& descriptor : application.descriptors.list) {
-            switch (descriptor->getDescriptorTag()) {
-            case MmtTlv::MhApplicationDescriptor::kDescriptorTag:
-            {
-                const auto* mmtDescriptor = static_cast<const MmtTlv::MhApplicationDescriptor*>(descriptor.get());
-                auto tsDescriptor = DescriptorConverter<MmtTlv::MhApplicationDescriptor>::convert(*mmtDescriptor);
-                tsApplication.descs.add(duck, tsDescriptor);
-                break;
-            }
-            case MmtTlv::MhTransportProtocolDescriptor::kDescriptorTag:
-            {
-                const auto* mmtDescriptor = static_cast<const MmtTlv::MhTransportProtocolDescriptor*>(descriptor.get());
-                auto tsDescriptor = DescriptorConverter<MmtTlv::MhTransportProtocolDescriptor>::convert(*mmtDescriptor);
-                tsApplication.descs.add(duck, tsDescriptor);
-                break;
-            }
-            case MmtTlv::MhSimpleApplicationLocationDescriptor::kDescriptorTag:
-            {
-                const auto* mmtDescriptor = static_cast<const MmtTlv::MhSimpleApplicationLocationDescriptor*>(descriptor.get());
-                auto tsDescriptor = DescriptorConverter<MmtTlv::MhSimpleApplicationLocationDescriptor>::convert(*mmtDescriptor);
-                tsApplication.descs.add(duck, tsDescriptor);
-                break;
-            }
-            case MmtTlv::MhApplicationBoundaryAndPermissionDescriptor::kDescriptorTag:
-            {
-                const auto* mmtDescriptor = static_cast<const MmtTlv::MhApplicationBoundaryAndPermissionDescriptor*>(descriptor.get());
-                auto tsDescriptor = DescriptorConverter<MmtTlv::MhApplicationBoundaryAndPermissionDescriptor>::convert(*mmtDescriptor);
-                tsApplication.descs.add(duck, tsDescriptor);
-                break;
-            }
-            }
-        }
-
-        ts::ApplicationIdentifier tsApplicationId(application.applicationIdentifier.organizationId, application.applicationIdentifier.applicationId);
-        tsAit.applications[tsApplicationId] = tsApplication;
-    }
-
-}
-
 void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
     tsid = mhEit.tlvStreamId;
 
@@ -875,9 +810,6 @@ void RemuxerHandler::onPlt(const MmtTlv::Plt& plt) {
             }
         }
     }
-}
-
-void RemuxerHandler::onDamt(const MmtTlv::Damt& damt) {
 }
 
 void RemuxerHandler::onMpt(const MmtTlv::Mpt& mpt) {

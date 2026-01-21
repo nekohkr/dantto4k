@@ -5,8 +5,8 @@ namespace MmtTlv {
 bool Ddmt::File::unpack(Common::ReadStream& stream) {
     try {
         nodeTag = stream.getBe16U();
-        uint8_t fileNameLength = stream.get8U();
 
+        uint8_t fileNameLength = stream.get8U();
         fileName.resize(fileNameLength);
         stream.read(fileName.data(), fileNameLength);
     }
@@ -21,6 +21,7 @@ bool Ddmt::Node::unpack(Common::ReadStream& stream) {
     try {
         nodeTag = stream.getBe16U();
         directoryNodeVersion = stream.get8U();
+
         uint8_t directoryNodePathLength = stream.get8U();
         directoryNodePath.resize(directoryNodePathLength);
         stream.read(directoryNodePath.data(), directoryNodePathLength);

@@ -264,15 +264,11 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream) {
 
     switch (tableId) {
     case MmtTableId::Mpt:
-    {
         processMmtPackageTable(*static_cast<Mpt*>(table.get()));
         break;
-    }
     case MmtTableId::Ecm_0:
-    {
         processEcm(*static_cast<Ecm*>(table.get()));
         break;
-    }
     }
     
     if (demuxerHandler) {
@@ -639,6 +635,9 @@ void MmtTlvDemuxer::processEcm(const Ecm& ecm) {
     }
 
     casHandler->onEcm(ecm.ecmData);
+}
+
+void MmtTlvDemuxer::processDamt(const Damt& damt) {
 }
 
 void MmtTlvDemuxer::clear() {

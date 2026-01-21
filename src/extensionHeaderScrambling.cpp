@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool ExtensionHeaderScrambling::unpack(Common::ReadStream& stream, uint16_t extensionHeaderType, uint16_t extensionHeaderLength)
-{
+bool ExtensionHeaderScrambling::unpack(Common::ReadStream& stream, uint16_t extensionHeaderType, uint16_t extensionHeaderLength) {
 	try {
 		if (stream.leftBytes() < 1) {
 			return false;

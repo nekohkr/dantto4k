@@ -11,7 +11,7 @@ ReadStream::ReadStream(const std::vector<uint8_t>& buffer)
     this->size = buffer.size();
 }
 
-ReadStream::ReadStream(const std::vector<uint8_t>& buffer, uint32_t size)
+ReadStream::ReadStream(const std::vector<uint8_t>& buffer, size_t size)
     : buffer(buffer)
 {
     if (buffer.size() < size) {
@@ -22,7 +22,7 @@ ReadStream::ReadStream(const std::vector<uint8_t>& buffer, uint32_t size)
     this->size = size;
 }
 
-ReadStream::ReadStream(ReadStream& stream, uint32_t size)
+ReadStream::ReadStream(ReadStream& stream, size_t size)
     : buffer(stream.buffer)
 {
     if (stream.buffer.size() < stream.pos + size) {
