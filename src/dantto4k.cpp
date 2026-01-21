@@ -85,14 +85,12 @@ Args parseArguments(int argc, char* argv[]) {
 
         if (!args.listSmartCardReader) {
             if (!result.count("input") || !result.count("output")) {
-                std::cerr << "input and output arguments are required.\n\n"
-                    << options.help() << '\n';
+                std::cerr << "input and output arguments are required" << std::endl;
                 std::exit(1);
             }
 
             if (args.input != "-" && args.input == args.output) {
-                std::cerr << "Input and output paths cannot be the same.\n\n"
-                    << options.help() << '\n';
+                std::cerr << "Input and output paths cannot be the same" << std::endl;
                 std::exit(1);
             }
         }
