@@ -1,4 +1,5 @@
 #include "mpuApplicationProcessor.h"
+#include "mmtStream.h"
 
 namespace MmtTlv {
 

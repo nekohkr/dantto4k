@@ -25,40 +25,6 @@
 #include "timeUtil.h"
 #include "mhApplicationDescriptor.h"
 
-constexpr uint8_t convertAudioComponentType(uint8_t componentType) {
-    uint8_t audioMode = componentType & 0b00011111;
-
-    switch (audioMode) {
-    case 0b00001: // 1/0 mode (single mono) 
-        return 0x01;
-    case 0b00010: // 1/0＋1/0 mode (dual mono) 
-        return 0x02;
-    case 0b00011: // 2/0 mode (stereo) 
-        return 0x03;
-    case 0b00111: // 3/1 mode 
-        return 0x07;
-    case 0b01000: // 3/2 mode
-        return 0x08;
-    case 0b01001: // 3/2＋LFE mode (3/2.1 mode)
-        return 0x09;
-    }
-
-    return 0;
-}
-
-constexpr uint8_t convertAudioSamplingRate(uint8_t samplingRate) {
-    switch (samplingRate) {
-    case 0b010: // 24 kHz
-        return 0b010;
-    case 0b101: // 32 kHz
-        return 0b101;
-    case 0b111: // 48 kHz 
-        return 0b111;
-    }
-
-    return 0;
-}
-
 constexpr uint8_t convertVideoComponentType(uint8_t videoResolution, uint8_t videoAspectRatio) {
     if (videoResolution > 7) {
         return 0;
@@ -222,7 +188,7 @@ struct DescriptorConverter<MmtTlv::MhAudioComponentDescriptor> {
     static ts::AudioComponentDescriptor convert(const MmtTlv::MhAudioComponentDescriptor& mmtDescriptor) {
         ts::AudioComponentDescriptor tsDescriptor;
         tsDescriptor.stream_content = 2; // audio
-        tsDescriptor.component_type = convertAudioComponentType(mmtDescriptor.componentType);
+        tsDescriptor.component_type = mmtDescriptor.componentType;
         tsDescriptor.component_tag = static_cast<uint8_t>(mmtDescriptor.componentTag);
         tsDescriptor.stream_type = 0x0F; // ISO/IEC13818-7 audio
         tsDescriptor.simulcast_group_tag = mmtDescriptor.simulcastGroupTag;
@@ -232,7 +198,7 @@ struct DescriptorConverter<MmtTlv::MhAudioComponentDescriptor> {
 
         tsDescriptor.main_component = mmtDescriptor.mainComponentFlag;
         tsDescriptor.quality_indicator = mmtDescriptor.qualityIndicator;
-        tsDescriptor.sampling_rate = convertAudioSamplingRate(mmtDescriptor.samplingRate);
+        tsDescriptor.sampling_rate = mmtDescriptor.samplingRate;
         tsDescriptor.ISO_639_language_code = ts::UString::FromUTF8(mmtDescriptor.language1);
 
         std::string textBlock = aribEncode(mmtDescriptor.text);

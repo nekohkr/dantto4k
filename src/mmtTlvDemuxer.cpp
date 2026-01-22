@@ -467,7 +467,6 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
                         locationInfo.packetId,
                         locationInfo.packetId
                     );
-
                     mmtStream = &it->second;
                     mmtStream->assetType = asset.assetType;
                     mmtStream->streamIndex = streamIndex;
@@ -637,9 +636,6 @@ void MmtTlvDemuxer::processEcm(const Ecm& ecm) {
     casHandler->onEcm(ecm.ecmData);
 }
 
-void MmtTlvDemuxer::processDamt(const Damt& damt) {
-}
-
 void MmtTlvDemuxer::clear() {
     mapAssembler.clear();
     mapFragmentValidator.clear();
@@ -647,6 +643,10 @@ void MmtTlvDemuxer::clear() {
     mapStream.clear();
     mapPacketIdByIdx.clear();
     statistics.clear();
+
+    if (casHandler) {
+        casHandler->clear();
+    }
 }
 
 void MmtTlvDemuxer::printStatistics() const {
@@ -796,7 +796,7 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
     const auto ret = mmtStream->mpuProcessor->process(*mmtStream, data);
     if (ret) {
         const auto& mfuData = ret.value();
-        auto mmtStream = getStreamByIdx(mfuData.streamIndex);
+        auto* mmtStream = getStreamByIdx(mfuData.streamIndex);
         if (!mmtStream) {
             return;
         }
@@ -888,7 +888,7 @@ bool MmtTlvDemuxer::isValidTlv(Common::ReadStream& stream) const {
     }
 
     uint8_t bytes[2];
-    stream.peek((char*)bytes, 2);
+    stream.peek(bytes, 2);
 
     // syncByte
     if (bytes[0] != 0x7F) {

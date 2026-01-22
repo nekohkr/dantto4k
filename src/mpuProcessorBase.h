@@ -2,7 +2,6 @@
 #include <vector>
 #include <optional>
 #include <memory>
-#include "mmtStream.h"
 #include "mmtp.h"
 #include "dataUnit.h"
 #include "mpu.h"
@@ -31,6 +30,8 @@ struct MfuData {
 	bool isFirstFragment{false};
 	bool isLastFragment{false};
 };
+
+class MmtStream;
 
 class MpuProcessorBase {
 public:

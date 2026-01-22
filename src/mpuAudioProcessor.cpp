@@ -1,4 +1,5 @@
 #include "mpuAudioProcessor.h"
+#include "mmtStream.h"
 
 namespace MmtTlv {
 
@@ -16,7 +17,7 @@ std::optional<MfuData> MpuAudioProcessor::process(MmtStream& mmtStream, const st
 
     MfuData mfuData;
     mfuData.isFirstFragment = true;
-    mfuData.isLastFragment= true;
+    mfuData.isLastFragment = true;
 
     mfuData.data.resize(size + 3);
     mfuData.data[0] = 0x56;

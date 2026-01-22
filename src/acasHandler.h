@@ -14,14 +14,16 @@ public:
     ~AcasHandler();
     bool onEcm(const std::vector<uint8_t>& ecm) override;
     bool decrypt(MmtTlv::Mmtp& mmtp) override;
+    void clear() override;
     void setSmartCard(std::unique_ptr<ISmartCard> sc);
 
 private:
     void worker();
     std::optional<std::array<uint8_t, 16>> getDecryptionKey(MmtTlv::EncryptionFlag keyType);
-    using ECM = std::vector<uint8_t>;
+
+    using Task = std::pair<uint64_t, std::vector<uint8_t>>;
     MmtTlv::EncryptionFlag lastPayloadKeyType{ MmtTlv::EncryptionFlag::UNSCRAMBLED };
-    std::queue<ECM> queue;
+    std::queue<Task> queue;
     std::condition_variable queueCv;
     std::vector<uint8_t> lastEcm;
     std::mutex queueMutex;
@@ -31,9 +33,9 @@ private:
     AcasCard::DecryptionKey key;
     bool running{true};
     std::thread workerThread;
-    std::string acasServerUrl;
-
     AESCtrCipher aes;
     std::array<uint8_t, 16> lastKey{};
     bool hasAESNI = false;
+    std::atomic<uint64_t> generation{0};
+
 };

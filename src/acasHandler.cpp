@@ -29,10 +29,9 @@ bool AcasHandler::onEcm(const std::vector<uint8_t>& ecm) {
 
     {
         std::lock_guard<std::mutex> lock(queueMutex);
-        queue.push(ecm);
+        queue.push({ generation.load(std::memory_order_relaxed), ecm });
     }
     queueCv.notify_one();
-    ecmReady = true;
 
     return true;
 }
@@ -66,6 +65,17 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
     return true;
 }
 
+void AcasHandler::clear() {
+    std::lock_guard<std::mutex> lock(queueMutex);
+    ecmReady = false;
+
+    std::queue<Task> empty;
+    queue.swap(empty);
+    lastEcm.clear();
+    generation.fetch_add(1, std::memory_order_relaxed);
+    queueCv.notify_all();
+}
+
 void AcasHandler::setSmartCard(std::unique_ptr<ISmartCard> sc) {
     acasCard->setSmartCard(std::move(sc));
 }
@@ -79,7 +89,7 @@ std::optional<std::array<uint8_t, 16>> AcasHandler::getDecryptionKey(MmtTlv::Enc
         std::unique_lock<std::mutex> lock(queueMutex);
         bool ready = queueCv.wait_for(lock, std::chrono::seconds(10), [&]() {
             return queue.empty();
-            });
+        });
         if (!ready) {
             // timeout
             return std::nullopt;
@@ -101,7 +111,7 @@ std::optional<std::array<uint8_t, 16>> AcasHandler::getDecryptionKey(MmtTlv::Enc
 
 void AcasHandler::worker() {
     while (true) {
-        ECM current;
+        Task current;
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             queueCv.wait(lock, [&]() {
@@ -113,19 +123,20 @@ void AcasHandler::worker() {
             }
 
             current = std::move(queue.front());
+            queue.pop();
         }
 
         AcasCard::DecryptionKey key = {};
-        acasCard->ecm(current, key);
+        acasCard->ecm(current.second, key);
 
-        {
+        if (generation.load(std::memory_order_relaxed) == current.first) {
             std::lock_guard<std::mutex> lock(keyMutex);
             this->key = key;
+            ecmReady = true;
         }
 
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-            queue.pop();
 
             if (queue.empty()) {
                 queueCv.notify_all();

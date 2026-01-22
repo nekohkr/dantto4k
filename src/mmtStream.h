@@ -6,10 +6,10 @@
 #include "mpuTimestampDescriptor.h"
 #include "videoComponentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
+#include "mpuProcessorBase.h"
 
 namespace MmtTlv {
 
-class MpuProcessorBase;
 class VideoComponentDescriptor;
 class MhAudioComponentDescriptor;
 
@@ -58,7 +58,7 @@ private:
 	int16_t componentTag{-1};
 	bool rapFlag{false};
 	std::optional<uint32_t> lastMpuSequenceNumber;
-	std::shared_ptr<MpuProcessorBase> mpuProcessor;
+	std::unique_ptr<MpuProcessorBase> mpuProcessor;
 	std::optional<VideoComponentDescriptor> videoComponentDescriptor;
 	std::optional<MhAudioComponentDescriptor> mhAudioComponentDescriptor;
 	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;

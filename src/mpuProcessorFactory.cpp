@@ -6,19 +6,19 @@
 
 namespace MmtTlv {
 
-std::shared_ptr<MpuProcessorBase> MpuProcessorFactory::create(uint32_t tag) {
+std::unique_ptr<MpuProcessorBase> MpuProcessorFactory::create(uint32_t tag) {
 	switch (tag) {
 	case MpuVideoProcessor::kAssetType:
-		return std::make_shared<MpuVideoProcessor>();
+		return std::make_unique<MpuVideoProcessor>();
 	case MpuAudioProcessor::kAssetType:
-		return std::make_shared<MpuAudioProcessor>();
+		return std::make_unique<MpuAudioProcessor>();
 	case MpuSubtitleProcessor::kAssetType:
-		return std::make_shared<MpuSubtitleProcessor>();
+		return std::make_unique<MpuSubtitleProcessor>();
 	case MpuApplicationProcessor::kAssetType:
-		return std::make_shared<MpuApplicationProcessor>();
+		return std::make_unique<MpuApplicationProcessor>();
 	}
 
-	return {};
+	return nullptr;
 }
 
 }
