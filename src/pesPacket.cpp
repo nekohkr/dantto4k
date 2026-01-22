@@ -49,7 +49,10 @@ bool PESPacket::pack(std::vector<uint8_t>& output) {
 
 	size_t length = 0;
 	if (payloadLength > 0) {
-		length = payloadLength + headerLength + 3;
+		length = payloadLength + headerLength;
+        if (streamId != 0xBF) {
+            length += 3;
+        }
 	}
 
 	if (length > 0xffff) {
