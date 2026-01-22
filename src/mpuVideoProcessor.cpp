@@ -1,5 +1,6 @@
 #include "mpuVideoProcessor.h"
 #include "stream.h"
+#include "mmtStream.h"
 #include <iostream>
 
 namespace MmtTlv {

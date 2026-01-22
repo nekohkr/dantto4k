@@ -1,4 +1,5 @@
 #include "mpuSubtitleProcessor.h"
+#include "mmtStream.h"
 
 namespace MmtTlv {
 

@@ -14,6 +14,7 @@ public:
     ~AcasHandler();
     bool onEcm(const std::vector<uint8_t>& ecm) override;
     bool decrypt(MmtTlv::Mmtp& mmtp) override;
+    void clear() override;
     void setSmartCard(std::unique_ptr<ISmartCard> sc);
 
 private:
@@ -31,9 +32,8 @@ private:
     AcasCard::DecryptionKey key;
     bool running{true};
     std::thread workerThread;
-    std::string acasServerUrl;
-
     AESCtrCipher aes;
     std::array<uint8_t, 16> lastKey{};
     bool hasAESNI = false;
+
 };

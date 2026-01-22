@@ -66,6 +66,15 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
     return true;
 }
 
+void AcasHandler::clear() {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    ecmReady = false;
+
+    std::queue<ECM> empty;
+    queue.swap(empty);
+    lastEcm.clear();
+}
+
 void AcasHandler::setSmartCard(std::unique_ptr<ISmartCard> sc) {
     acasCard->setSmartCard(std::move(sc));
 }
