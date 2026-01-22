@@ -15,7 +15,7 @@ AcasHandler::~AcasHandler() {
         running = false;
     }
 
-    queueCv.notify_all();
+    queueCv.notify_one();
     if (workerThread.joinable()) {
         workerThread.join();
     }
@@ -69,16 +69,19 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
 
 void AcasHandler::clear() {
     ecmReady = false;
+    lastPayloadKeyType = MmtTlv::EncryptionFlag::UNSCRAMBLED;
 
     std::queue<Task> empty;
     {
-        std::lock_guard<std::mutex> lock(queueMutex);
+        std::unique_lock<std::mutex> lock(queueMutex);
         queue.swap(empty);
-        processing = false;
+        queueCv.notify_one();
+        queueCv.wait(lock, [&]() {
+            return !processing;
+        });
     }
     lastEcm.clear();
     generation.fetch_add(1, std::memory_order_relaxed);
-    queueCv.notify_all();
 }
 
 void AcasHandler::setSmartCard(std::unique_ptr<ISmartCard> sc) {
