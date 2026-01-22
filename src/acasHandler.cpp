@@ -123,6 +123,7 @@ void AcasHandler::worker() {
             }
 
             current = std::move(queue.front());
+            queue.pop();
         }
 
         AcasCard::DecryptionKey key = {};
@@ -136,7 +137,6 @@ void AcasHandler::worker() {
 
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-            queue.pop();
 
             if (queue.empty()) {
                 queueCv.notify_all();
