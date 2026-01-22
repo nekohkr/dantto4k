@@ -37,5 +37,6 @@ private:
     std::array<uint8_t, 16> lastKey{};
     bool hasAESNI = false;
     std::atomic<uint64_t> generation{0};
+    bool processing{false};
 
 };
