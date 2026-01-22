@@ -30,8 +30,10 @@ bool AcasHandler::onEcm(const std::vector<uint8_t>& ecm) {
     {
         std::lock_guard<std::mutex> lock(queueMutex);
         queue.push({ generation.load(std::memory_order_relaxed), ecm });
+        processing = true;
     }
     queueCv.notify_one();
+    ecmReady = true;
 
     return true;
 }
@@ -66,11 +68,14 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
 }
 
 void AcasHandler::clear() {
-    std::lock_guard<std::mutex> lock(queueMutex);
     ecmReady = false;
 
     std::queue<Task> empty;
-    queue.swap(empty);
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        queue.swap(empty);
+        processing = false;
+    }
     lastEcm.clear();
     generation.fetch_add(1, std::memory_order_relaxed);
     queueCv.notify_all();
@@ -88,7 +93,7 @@ std::optional<std::array<uint8_t, 16>> AcasHandler::getDecryptionKey(MmtTlv::Enc
     if (lastPayloadKeyType != keyType) {
         std::unique_lock<std::mutex> lock(queueMutex);
         bool ready = queueCv.wait_for(lock, std::chrono::seconds(10), [&]() {
-            return queue.empty();
+            return !processing;
         });
         if (!ready) {
             // timeout
@@ -116,7 +121,7 @@ void AcasHandler::worker() {
             std::unique_lock<std::mutex> lock(queueMutex);
             queueCv.wait(lock, [&]() {
                 return !queue.empty() || !running;
-                });
+            });
 
             if (!running) {
                 break;
@@ -132,13 +137,11 @@ void AcasHandler::worker() {
         if (generation.load(std::memory_order_relaxed) == current.first) {
             std::lock_guard<std::mutex> lock(keyMutex);
             this->key = key;
-            ecmReady = true;
         }
-
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-
             if (queue.empty()) {
+                processing = false;
                 queueCv.notify_all();
             }
         }
