@@ -888,7 +888,7 @@ bool MmtTlvDemuxer::isValidTlv(Common::ReadStream& stream) const {
     }
 
     uint8_t bytes[2];
-    stream.peek((char*)bytes, 2);
+    stream.peek(bytes, 2);
 
     // syncByte
     if (bytes[0] != 0x7F) {

@@ -20,9 +20,10 @@ public:
 private:
     void worker();
     std::optional<std::array<uint8_t, 16>> getDecryptionKey(MmtTlv::EncryptionFlag keyType);
-    using ECM = std::vector<uint8_t>;
+
+    using Task = std::pair<uint64_t, std::vector<uint8_t>>;
     MmtTlv::EncryptionFlag lastPayloadKeyType{ MmtTlv::EncryptionFlag::UNSCRAMBLED };
-    std::queue<ECM> queue;
+    std::queue<Task> queue;
     std::condition_variable queueCv;
     std::vector<uint8_t> lastEcm;
     std::mutex queueMutex;
@@ -35,5 +36,6 @@ private:
     AESCtrCipher aes;
     std::array<uint8_t, 16> lastKey{};
     bool hasAESNI = false;
+    std::atomic<uint64_t> generation{0};
 
 };
