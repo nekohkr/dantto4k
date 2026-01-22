@@ -39,7 +39,7 @@ Args parseArguments(int argc, char* argv[]) {
             ("casProxyServer", "Specify the address of a CasProxyServer", cxxopts::value<std::string>())
             ("smartCardReaderName", "Specify the smart card reader to use", cxxopts::value<std::string>())
 #ifdef WIN32
-            ("customWinscardDLL", "Specify the path to a winscard.dll", cxxopts::value<std::string>()->default_value(""))
+            ("customWinscardDLL", "Specify the path to a winscard.dll", cxxopts::value<std::string>())
 #endif
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
             ("no-progress", "Disable progress display", cxxopts::value<bool>()->default_value("false"))
