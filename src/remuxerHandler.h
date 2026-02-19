@@ -78,6 +78,11 @@ public:
 	void clear();
 
 private:
+	enum class PesState {
+		Init,
+		InFragment,
+	};
+
 	void writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& data);
 	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle);
 	void writeCaptionManagementData(uint64_t pts);
@@ -86,7 +91,8 @@ private:
 	std::unordered_map<uint16_t, uint16_t> mapService2Pid;
 	std::unordered_map<uint16_t, uint8_t> mapCC;
 	std::unordered_map<uint16_t, std::vector<uint8_t>> mapPesPendingData;
-    std::unordered_map<uint16_t, uint32_t> mapPesPacketIndex;
+	std::unordered_map<uint16_t, uint32_t> mapPesPacketIndex;
+	std::unordered_map<uint16_t, PesState> mapPesState;
 	int tsid{-1};
 	uint64_t lastPcr{};
 	uint64_t lastCaptionManagementDataPts{};
