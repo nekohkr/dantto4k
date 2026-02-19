@@ -185,6 +185,7 @@ void RemuxerHandler::writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTl
     auto& pendingData = mapPesPendingData[pid];
     auto& cc = mapCC[pid];
     auto& packetIndex = mapPesPacketIndex[pid];
+    auto& state = mapPesState[pid];
     size_t offset = 0;
 
     if (mfuData.isFirstFragment) {
@@ -221,6 +222,13 @@ void RemuxerHandler::writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTl
         pendingData.clear();
         pendingData.insert(pendingData.end(), pesOutput.begin(), pesOutput.end());
         packetIndex = 0;
+
+        state = PesState::InFragment;
+    }
+
+    // Wait for the first fragment to start generating a PES packet.
+    if (state != PesState::InFragment) {
+        return;
     }
 
     pendingData.insert(pendingData.end(), streamData.begin(), streamData.end());
@@ -1088,6 +1096,7 @@ void RemuxerHandler::clear() {
     mapCC.clear();
     mapPesPendingData.clear();
     mapPesPacketIndex.clear();
+    mapPesState.clear();
     tsid = -1;
     lastPcr = 0;
     lastCaptionManagementDataPts = 0;
