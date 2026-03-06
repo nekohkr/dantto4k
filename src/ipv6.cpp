@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool IPv6Header::unpack(Common::ReadStream& stream)
-{
+bool IPv6Header::unpack(Common::ReadStream& stream) {
 	try {
 		uint16_t uint16 = stream.getBe16U();
 		version = (uint16 & 0b1111000000000000) >> 12;
@@ -30,8 +29,7 @@ bool IPv6Header::unpack(Common::ReadStream& stream)
 	return true;
 }
 
-bool IPv6ExtensionHeader::unpack(Common::ReadStream& stream, bool headerLengthOnly)
-{
+bool IPv6ExtensionHeader::unpack(Common::ReadStream& stream, bool headerLengthOnly) {
 	try {
 		if (!headerLengthOnly) {
 			next_header = stream.get8U();
@@ -45,8 +43,7 @@ bool IPv6ExtensionHeader::unpack(Common::ReadStream& stream, bool headerLengthOn
 	return true;
 }
 
-bool UDPHeader::unpack(Common::ReadStream& stream, bool headerLengthOnly)
-{
+bool UDPHeader::unpack(Common::ReadStream& stream, bool headerLengthOnly) {
 	try {
 		source_port = stream.getBe16U();
 		destination_port = stream.getBe16U();

@@ -9,8 +9,10 @@ constexpr uint8_t CRA_NUT = 0x15;
 constexpr uint8_t NAL_AUD = 0x23;
 
 std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data) {
+    constexpr uint32_t MAX_NAL_SIZE = 1024 * 1024;
     Common::ReadStream stream(data);
     MfuData mfuData;
+
 
     if (nalUnitSize == 0) {
         if (stream.leftBytes() < 4) {
@@ -18,6 +20,11 @@ std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const st
         }
 
         nalUnitSize = stream.getBe32U();
+        if (nalUnitSize > MAX_NAL_SIZE) {
+            clear();
+            return std::nullopt;
+        }
+
         uint8_t uint8 = stream.peek8U();
         nalUnitType = ((uint8 >> 1) & 0b111111);
 
