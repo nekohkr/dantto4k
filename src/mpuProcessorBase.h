@@ -36,7 +36,7 @@ class MmtStream;
 class MpuProcessorBase {
 public:
 	virtual ~MpuProcessorBase() = default;
-	virtual std::optional<MfuData> process(MmtStream& mmtStream, const std::vector<uint8_t>& data) { return std::nullopt; }
+	virtual std::optional<MfuData> process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) { return std::nullopt; }
 	virtual void clear() {}
 
 };
