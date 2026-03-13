@@ -5,7 +5,7 @@
 
 namespace MmtTlv {
 
-constexpr uint32_t MAX_AAC_FRAME_SIZE = 1024 * 10;
+constexpr int MAX_AAC_FRAME_SIZE = 1024 * 10;
 
 std::optional<MfuData> MpuAudioProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) {
     aacFragment.insert(aacFragment.end(), data.begin(), data.end());

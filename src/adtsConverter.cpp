@@ -155,7 +155,7 @@ std::optional<int> AACUtils::getFrameSize(const uint8_t* input, size_t size) {
     }
 
     int slotLength = 0;
-    int i = 6;
+    size_t i = 6;
 
     while (true) {
         if (i + 1 >= size) {
