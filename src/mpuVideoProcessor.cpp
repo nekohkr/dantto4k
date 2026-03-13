@@ -7,12 +7,11 @@ namespace MmtTlv {
 
 constexpr uint8_t CRA_NUT = 0x15;
 constexpr uint8_t NAL_AUD = 0x23;
+constexpr uint32_t MAX_NAL_SIZE = 1024 * 1024;
 
-std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data) {
-    constexpr uint32_t MAX_NAL_SIZE = 1024 * 1024;
+std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) {
     Common::ReadStream stream(data);
     MfuData mfuData;
-
 
     if (nalUnitSize == 0) {
         if (stream.leftBytes() < 4) {
@@ -40,7 +39,6 @@ std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const st
 
             pts = ptsDts.first;
             dts = ptsDts.second;
-            streamIndex = mmtStream.getStreamIndex();
             sliceSegmentCount = 0;
             mfuData.isFirstFragment = true;
         }
@@ -69,7 +67,7 @@ std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const st
 
     mfuData.pts = pts;
     mfuData.dts = dts;
-    mfuData.streamIndex = streamIndex;
+    mfuData.streamIndex = mmtStream.getStreamIndex();
 
     if (sliceSegmentCount >= (mmtStream.is8KVideo() ? 4 : 1)) {
         if (nalUnitSize == 0) {
@@ -82,13 +80,12 @@ std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const st
 }
 
 void MpuVideoProcessor::clear() {
+    buffer.clear();
     sliceSegmentCount = 0;
     nalUnitSize = 0;
     nalUnitType = 0;
     pts = 0;
     dts = 0;
-    streamIndex = 0;
-    buffer.clear();
 
 }
 

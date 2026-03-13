@@ -1,6 +1,13 @@
 #pragma once
 #include <vector>
 #include <cstdint>
+#include <optional>
+
+namespace AACUtils {
+
+std::optional<int> getFrameSize(const uint8_t* input, size_t size);
+
+}
 
 class ADTSConverter {
 public:

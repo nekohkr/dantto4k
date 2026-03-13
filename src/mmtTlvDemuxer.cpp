@@ -124,8 +124,16 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream) {
             if (mmtStat->lastPacketSequenceNumber + 1 != mmtp.packetSequenceNumber) {
                 mmtStat->drop++;
 
+                auto mmtStream = getStream(mmtp.packetId);
+                if (mmtStream) {
+                    mmtStream->mpuProcessor->clear();
+                    auto validator = getFragmentValidator(mmtp.packetId);
+                    validator->clear();
+                    auto assembler = getAssembler(mmtp.packetId);
+                    assembler->clear();
+                }
+
                 if (demuxerHandler) {
-                    auto mmtStream = getStream(mmtp.packetId);
                     demuxerHandler->onPacketDrop(mmtp.packetId, mmtStream);
                 }
             }
@@ -439,6 +447,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
                 if (mptIt->second != it->second.assetType) {
                     it = mapStream.erase(it);
                     mapFragmentValidator.erase(mptIt->first);
+                    mapAssembler.erase(mptIt->first);
                 }
                 else {
                     ++it;
@@ -447,6 +456,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
             else {
                 it = mapStream.erase(it);
                 mapFragmentValidator.erase(mptIt->first);
+                mapAssembler.erase(mptIt->first);
             }
         }
     }
@@ -793,7 +803,7 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
     std::vector<uint8_t> data(stream.leftBytes());
     stream.read(data.data(), stream.leftBytes());
 
-    const auto ret = mmtStream->mpuProcessor->process(*mmtStream, data);
+    const auto ret = mmtStream->mpuProcessor->process(*mmtStream, data, mpu.fragmentationIndicator);
     if (ret) {
         const auto& mfuData = ret.value();
         auto* mmtStream = getStreamByIdx(mfuData.streamIndex);
@@ -801,7 +811,7 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
             return;
         }
 
-        if(demuxerHandler) {
+        if (demuxerHandler) {
             switch (mmtStream->assetType) {
             case AssetType::hev1:
                 demuxerHandler->onVideoData(*mmtStream, mfuData);

@@ -148,3 +148,34 @@ bool ADTSConverter::unpackAudioSpecificConfig(uint8_t* input, size_t size) {
 
     return true;
 }
+
+std::optional<int> AACUtils::getFrameSize(const uint8_t* input, size_t size) {
+    if (size < 8) {
+        return std::nullopt;
+    }
+
+    int slotLength = 0;
+    int i = 6;
+
+    while (true) {
+        if (i + 1 >= size) {
+            return std::nullopt;
+        }
+
+        int tmp = ((input[i] & 0b00000111) << 5) |
+            ((input[i + 1] & 0b11111000) >> 3);
+
+        slotLength += tmp;
+        i++;
+
+        if (tmp != 255) {
+            break;
+        }
+
+        if (i >= size) {
+            return std::nullopt;
+        }
+    }
+
+    return slotLength + i + 1;
+}
