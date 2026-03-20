@@ -4,8 +4,7 @@
 
 namespace MmtTlv {
 
-bool MhSdt::unpack(Common::ReadStream& stream)
-{
+bool MhSdt::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtTableBase::unpack(stream)) {
             return false;
@@ -47,15 +46,14 @@ bool MhSdt::unpack(Common::ReadStream& stream)
     return true;
 }
 
-bool MhSdt::Service::unpack(Common::ReadStream& stream)
-{
+bool MhSdt::Service::unpack(Common::ReadStream& stream) {
     try {
         serviceId = stream.getBe16U();
 
         uint8_t uint8 = stream.get8U();
         eitUserDefinedFlags = (uint8 & 0b00011100) >> 2;
         eitScheduleFlag = (uint8 & 0b00000010) >> 1;
-        eitPresentFollowingFlag = (uint8 & 0b00000001) >> 1;
+        eitPresentFollowingFlag = uint8 & 0b00000001;
 
         uint16_t uint16 = stream.getBe16U();
         runningStatus = (uint16 & 0b1110000000000000) >> 13;

@@ -445,18 +445,18 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
             auto mptIt = mapMpt.find(it->first);
             if (mptIt != mapMpt.end()) {
                 if (mptIt->second != it->second.assetType) {
-                    it = mapStream.erase(it);
                     mapFragmentValidator.erase(mptIt->first);
                     mapAssembler.erase(mptIt->first);
+                    it = mapStream.erase(it);
                 }
                 else {
                     ++it;
                 }
             }
             else {
-                it = mapStream.erase(it);
                 mapFragmentValidator.erase(mptIt->first);
                 mapAssembler.erase(mptIt->first);
+                it = mapStream.erase(it);
             }
         }
     }
@@ -855,7 +855,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream) {
         }
 
         Common::ReadStream nstream(signalingMessage.payload);
-        while (nstream.isEof()) {
+        while (!nstream.isEof()) {
             uint32_t length;
             if (signalingMessage.lengthExtensionFlag)
                 length = nstream.getBe32U();
