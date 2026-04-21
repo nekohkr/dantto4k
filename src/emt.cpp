@@ -14,7 +14,7 @@ bool Emt::unpack(Common::ReadStream& stream) {
 
         uint16 = stream.getBe16U();
         dataEventId = ((uint16 & 0b1111000000000000) >> 12);
-        eventMsgGroupId = ((uint16 & 0b1111000000000000) >> 12);
+        eventMsgGroupId = uint16 & 0b0000111111111111;
 
         uint8_t uint8 = stream.get8U();
         currentNextIndicator = uint8 & 1;

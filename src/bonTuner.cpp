@@ -4,13 +4,6 @@
 #include "config.h"
 #include "bonDriverContext.h"
 
-namespace {
-
-std::vector<uint8_t> inputBuffer;
-std::vector<uint8_t> outputBuffer;
-
-}
-
 bool CBonTuner::init() {
 	HINSTANCE hBonDriverDLL = LoadLibraryA(config.bondriverPath.c_str());
 	if (!hBonDriverDLL) {

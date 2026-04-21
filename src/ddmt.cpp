@@ -63,7 +63,7 @@ bool Ddmt::unpack(Common::ReadStream& stream) {
         baseDirectoryPath.resize(baseDirectoryPathLength); 
         stream.read(baseDirectoryPath.data(), baseDirectoryPathLength);
 
-        uint16_t numOfDirectoryNodes = stream.get8U();
+        uint8_t numOfDirectoryNodes = stream.get8U();
         for (int i = 0; i < numOfDirectoryNodes; i++) {
             Node node;
             if (!node.unpack(stream)) {

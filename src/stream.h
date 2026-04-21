@@ -67,7 +67,7 @@ public:
         }
 
         std::copy(buffer.begin() + pos, buffer.begin() + pos + data.size(), data.begin());
-        return size;
+        return data.size();
     }
 
     uint8_t get8U() {

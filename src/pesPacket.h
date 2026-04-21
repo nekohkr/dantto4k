@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <cstddef>
 
 constexpr uint8_t STREAM_ID_PROGRAM_STREAM_MAP =       0xbc;
 constexpr uint8_t STREAM_ID_PRIVATE_STREAM_1 =         0xbd;

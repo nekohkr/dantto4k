@@ -24,7 +24,7 @@ bool MhCacheControlInfoDescriptor::unpack(Common::ReadStream & stream) {
         return false;
     }
 
-    return false;
+    return true;
 }
 
 }

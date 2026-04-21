@@ -184,7 +184,7 @@ void LocalSmartCard::connect() {
         }
 
         std::ostringstream oss;
-        oss << "Failed to connect to smart card (" << readerName << "): 0x" << std::hex << std::uppercase << result;
+        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << result;
         throw std::runtime_error(oss.str());
     }
 }
@@ -387,7 +387,7 @@ void RemoteSmartCard::connect() {
         }
 
         std::ostringstream oss;
-        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << std::uppercase << result;
+        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << result;
         throw std::runtime_error(oss.str());
     }
 }

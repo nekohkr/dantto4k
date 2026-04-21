@@ -6,8 +6,9 @@ namespace MmtTlv {
 bool FragmentAssembler::assemble(const std::vector<uint8_t>& fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber) {
     switch (fragmentationIndicator) {
     case FragmentationIndicator::NotFragmented:
-        if (state == State::InFragment)
+        if (state == State::InFragment) {
             return false;
+        }
 
         data.insert(data.end(), fragment.begin(), fragment.end());
         state = State::NotStarted;
@@ -36,8 +37,9 @@ bool FragmentAssembler::assemble(const std::vector<uint8_t>& fragment, Fragmenta
             return false;
         }
 
-        if (state != State::InFragment)
+        if (state != State::InFragment) {
             return false;
+        }
 
         data.insert(data.end(), fragment.begin(), fragment.end());
         state = State::NotStarted;
