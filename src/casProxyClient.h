@@ -36,7 +36,7 @@ private:
     void onOpen();
     void onFail();
     void onClose();
-    std::optional<std::shared_ptr<casproxy::ResponseBase>> sendRequest(casproxy::RequestBase& res);
+    std::shared_ptr<casproxy::ResponseBase> sendRequest(casproxy::RequestBase& res);
 
     uint32_t packetLength;
     std::vector<uint8_t> packetData;
@@ -48,7 +48,7 @@ private:
     std::thread thread;
     std::map<uint32_t, std::promise<std::shared_ptr<casproxy::ResponseBase>>> mapResponsePromise;
     std::optional<std::promise<bool>> connectionPromise;
-    bool connected{false};
+    std::atomic<bool> connected{false};
     bool connecting{false};
     std::atomic<uint32_t> packetId;
     std::string host;

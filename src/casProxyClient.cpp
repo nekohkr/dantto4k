@@ -21,7 +21,7 @@ void CasProxyClient::connect() {
 
     connecting = true;
     connectionTimer.expires_after(std::chrono::milliseconds(kConnectionTimeoutMs));
-    connectionTimer.async_wait([&](const std::error_code& error) {
+    connectionTimer.async_wait([this](const std::error_code& error) {
         if (!error && !connected) {
             onFail();
         }
@@ -167,7 +167,7 @@ void CasProxyClient::onClose() {
     connected = false;
 }
 
-std::optional<std::shared_ptr<casproxy::ResponseBase>> CasProxyClient::sendRequest(casproxy::RequestBase& req) {
+std::shared_ptr<casproxy::ResponseBase> CasProxyClient::sendRequest(casproxy::RequestBase& req) {
     if (connected == false) {
         connectionPromise = std::promise<bool>();
         connect();
@@ -215,7 +215,7 @@ std::optional<std::shared_ptr<casproxy::ResponseBase>> CasProxyClient::sendReque
     }
 
     if (!res) {
-        return std::nullopt;
+        return nullptr;
     }
 
     return res;
@@ -248,7 +248,7 @@ LONG CasProxyClient::scardEstablishContext(DWORD dwScope, LPCVOID pvReserved1, L
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardEstablishContextResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardEstablishContextResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -269,7 +269,7 @@ LONG CasProxyClient::scardReleaseContext(SCARDCONTEXT hContext) {
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardReleaseContextResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardReleaseContextResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -297,7 +297,7 @@ LONG CasProxyClient::scardListReaders(SCARDCONTEXT hContext, LPCSTR mszGroups, L
                 return SCARD_F_INTERNAL_ERROR;
             }
 
-            auto res = std::dynamic_pointer_cast<casproxy::SCardListReadersResponse>(*r);
+            auto res = std::dynamic_pointer_cast<casproxy::SCardListReadersResponse>(r);
             if (res->resultCode != 0) {
                 throw std::runtime_error(std::string("CasProxyServer returned an error response"));
             }
@@ -309,7 +309,7 @@ LONG CasProxyClient::scardListReaders(SCARDCONTEXT hContext, LPCSTR mszGroups, L
             if (res->readersLength == 1) {
                 *(LPSTR*)mszReaders = new char[1];
                 (*(LPSTR*)mszReaders)[0] = 0;
-                return res->resultCode;
+                return res->apiReturn;
             }
 
             readersLength = res->readersLength;
@@ -328,7 +328,7 @@ LONG CasProxyClient::scardListReaders(SCARDCONTEXT hContext, LPCSTR mszGroups, L
                 return SCARD_F_INTERNAL_ERROR;
             }
 
-            auto res = std::dynamic_pointer_cast<casproxy::SCardListReadersResponse>(*r);
+            auto res = std::dynamic_pointer_cast<casproxy::SCardListReadersResponse>(r);
             if (res->resultCode != 0) {
                 throw std::runtime_error(std::string("CasProxyServer returned an error response"));
             }
@@ -338,7 +338,7 @@ LONG CasProxyClient::scardListReaders(SCARDCONTEXT hContext, LPCSTR mszGroups, L
             }
 
             if (readersLength == 0) {
-                return res->resultCode;
+                return res->apiReturn;
             }
 
             *(LPSTR*)mszReaders = new char[res->readers.size()];
@@ -353,14 +353,14 @@ LONG CasProxyClient::scardListReaders(SCARDCONTEXT hContext, LPCSTR mszGroups, L
         if (mszGroups != nullptr) {
             req.groups = mszGroups;
         }
-        req.readersLength = *pcchReaders == SCARD_AUTOALLOCATE ? 1024 : *pcchReaders;
+        req.readersLength = *pcchReaders;
 
         auto r = sendRequest(req);
         if (!r) {
             return SCARD_F_INTERNAL_ERROR;
         }
 
-        auto res = std::dynamic_pointer_cast<casproxy::SCardListReadersResponse>(*r);
+        auto res = std::dynamic_pointer_cast<casproxy::SCardListReadersResponse>(r);
         if (res->resultCode != 0) {
             throw std::runtime_error(std::string("CasProxyServer returned an error response"));
         }
@@ -387,7 +387,7 @@ LONG CasProxyClient::scardConnect(SCARDCONTEXT hContext, LPCSTR szReader, DWORD 
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardConnectResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardConnectResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -412,7 +412,7 @@ LONG CasProxyClient::scardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition) {
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardDisconnectResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardDisconnectResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -429,7 +429,7 @@ LONG CasProxyClient::scardBeginTransaction(SCARDHANDLE hCard) {
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardBeginTransactionResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardBeginTransactionResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -447,7 +447,7 @@ LONG CasProxyClient::scardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition)
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardEndTransactionResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardEndTransactionResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -476,7 +476,7 @@ LONG CasProxyClient::scardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pioSen
     }
     else {
         req.recvPciProtocol = pioRecvPci->dwProtocol;
-        req.recvPciProtocol = pioRecvPci->cbPciLength;
+        req.recvPciLength = pioRecvPci->cbPciLength;
     }
 
     req.recvLength = *pcbRecvLength;
@@ -486,7 +486,7 @@ LONG CasProxyClient::scardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pioSen
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardTransmitResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardTransmitResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }
@@ -518,7 +518,7 @@ LONG CasProxyClient::scardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pb
         return SCARD_F_INTERNAL_ERROR;
     }
 
-    auto res = std::dynamic_pointer_cast<casproxy::SCardGetAttribResponse>(*r);
+    auto res = std::dynamic_pointer_cast<casproxy::SCardGetAttribResponse>(r);
     if (res->resultCode != 0) {
         throw std::runtime_error(std::string("CasProxyServer returned an error response"));
     }

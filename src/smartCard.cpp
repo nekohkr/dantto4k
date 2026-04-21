@@ -140,7 +140,7 @@ void LocalSmartCard::connect() {
     std::string readerName;
     disconnect();
 
-    if(smartCardReaderName == "") {
+    if (smartCardReaderName.empty()) {
         char* readers = nullptr;
 #ifdef WIN32
         result = pSCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
@@ -345,7 +345,7 @@ void RemoteSmartCard::connect() {
     
     disconnect();
     
-    if(smartCardReaderName == "") {
+    if (smartCardReaderName.empty()) {
         char* readers = nullptr;
         result = client->scardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
         if (result != SCARD_S_SUCCESS) {
