@@ -2,8 +2,7 @@
 
 namespace MmtTlv {
 
-bool MhShortEventDescriptor::unpack(Common::ReadStream& stream)
-{
+bool MhShortEventDescriptor::unpack(Common::ReadStream& stream) {
     try {
         if (!MmtDescriptorTemplate::unpack(stream)) {
             return false;

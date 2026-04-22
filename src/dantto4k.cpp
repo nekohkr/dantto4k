@@ -245,9 +245,8 @@ int main(int argc, char* argv[]) {
         }
 
         size_t oldSize = inputBuffer.size();
-        size_t bytesToRead = chunkSize;
         if (oldSize < chunkSize) {
-            inputBuffer.resize(oldSize + bytesToRead);
+            inputBuffer.resize(oldSize + chunkSize);
             inputStream->read(reinterpret_cast<char*>(inputBuffer.data() + oldSize), chunkSize);
             std::streamsize bytesRead = inputStream->gcount();
             inputBuffer.resize(oldSize + bytesRead);

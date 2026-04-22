@@ -44,5 +44,7 @@ public:
 protected:
 	IBonDriver2* pBonDriver2;
 	std::vector<uint8_t> inputBuffer;
+	std::vector<uint8_t> outputBuffer;
 	std::mutex mutex;
+
 };

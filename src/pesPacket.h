@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <cstddef>
 
 constexpr uint8_t STREAM_ID_PROGRAM_STREAM_MAP =       0xbc;
 constexpr uint8_t STREAM_ID_PRIVATE_STREAM_1 =         0xbd;
@@ -42,16 +43,16 @@ class PESPacket {
 public:
 	bool pack(std::vector<uint8_t>& output);
 	void setPts(uint64_t pts) { this->pts = pts; }
-	void setDts(uint64_t dts) { this->dts = dts; }
-	void setStreamId(uint8_t streamId) { this->streamId = streamId; };
-	void setDataAlignmentIndicator(bool dataAlignmentIndicator) { this->dataAlignmentIndicator = dataAlignmentIndicator; }
 	uint64_t getPts() const { return pts; }
+	void setDts(uint64_t dts) { this->dts = dts; }
 	uint64_t getDts() const { return dts; }
-	uint8_t setStreamId() const { return streamId; }
-	void setPayload(const std::vector<uint8_t>* payload) { this->payload = payload; }
-	void setPrivateData(const std::vector<uint8_t>* privateData) { this->privateData = privateData; }
+	void setStreamId(uint8_t streamId) { this->streamId = streamId; };
+	uint8_t getStreamId() const { return streamId; }
+	void setDataAlignmentIndicator(bool dataAlignmentIndicator) { this->dataAlignmentIndicator = dataAlignmentIndicator; }
 	bool getDataAlignmentIndicator() const { return dataAlignmentIndicator; }
+	void setPayload(const std::vector<uint8_t>* payload) { this->payload = payload; }
 	void setPayloadLength(size_t payloadLength) { this->payloadLength = payloadLength; }
+	void setPrivateData(const std::vector<uint8_t>* privateData) { this->privateData = privateData; }
 	void setStuffingByteLength(uint8_t stuffingByteLength) { this->stuffingByteLength = stuffingByteLength; }
 
 private:

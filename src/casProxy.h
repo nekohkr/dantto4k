@@ -525,7 +525,7 @@ protected:
         writer.writeBe(sendBuffer);
         writer.writeBe(isRecvPciNull);
         if (!isRecvPciNull) {
-            writer.writeBe(isRecvPciNull);
+            writer.writeBe(recvPciProtocol);
             writer.writeBe(recvPciLength);
         }
         writer.writeBe(recvLength);
@@ -629,9 +629,6 @@ public:
 
 protected:
     virtual bool unpackPayload(StreamReader& reader) {
-        if (!reader.readBe(resultCode)) {
-            return false;
-        }
         if (!reader.readBe(apiReturn)) {
             return false;
         }
@@ -640,7 +637,6 @@ protected:
     }
 
     virtual void packPayload(StreamWriter& writer) const {
-        writer.writeBe(resultCode);
         writer.writeBe(apiReturn);
     }
 

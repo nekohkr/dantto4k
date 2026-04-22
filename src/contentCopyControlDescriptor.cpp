@@ -25,7 +25,7 @@ bool ContentCopyControlDescriptor::unpack(Common::ReadStream& stream)
             componentControlLength = nstream.get8U();
             
             Common::ReadStream componentStream(nstream, componentControlLength);
-            while (componentStream.isEof()) {
+            while (!componentStream.isEof()) {
                 Component component;
                 if (!component.unpack(componentStream)) {
                     return false;

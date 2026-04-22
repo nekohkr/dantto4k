@@ -177,5 +177,5 @@ std::optional<int> AACUtils::getFrameSize(const uint8_t* input, size_t size) {
         }
     }
 
-    return slotLength + i + 1;
+    return static_cast<int>(slotLength + i + 1);
 }

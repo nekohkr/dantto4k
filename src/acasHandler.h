@@ -28,7 +28,7 @@ private:
     std::vector<uint8_t> lastEcm;
     std::mutex queueMutex;
     std::mutex keyMutex;
-    bool ecmReady{false};
+    std::atomic<bool> ecmReady{false};
     std::unique_ptr<AcasCard> acasCard;
     AcasCard::DecryptionKey key;
     bool running{true};
@@ -37,6 +37,7 @@ private:
     std::array<uint8_t, 16> lastKey{};
     bool hasAESNI = false;
     std::atomic<uint64_t> generation{0};
-    bool processing{false};
+    std::atomic<bool> processing{false};
+
 
 };

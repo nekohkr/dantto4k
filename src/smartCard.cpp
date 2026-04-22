@@ -140,7 +140,7 @@ void LocalSmartCard::connect() {
     std::string readerName;
     disconnect();
 
-    if(smartCardReaderName == "") {
+    if (smartCardReaderName.empty()) {
         char* readers = nullptr;
 #ifdef WIN32
         result = pSCardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
@@ -184,7 +184,7 @@ void LocalSmartCard::connect() {
         }
 
         std::ostringstream oss;
-        oss << "Failed to connect to smart card (" << readerName << "): 0x" << std::hex << std::uppercase << result;
+        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << result;
         throw std::runtime_error(oss.str());
     }
 }
@@ -345,7 +345,7 @@ void RemoteSmartCard::connect() {
     
     disconnect();
     
-    if(smartCardReaderName == "") {
+    if (smartCardReaderName.empty()) {
         char* readers = nullptr;
         result = client->scardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
         if (result != SCARD_S_SUCCESS) {
@@ -387,7 +387,7 @@ void RemoteSmartCard::connect() {
         }
 
         std::ostringstream oss;
-        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << std::uppercase << result;
+        oss << "Failed to connect to smart card (" << readerName << "): " << std::showbase << std::hex << result;
         throw std::runtime_error(oss.str());
     }
 }

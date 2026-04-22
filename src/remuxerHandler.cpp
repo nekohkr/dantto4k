@@ -553,7 +553,7 @@ void RemuxerHandler::onMhBit(const MmtTlv::MhBit& mhBit) {
 void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
     tsid = mhEit.tlvStreamId;
 
-    if (mhEit.isPf() && mhEit.sectionNumber == 0 && mhEit.events.size() > 0) {
+    if (mhEit.isPf() && mhEit.sectionNumber == 0 && !mhEit.events.empty()) {
         std::tm startTime = EITConvertStartTime((mhEit.events.begin())->get()->startTime);
         programStartTime = static_cast<uint64_t>(std::mktime(&startTime));
     }
@@ -708,7 +708,7 @@ void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
 }
 
 void RemuxerHandler::onMhSdtActual(const MmtTlv::MhSdt& mhSdt) {
-    if (mhSdt.services.size() == 0) {
+    if (mhSdt.services.empty()) {
         return;
     }
 
@@ -781,11 +781,11 @@ void RemuxerHandler::onPlt(const MmtTlv::Plt& plt) {
 
     int i = 0;
     for (auto& item : plt.entries) {
-        if (item.mmtPackageIdLength != 2) {
-            return;
+        uint16_t serviceId = 0;
+        if (item.mmtPackageIdByte.size() >= 2) {
+            std::memcpy(&serviceId, item.mmtPackageIdByte.data(), 2);
+            serviceId = MmtTlv::Common::swapEndian16(serviceId);
         }
-
-        uint16_t serviceId = MmtTlv::Common::swapEndian16(*(uint16_t*)item.mmtPackageIdByte.data());
 
         if (item.locationInfos.locationType != 0) {
             return;
@@ -820,21 +820,18 @@ void RemuxerHandler::onPlt(const MmtTlv::Plt& plt) {
 }
 
 void RemuxerHandler::onMpt(const MmtTlv::Mpt& mpt) {
-    uint16_t serviceId;
-    uint16_t pid;
-
-    if (mpt.mmtPackageIdLength != 2) {
-        return;
+    uint16_t serviceId = 0;
+    if (mpt.mmtPackageIdByte.size() >= 2) {
+        std::memcpy(&serviceId, mpt.mmtPackageIdByte.data(), 2);
+        serviceId = MmtTlv::Common::swapEndian16(serviceId);
     }
-
-    serviceId = MmtTlv::Common::swapEndian16(*(uint16_t*)mpt.mmtPackageIdByte.data());
 
     auto it = mapService2Pid.find(serviceId);
     if (it == mapService2Pid.end()) {
         return;
     }
 
-    pid = it->second;
+    uint16_t pid = it->second;
 
     ts::PMT tsPmt(mpt.version % 32, true, serviceId, PCR_PID);
 
