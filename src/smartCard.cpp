@@ -8,7 +8,7 @@ bool LocalSmartCard::init() {
 #else
     LONG result = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext);
 #endif
-    
+
     return result == SCARD_S_SUCCESS;
 }
 
@@ -36,6 +36,7 @@ LocalSmartCard::LocalSmartCard() {
     if (!pSCardConnect) {
         throw std::runtime_error("Failed to get address of SCardConnectA");
     }
+    pSCardReconnect = reinterpret_cast<FnSCardReconnect>(GetProcAddress(hWinSCard, "SCardReconnect"));
     pSCardDisconnect = reinterpret_cast<FnSCardDisconnect>(GetProcAddress(hWinSCard, "SCardDisconnect"));
     if (!pSCardDisconnect) {
         throw std::runtime_error("Failed to get address of SCardDisconnect");
@@ -99,7 +100,7 @@ std::vector<std::string> LocalSmartCard::getReaders() const {
                 oss << std::showbase << std::hex << result;
                 return oss.str();
             }()
-        );
+                );
     }
 
     std::vector<char> readersBuffer(readersSize);
@@ -121,7 +122,7 @@ std::vector<std::string> LocalSmartCard::getReaders() const {
                 oss << std::showbase << std::hex << result;
                 return oss.str();
             }()
-        );
+                );
     }
 
     std::vector<std::string> readers;
@@ -201,7 +202,6 @@ uint32_t LocalSmartCard::transmit(const std::vector<uint8_t>& message, ApduRespo
 #endif
     while (result != SCARD_S_SUCCESS && retryCount < 5) {
         if (result == SCARD_W_RESET_CARD || result == SCARD_E_NOT_TRANSACTED) {
-            hCard = 0;
             return SCARD_W_RESET_CARD;
         }
 
@@ -244,6 +244,35 @@ void LocalSmartCard::disconnect() {
 #endif
         hCard = 0;
     }
+}
+
+uint32_t LocalSmartCard::reconnect() {
+    if (hCard != 0) {
+#ifdef WIN32
+        if (!pSCardReconnect) {
+            return SCARD_S_SUCCESS;
+        }
+
+        LONG result = pSCardReconnect(
+            hCard,
+            SCARD_SHARE_SHARED,
+            SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,
+            SCARD_RESET_CARD,
+            &dwActiveProtocol
+        );
+#else
+        LONG result = SCardReconnect(
+            hCard,
+            SCARD_SHARE_SHARED,
+            SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,
+            SCARD_RESET_CARD,
+            &dwActiveProtocol
+        );
+#endif
+        return result;
+    }
+
+    return SCARD_E_INVALID_HANDLE;
 }
 
 void LocalSmartCard::beginTransaction() {
@@ -307,7 +336,7 @@ std::vector<std::string> RemoteSmartCard::getReaders() const {
                 oss << std::showbase << std::hex << result;
                 return oss.str();
             }()
-        );
+                );
     }
 
     std::vector<char> readersBuffer(readersSize);
@@ -325,7 +354,7 @@ std::vector<std::string> RemoteSmartCard::getReaders() const {
                 oss << std::showbase << std::hex << result;
                 return oss.str();
             }()
-        );
+                );
     }
 
     std::vector<std::string> readers;
@@ -342,9 +371,9 @@ void RemoteSmartCard::connect() {
     LONG result;
     DWORD readersSize = SCARD_AUTOALLOCATE;
     std::string readerName;
-    
+
     disconnect();
-    
+
     if (smartCardReaderName.empty()) {
         char* readers = nullptr;
         result = client->scardListReaders(hContext, nullptr, (LPSTR)&readers, &readersSize);
@@ -392,6 +421,20 @@ void RemoteSmartCard::connect() {
     }
 }
 
+uint32_t RemoteSmartCard::reconnect() {
+    if (hCard != 0) {
+        return client->scardReconnect(
+            hCard,
+            SCARD_SHARE_SHARED,
+            SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,
+            SCARD_RESET_CARD,
+            &dwActiveProtocol
+        );
+    }
+
+    return SCARD_E_INVALID_HANDLE;
+}
+
 uint32_t RemoteSmartCard::transmit(const std::vector<uint8_t>& message, ApduResponse& response) {
     DWORD recvLength = 256;
     std::vector<uint8_t> recvBuffer(recvLength);
@@ -400,16 +443,12 @@ uint32_t RemoteSmartCard::transmit(const std::vector<uint8_t>& message, ApduResp
     LONG result = client->scardTransmit(hCard, SCARD_PCI_T1, message.data(), static_cast<uint32_t>(message.size()), nullptr, recvBuffer.data(), &recvLength);
     while (result != SCARD_S_SUCCESS && retryCount < 5) {
         if (result == SCARD_W_RESET_CARD || result == SCARD_E_NOT_TRANSACTED) {
-            hContext = 0;
-            hCard = 0;
             return SCARD_W_RESET_CARD;
         }
 
         // CasProxyServer error occurred
         if (result == SCARD_E_INVALID_HANDLE || result == SCARD_F_INTERNAL_ERROR) {
-            hContext = 0;
-            hCard = 0;
-            return result;
+            return SCARD_W_RESET_CARD;
         }
 
         retryCount++;
@@ -420,7 +459,7 @@ uint32_t RemoteSmartCard::transmit(const std::vector<uint8_t>& message, ApduResp
     if (result != SCARD_S_SUCCESS) {
         return result;
     }
-    
+
     recvBuffer.resize(recvLength);
 
     uint8_t sw1 = recvBuffer[recvLength - 2];

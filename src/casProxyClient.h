@@ -18,6 +18,7 @@ public:
     LONG scardReleaseContext(SCARDCONTEXT hContext);
     LONG scardListReaders(SCARDCONTEXT hContext, LPCSTR mszGroups, LPSTR mszReaders, LPDWORD pcchReaders);
     LONG scardConnect(SCARDCONTEXT hContext, LPCSTR szReader, DWORD dwShareMode, DWORD dwPreferredProtocols, LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
+    LONG scardReconnect(SCARDHANDLE hCard, DWORD dwShareMode, DWORD dwPreferredProtocols, DWORD dwInitialization, LPDWORD pdwActiveProtocol);
     LONG scardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition);
     LONG scardBeginTransaction(SCARDHANDLE hCard);
     LONG scardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition);

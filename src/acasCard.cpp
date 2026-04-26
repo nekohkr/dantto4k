@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "config.h"
 
-bool AcasCard::getA0AuthKcl(sha256_t& output) {
+uint32_t AcasCard::getA0AuthKcl(sha256_t& output) {
     std::default_random_engine engine(std::random_device{}());
     std::uniform_int_distribution<int> distrib(0, 255);
 
@@ -26,12 +26,13 @@ bool AcasCard::getA0AuthKcl(sha256_t& output) {
         smartCard->connect();
     }
 
-    if (smartCard->transmit(apdu.case4short(data, 0x00), response) != SCARD_S_SUCCESS) {
-        return false;
+    LONG result = smartCard->transmit(apdu.case4short(data, 0x00), response);
+    if (result != SCARD_S_SUCCESS) {
+        return result;
     }
 
     if (!response.isSuccess()) {
-        return false;
+        return SCARD_F_INTERNAL_ERROR;
     }
 
     auto a0data = response.getData();
@@ -52,24 +53,39 @@ bool AcasCard::getA0AuthKcl(sha256_t& output) {
     sha256_t hash = SHA256::hash(plainData);
 
     if (!std::equal(hash.begin(), hash.end(), a0hash.begin())) {
-        return false;
+        return SCARD_F_INTERNAL_ERROR;
     }
 
     output = kcl;
 
-    return true;
+    return SCARD_S_SUCCESS;
 }
 
 bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
     ApduResponse response;
     sha256_t kcl;
     uint32_t retryCount = 0;
+    uint32_t retryReconnectCount = 0;
     if (smartCard == nullptr) {
         return false;
     }
 
     try {
     retry:
+        if (cardReset) {
+        retryReconnect:
+            if (retryReconnectCount > 4) {
+                return false;
+            }
+
+            uint32_t result = smartCard->reconnect();
+            if (result != SCARD_S_SUCCESS) {
+                ++retryReconnectCount;
+                goto retryReconnect;
+            }
+            cardReset = false;
+        }
+
         if (!smartCard->isInited()) {
             smartCard->init();
         }
@@ -77,52 +93,61 @@ bool AcasCard::ecm(const std::vector<uint8_t>& ecm, DecryptionKey& output) {
             smartCard->connect();
         }
 
-        auto scope = smartCard->scopedTransaction();
+        {
+            auto scope = smartCard->scopedTransaction();
 
-        if (!getA0AuthKcl(kcl)) {
-            if (retryCount > 1) {
+            uint32_t result = getA0AuthKcl(kcl);
+            if (result != SCARD_S_SUCCESS) {
+                if (result == SCARD_W_RESET_CARD) {
+                    if (retryCount > 4) {
+                        return false;
+                    }
+
+                    cardReset = true;
+                    ++retryCount;
+                    goto retry;
+                }
+
                 return false;
             }
 
-            ++retryCount;
-            goto retry;
-        }
+            ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
+            result = smartCard->transmit(apdu.case4short(ecm, 0x00), response);
+            if (result != SCARD_S_SUCCESS) {
+                if (result == SCARD_W_RESET_CARD) {
+                    if (retryCount > 4) {
+                        return false;
+                    }
 
-        ApduCommand apdu(0x90, 0x34, 0x00, 0x01);
-        uint32_t ret = smartCard->transmit(apdu.case4short(ecm, 0x00), response);
-        if (ret != SCARD_S_SUCCESS) {
-            if (ret == SCARD_W_RESET_CARD || ret == SCARD_E_INVALID_HANDLE) {
-                if (retryCount > 1) {
-                    return false;
+                    cardReset = true;
+                    ++retryCount;
+                    goto retry;
                 }
 
-                ++retryCount;
-                goto retry;
+                return false;
             }
 
-            return false;
+            if (!response.isSuccess()) {
+                return false;
+            }
+
+            auto ecmData = response.getData();
+            std::vector<uint8_t> ecmResponse(ecmData.begin() + 0x06, ecmData.end());
+            std::vector<uint8_t> ecmInit(ecm.begin() + 0x04, ecm.begin() + 0x04 + 0x17);
+
+            std::vector<uint8_t> plainData;
+            plainData.insert(plainData.end(), kcl.begin(), kcl.end());
+            plainData.insert(plainData.end(), ecmInit.begin(), ecmInit.end());
+
+            sha256_t hash = SHA256::hash(plainData);
+
+            for (size_t i = 0; i < hash.size(); i++) {
+                hash[i] ^= ecmResponse[i];
+            }
+
+            std::copy(hash.begin(), hash.begin() + 0x10, output.odd.begin());
+            std::copy(hash.begin() + 0x10, hash.begin() + 0x20, output.even.begin());
         }
-
-        if (!response.isSuccess()) {
-            return false;
-        }
-
-        auto ecmData = response.getData();
-        std::vector<uint8_t> ecmResponse(ecmData.begin() + 0x06, ecmData.end());
-        std::vector<uint8_t> ecmInit(ecm.begin() + 0x04, ecm.begin() + 0x04 + 0x17);
-
-        std::vector<uint8_t> plainData;
-        plainData.insert(plainData.end(), kcl.begin(), kcl.end());
-        plainData.insert(plainData.end(), ecmInit.begin(), ecmInit.end());
-
-        sha256_t hash = SHA256::hash(plainData);
-
-        for (size_t i = 0; i < hash.size(); i++) {
-            hash[i] ^= ecmResponse[i];
-        }
-
-        std::copy(hash.begin(), hash.begin() + 0x10, output.odd.begin());
-        std::copy(hash.begin() + 0x10, hash.begin() + 0x20, output.even.begin());
 
         return true;
     }
