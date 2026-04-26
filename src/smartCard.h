@@ -72,6 +72,7 @@ public:
     virtual ~ISmartCard() = default;
     virtual bool init() = 0;
     virtual void connect() = 0;
+    virtual uint32_t reconnect() = 0;
     virtual void disconnect() = 0;
     virtual bool isConnected() const = 0;
     virtual bool isInited() const = 0;
@@ -102,6 +103,7 @@ public:
     ~LocalSmartCard();
     bool init() override;
     void connect() override;
+    uint32_t reconnect() override;
     void disconnect() override;
     bool isConnected() const override;
     bool isInited() const override;
@@ -121,6 +123,7 @@ private:
     typedef LONG(WINAPI* FnSCardEstablishContext)(DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
     typedef LONG(WINAPI* FnSCardReleaseContext)(SCARDCONTEXT hContext);
     typedef LONG(WINAPI* FnSCardConnect)(SCARDCONTEXT hContext, LPCSTR szReader, DWORD dwShareMode, DWORD dwPreferredProtocols, LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
+    typedef LONG(WINAPI* FnSCardReconnect)(SCARDHANDLE hCard, DWORD dwShareMode, DWORD dwPreferredProtocols, DWORD dwInitialization, LPDWORD pdwActiveProtocol);
     typedef LONG(WINAPI* FnSCardDisconnect)(SCARDHANDLE hCard, DWORD dwDisposition);
     typedef LONG(WINAPI* FnSCardBeginTransaction)(SCARDHANDLE hCard);
     typedef LONG(WINAPI* FnSCardEndTransaction)(SCARDHANDLE hCard, DWORD dwDisposition);
@@ -131,6 +134,7 @@ private:
     FnSCardEstablishContext pSCardEstablishContext = nullptr;
     FnSCardReleaseContext pSCardReleaseContext = nullptr;
     FnSCardConnect pSCardConnect = nullptr;
+    FnSCardReconnect pSCardReconnect = nullptr;
     FnSCardDisconnect pSCardDisconnect = nullptr;
     FnSCardBeginTransaction pSCardBeginTransaction = nullptr;
     FnSCardEndTransaction pSCardEndTransaction = nullptr;
@@ -152,6 +156,7 @@ public:
     ~RemoteSmartCard();
     bool init() override;
     void connect() override;
+    uint32_t reconnect() override;
     void disconnect() override;
     bool isConnected() const override;
     bool isInited() const;
@@ -170,6 +175,5 @@ private:
     DWORD dwActiveProtocol = 0;
     std::string smartCardReaderName;
     std::unique_ptr<CasProxyClient> client;
-
 
 };

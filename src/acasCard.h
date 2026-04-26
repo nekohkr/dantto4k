@@ -25,8 +25,9 @@ public:
     void setSmartCard(std::unique_ptr<ISmartCard> sc);
 
 private:
-    bool getA0AuthKcl(sha256_t& output);
+    uint32_t getA0AuthKcl(sha256_t& output);
 
     std::unique_ptr<ISmartCard> smartCard;
+    bool cardReset{false};
 
 };

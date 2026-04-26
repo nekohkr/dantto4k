@@ -402,6 +402,30 @@ LONG CasProxyClient::scardConnect(SCARDCONTEXT hContext, LPCSTR szReader, DWORD 
     return res->apiReturn;
 }
 
+LONG CasProxyClient::scardReconnect(SCARDHANDLE hCard, DWORD dwShareMode, DWORD dwPreferredProtocols, DWORD dwInitialization, LPDWORD pdwActiveProtocol) {
+    casproxy::SCardReconnectRequest req;
+    req.hCard = hCard;
+    req.dwShareMode = dwShareMode;
+    req.dwPreferredProtocols = dwPreferredProtocols;
+    req.dwInitialization = dwInitialization;
+
+    auto r = sendRequest(req);
+    if (!r) {
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    auto res = std::dynamic_pointer_cast<casproxy::SCardReconnectResponse>(r);
+    if (res->resultCode != 0) {
+        throw std::runtime_error(std::string("CasProxyServer returned an error response"));
+    }
+
+    if (pdwActiveProtocol != nullptr) {
+        *pdwActiveProtocol = res->dwActiveProtocol;
+    }
+
+    return res->apiReturn;
+}
+
 LONG CasProxyClient::scardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition) {
     casproxy::SCardDisconnectRequest req;
     req.hCard = hCard;
