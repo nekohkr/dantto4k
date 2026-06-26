@@ -18,20 +18,23 @@ uint64_t ff_parse_ntp_time2(uint64_t ntp_ts)
 
 } // anonymous namespace
 
-bool MpuTimestampDescriptor::unpack(Common::ReadStream& stream)
-{
+bool MpuTimestampDescriptor::unpack(Common::ReadStream& stream) {
 	try {
 		if (!MmtDescriptorTemplate::unpack(stream)) {
 			return false;
 		}
 
+		Common::ReadStream nstream(stream, descriptorLength);
+
 		entries.reserve(descriptorLength / 12);
 		for (int i = 0; i < descriptorLength / 12; i++) {
 			Entry entry;
-			entry.mpuSequenceNumber = stream.getBe32U();
-			entry.mpuPresentationTime = ff_parse_ntp_time2(stream.getBe64U()) - NTP_OFFSET_US;
+			entry.mpuSequenceNumber = nstream.getBe32U();
+			entry.mpuPresentationTime = ff_parse_ntp_time2(nstream.getBe64U()) - NTP_OFFSET_US;
 			entries.push_back(entry);
 		}
+
+		stream.skip(descriptorLength);
 	}
 	catch (const std::out_of_range&) {
 		return false;

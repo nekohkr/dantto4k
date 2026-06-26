@@ -8,30 +8,34 @@ bool MhExtendedEventDescriptor::unpack(Common::ReadStream& stream) {
             return false;
         }
 
-        uint8_t uint8 = stream.get8U();
+        Common::ReadStream nstream(stream, descriptorLength);
+
+        uint8_t uint8 = nstream.get8U();
         descriptorNumber = (uint8 & 0b11110000) >> 4;
         lastDescriptorNumber = (uint8 & 0b00001111);
-        stream.read(language, 3);
+        nstream.read(language, 3);
         language[3] = '\0';
 
-        lengthOfItems = stream.getBe16U();
-        Common::ReadStream nstream(stream, lengthOfItems);
-        while (!nstream.isEof()) {
+        lengthOfItems = nstream.getBe16U();
+        Common::ReadStream nstream2(nstream, lengthOfItems);
+        while (!nstream2.isEof()) {
             Entry entry;
-            if (!entry.unpack(nstream)) {
+            if (!entry.unpack(nstream2)) {
                 return false;
             }
 
             entries.push_back(entry);
         }
-        stream.skip(lengthOfItems);
+        nstream.skip(lengthOfItems);
 
 
-        textLength = stream.getBe16U();
+        textLength = nstream.getBe16U();
         if (textLength) {
             textChar.resize(textLength);
-            stream.read(textChar.data(), textLength);
+            nstream.read(textChar.data(), textLength);
         }
+
+        stream.skip(descriptorLength);
     }
     catch (const std::out_of_range&) {
         return false;
