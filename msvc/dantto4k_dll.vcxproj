@@ -176,7 +176,7 @@
     <ClCompile Include="../src/mhSimpleApplicationLocationDescriptor.cpp" />
     <ClCompile Include="../src/mhTransportProtocolDescriptor.cpp" />
     <ClCompile Include="../src/mpuApplicationProcessor.cpp" />
-    <ClCompile Include="../src/aribUtil.cpp" />
+    <ClCompile Include="../src/aribTextEncoder.cpp" />
     <ClCompile Include="../src/mpuAudioProcessor.cpp" />
     <ClCompile Include="../src/acasCard.cpp" />
     <ClCompile Include="../src/adtsConverter.cpp" />
@@ -262,7 +262,8 @@
     <ClCompile Include="../src/transmissionControlSignal.cpp" />
     <ClCompile Include="../src/mpuSubtitleProcessor.cpp" />
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
-    <ClCompile Include="../src/aribEncoder.cpp" />
+    <ClCompile Include="../src/aribCharsetTables.cpp" />
+    <ClCompile Include="../src/aribCharsetEncoder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/accessControlDescriptor.h" />
@@ -280,7 +281,7 @@
     <ClInclude Include="../src/mhSimpleApplicationLocationDescriptor.h" />
     <ClInclude Include="../src/mhTransportProtocolDescriptor.h" />
     <ClInclude Include="../src/mpuApplicationProcessor.h" />
-    <ClInclude Include="../src/aribUtil.h" />
+    <ClInclude Include="../src/aribTextEncoder.h" />
     <ClInclude Include="../src/mpuAudioProcessor.h" />
     <ClInclude Include="../src/acasCard.h" />
     <ClInclude Include="../src/adtsConverter.h" />
@@ -383,7 +384,8 @@
     <ClInclude Include="../src/mmtDescriptorBase.h" />
     <ClInclude Include="../src/mmtTlvDemuxer.h" />
     <ClInclude Include="../src/aesCtrCipher.h" />
-    <ClInclude Include="../src/aribEncoder.h" />
+    <ClInclude Include="../src/aribCharsetTables.h" />
+    <ClInclude Include="../src/aribCharsetEncoder.h" />
     <ClInclude Include="../src/progressReporter.h" />
     <ClInclude Include="../src/sha256.h" />
   </ItemGroup>

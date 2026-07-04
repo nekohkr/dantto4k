@@ -1,5 +1,9 @@
-﻿#include "aribUtil.h"
-#include "aribEncoder.h"
+﻿#include "aribTextEncoder.h"
+#include <array>
+#include <mutex>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
 namespace {
 
@@ -137,13 +141,13 @@ void replaceSequence(std::string& str, std::string_view sequence, const char* re
     }
 }
 
-void convertGaiji(std::string& str) {
+void replaceGaiji(std::string& str) {
     for (const auto& gaiji : GaijiTable) {
         replaceSequence(str, reinterpret_cast<const char*>(gaiji.find), reinterpret_cast<const char*>(gaiji.replacement));
     }
 }
 
-void jisX0201KatakanaToKatakana(std::string& str) {
+void normalizeHalfwidthKatakana(std::string& str) {
     // Half-width Katakana (JIS X 0201) in UTF-8 ranges from EF BD A1 to EF BE 9F.
     static const auto KatakanaReplacementTable = [] {
         std::array<const char*, 95> table{};
@@ -192,40 +196,57 @@ void jisX0201KatakanaToKatakana(std::string& str) {
 
 }
 
-static std::unordered_map<std::string, std::string> aribEncodeCache;
-static std::mutex aribEncodeCacheMutex;
-constexpr size_t ARIB_ENCODE_CACHE_MAX_SIZE = 4096;
+static std::unordered_map<std::string, std::string> aribTextEncodeCache;
+static std::mutex aribTextEncodeCacheMutex;
+constexpr size_t ARIB_TEXT_ENCODE_CACHE_MAX_SIZE = 4096;
 
-const std::string aribEncode(std::string_view input, bool isCaption) {
-    std::string input_str{ input };
-    {
-        std::lock_guard<std::mutex> lock(aribEncodeCacheMutex);
-        auto it = aribEncodeCache.find(input_str);
-        if (it != aribEncodeCache.end()) {
+static std::string makeCacheKey(std::string_view input, arib::text::EncodeOptions options) {
+    std::string key;
+    key.reserve(input.size() + 3);
+    key.push_back(options.mode == arib::charset::EncodeMode::Caption ? '\1' : '\0');
+    key.push_back(options.replaceGaiji ? '\1' : '\0');
+    key.push_back(options.normalizeHalfwidthKatakana ? '\1' : '\0');
+    key.append(input);
+    return key;
+}
+
+namespace arib::text {
+
+std::string encode(std::string_view input, EncodeOptions options) {
+    std::string cacheKey;
+    if (options.useCache) {
+        cacheKey = makeCacheKey(input, options);
+        std::lock_guard<std::mutex> lock(aribTextEncodeCacheMutex);
+        auto it = aribTextEncodeCache.find(cacheKey);
+        if (it != aribTextEncodeCache.end()) {
             return it->second;
         }
     }
 
     std::string converted{ input };
-    convertGaiji(converted);
-
-    // Convert JIS X 0201 Katakana to Katakana for Mirakurun
-    if (!isCaption) {
-        jisX0201KatakanaToKatakana(converted);
+    if (options.replaceGaiji) {
+        replaceGaiji(converted);
     }
 
-    auto result = AribEncoder::encode(converted, isCaption);
+    // Convert JIS X 0201 Katakana to Katakana for Mirakurun
+    if (options.normalizeHalfwidthKatakana && options.mode != arib::charset::EncodeMode::Caption) {
+        normalizeHalfwidthKatakana(converted);
+    }
 
-    {
-        std::lock_guard<std::mutex> lock(aribEncodeCacheMutex);
-        if (aribEncodeCache.size() >= ARIB_ENCODE_CACHE_MAX_SIZE) {
-            aribEncodeCache.clear();
+    auto result = arib::charset::encode(converted, options.mode);
+
+    if (options.useCache) {
+        std::lock_guard<std::mutex> lock(aribTextEncodeCacheMutex);
+        if (aribTextEncodeCache.size() >= ARIB_TEXT_ENCODE_CACHE_MAX_SIZE) {
+            aribTextEncodeCache.clear();
         }
-        aribEncodeCache.emplace(std::move(input_str), result);
+        aribTextEncodeCache.emplace(std::move(cacheKey), result);
     }
     return result;
 }
 
-const std::string aribEncode(const char* input, size_t size, bool isCaption) {
-    return aribEncode({ input, size }, isCaption);
+std::string encode(const char* input, std::size_t size, EncodeOptions options) {
+    return encode({ input, size }, options);
 }
+
+} // namespace arib::text

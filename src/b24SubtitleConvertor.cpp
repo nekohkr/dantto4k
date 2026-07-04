@@ -1,8 +1,8 @@
-﻿#include "b24SubtitleConvertor.h"
-#include <vector>
-#include "aribUtil.h"
+#include "b24SubtitleConvertor.h"
+#include "aribTextEncoder.h"
 #include "b24Color.h"
 #include "b24ControlSet.h"
+#include <vector>
 
 namespace {
 
@@ -61,7 +61,10 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
             }
         }
 
-        auto encoded = aribEncode(text, true);
+        arib::text::EncodeOptions captionEncodeOptions;
+        captionEncodeOptions.mode = arib::charset::EncodeMode::Caption;
+        captionEncodeOptions.normalizeHalfwidthKatakana = false;
+        auto encoded = arib::text::encode(text, captionEncodeOptions);
         auto encodedSplit = splitByNull(encoded);
         int encodedSplitIndex = 0;
 
