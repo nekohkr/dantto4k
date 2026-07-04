@@ -61,10 +61,7 @@ bool B24SubtitleConvertor::convert(const std::string& input, std::list<B24Subtit
             }
         }
 
-        arib::text::EncodeOptions captionEncodeOptions;
-        captionEncodeOptions.mode = arib::charset::EncodeMode::Caption;
-        captionEncodeOptions.normalizeHalfwidthKatakana = false;
-        auto encoded = arib::text::encode(text, captionEncodeOptions);
+        auto encoded = arib::text::encode(text, arib::charset::EncodeMode::Caption);
         auto encodedSplit = splitByNull(encoded);
         int encodedSplitIndex = 0;
 

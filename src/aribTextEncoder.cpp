@@ -7,12 +7,12 @@
 
 namespace {
 
-struct Gaiji {
+struct TextReplacement {
     const char8_t* find;
     const char8_t* replacement;
 };
 
-constexpr Gaiji GaijiTable[] = {
+constexpr TextReplacement GaijiTable[] = {
     // ARIB STD-B62
     {u8"\U0001F19B", u8"[3D]"},
     {u8"\U0001F19C", u8"[2nd Scr]"},
@@ -66,7 +66,17 @@ constexpr Gaiji GaijiTable[] = {
     {u8"\U00002015", u8"ー"},
 };
 
-constexpr Gaiji jisX0201KatakanaTable[] = {
+constexpr TextReplacement AribPuaToUnicodeMap[] = {
+    // Duplicate encoded characters (ARIB STD-B24 Version 6.2-E1, p. 104).
+    {u8"\U0000E182", u8"\U0000E2DA"},
+    {u8"\U0000260E", u8"\U0000E2FB"},
+    {u8"\U0000E28B", u8"\U00005E74"},
+    {u8"\U0000E28C", u8"\U00006708"},
+    {u8"\U0000E28D", u8"\U000065E5"},
+    {u8"\U0000E28E", u8"\U00005186"},
+};
+
+constexpr TextReplacement jisX0201KatakanaTable[] = {
     { u8"｡", u8"。" },
     { u8"｢", u8"「" },
     { u8"｣", u8"」" },
@@ -147,7 +157,13 @@ void replaceGaiji(std::string& str) {
     }
 }
 
-void normalizeHalfwidthKatakana(std::string& str) {
+void normalizeAribPuaToUnicode(std::string& str) {
+    for (const auto& codepoint : AribPuaToUnicodeMap) {
+        replaceSequence(str, reinterpret_cast<const char*>(codepoint.find), reinterpret_cast<const char*>(codepoint.replacement));
+    }
+}
+
+void jisX0201KatakanaToKatakana(std::string& str) {
     // Half-width Katakana (JIS X 0201) in UTF-8 ranges from EF BD A1 to EF BE 9F.
     static const auto KatakanaReplacementTable = [] {
         std::array<const char*, 95> table{};
@@ -200,22 +216,19 @@ static std::unordered_map<std::string, std::string> aribTextEncodeCache;
 static std::mutex aribTextEncodeCacheMutex;
 constexpr size_t ARIB_TEXT_ENCODE_CACHE_MAX_SIZE = 4096;
 
-static std::string makeCacheKey(std::string_view input, arib::text::EncodeOptions options) {
+static std::string makeCacheKey(std::string_view input, arib::charset::EncodeMode mode) {
     std::string key;
-    key.reserve(input.size() + 3);
-    key.push_back(options.mode == arib::charset::EncodeMode::Caption ? '\1' : '\0');
-    key.push_back(options.replaceGaiji ? '\1' : '\0');
-    key.push_back(options.normalizeHalfwidthKatakana ? '\1' : '\0');
+    key.reserve(input.size() + 1);
+    key.push_back(mode == arib::charset::EncodeMode::Caption ? '\1' : '\0');
     key.append(input);
     return key;
 }
 
 namespace arib::text {
 
-std::string encode(std::string_view input, EncodeOptions options) {
-    std::string cacheKey;
-    if (options.useCache) {
-        cacheKey = makeCacheKey(input, options);
+std::string encode(std::string_view input, charset::EncodeMode mode) {
+    std::string cacheKey = makeCacheKey(input, mode);
+    {
         std::lock_guard<std::mutex> lock(aribTextEncodeCacheMutex);
         auto it = aribTextEncodeCache.find(cacheKey);
         if (it != aribTextEncodeCache.end()) {
@@ -224,18 +237,16 @@ std::string encode(std::string_view input, EncodeOptions options) {
     }
 
     std::string converted{ input };
-    if (options.replaceGaiji) {
-        replaceGaiji(converted);
+    normalizeAribPuaToUnicode(converted);
+    replaceGaiji(converted);
+
+    if (mode == arib::charset::EncodeMode::Text) {
+        jisX0201KatakanaToKatakana(converted);
     }
 
-    // Convert JIS X 0201 Katakana to Katakana for Mirakurun
-    if (options.normalizeHalfwidthKatakana && options.mode != arib::charset::EncodeMode::Caption) {
-        normalizeHalfwidthKatakana(converted);
-    }
+    auto result = arib::charset::encode(converted, mode);
 
-    auto result = arib::charset::encode(converted, options.mode);
-
-    if (options.useCache) {
+    {
         std::lock_guard<std::mutex> lock(aribTextEncodeCacheMutex);
         if (aribTextEncodeCache.size() >= ARIB_TEXT_ENCODE_CACHE_MAX_SIZE) {
             aribTextEncodeCache.clear();
@@ -245,8 +256,8 @@ std::string encode(std::string_view input, EncodeOptions options) {
     return result;
 }
 
-std::string encode(const char* input, std::size_t size, EncodeOptions options) {
-    return encode({ input, size }, options);
+std::string encode(const char* input, std::size_t size, charset::EncodeMode mode) {
+    return arib::text::encode(std::string_view{ input, size }, mode);
 }
 
 } // namespace arib::text
