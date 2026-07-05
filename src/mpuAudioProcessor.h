@@ -5,7 +5,7 @@ namespace MmtTlv {
 
 class MpuAudioProcessor : public MpuProcessorTemplate<AssetType::mp4a> {
 public:
-	std::optional<MfuData> process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) override;
+	std::optional<MfuData> process(MmtStream& mmtStream, std::span<const uint8_t> data, FragmentationIndicator fragmentationIndicator) override;
 	void clear() override;
 
 private:

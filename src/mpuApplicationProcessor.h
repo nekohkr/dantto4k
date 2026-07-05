@@ -5,7 +5,7 @@ namespace MmtTlv {
 
 class MpuApplicationProcessor : public MpuProcessorTemplate<AssetType::aapp> {
 public:
-	std::optional<MfuData> process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) override;
+	std::optional<MfuData> process(MmtStream& mmtStream, std::span<const uint8_t> data, FragmentationIndicator fragmentationIndicator) override;
 
 };
 
