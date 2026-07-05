@@ -16,17 +16,17 @@
   </ImportGroup>
 
   <ItemGroup>
-    <DanttoTSDuckPublicHeaders Include="$(TSDuckRootDir)src\libtsduck\**\*.h"
-                               Exclude="$(TSDuckRootDir)src\libtsduck\**\unix\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\linux\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\mac\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\bsd\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\freebsd\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\netbsd\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\openbsd\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\dragonflybsd\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\private\**;
-                                        $(TSDuckRootDir)src\libtsduck\**\__pycache__\**" />
+    <DanttoTSDuckPublicHeaders Include="$(TSDuckRootDir)src\libtscore\**\*.h;$(TSDuckRootDir)src\libtsduck\**\*.h"
+                               Exclude="$(TSDuckRootDir)src\**\unix\**;
+                                        $(TSDuckRootDir)src\**\linux\**;
+                                        $(TSDuckRootDir)src\**\mac\**;
+                                        $(TSDuckRootDir)src\**\bsd\**;
+                                        $(TSDuckRootDir)src\**\freebsd\**;
+                                        $(TSDuckRootDir)src\**\netbsd\**;
+                                        $(TSDuckRootDir)src\**\openbsd\**;
+                                        $(TSDuckRootDir)src\**\dragonflybsd\**;
+                                        $(TSDuckRootDir)src\**\private\**;
+                                        $(TSDuckRootDir)src\**\__pycache__\**" />
     <DanttoTSDuckPublicDirs Include="@(DanttoTSDuckPublicHeaders->'%(RootDir)%(Directory)'->Distinct())" />
   </ItemGroup>
 
@@ -42,8 +42,12 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(TSDuckOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">tscorelib.lib;tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscore.lib')">tscore.lib;tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">/wholearchive:tscorelib.lib /wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="Exists('$(TSDuckOutDir)tscore.lib')">/wholearchive:tscore.lib /wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">/wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 
