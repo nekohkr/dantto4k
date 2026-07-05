@@ -1,0 +1,91 @@
+name: build
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y make g++ libpcsclite-dev pkgconf
+    - name: Install tsduck
+      run: |
+        cd thirdparty/tsduck
+        scripts/install-prerequisites.sh
+        make -j10
+        sudo make install
+    - name: make
+      run: make
+
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+    - uses: microsoft/setup-msbuild@v2
+
+    - name: Build static TSDuck
+      env:
+        _CL_: /D_USE_STD_VECTOR_ALGORITHMS=0 /MT /WX-
+      run: msbuild thirdparty\tsduck\scripts\msvc\tsduck.sln /m /t:tsducklib /p:Configuration=Release /p:Platform=x64
+
+    - name: Build dantto4k
+      run: msbuild msvc\dantto4k.sln /m /p:Configuration=Release /p:Platform=x64
+
+    - name: Package Windows x64
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = "Stop"
+        $packageDir = "dist\dantto4k"
+        New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+        Copy-Item "msvc\x64\Release\dantto4k.exe" $packageDir
+        Copy-Item "msvc\x64\Release\BonDriver_dantto4k.dll" $packageDir
+        Copy-Item "ini\BonDriver_dantto4k.ini" $packageDir
+
+        $version = "${{ github.ref_name }}" -replace '[^A-Za-z0-9._-]', '-'
+        $archiveName = "dantto4k-$version-windows-x64.zip"
+        $archivePath = "dist\$archiveName"
+        Compress-Archive -Path "$packageDir\*" -DestinationPath $archivePath -Force
+
+        "PACKAGE_PATH=$archivePath" >> $env:GITHUB_ENV
+        "ARTIFACT_NAME=dantto4k-$version-windows-x64" >> $env:GITHUB_ENV
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+        path: dist\dantto4k
+
+    - name: Publish GitHub release
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        $ErrorActionPreference = "Stop"
+        $tag = "${{ github.ref_name }}"
+        gh release view $tag *> $null
+        if ($LASTEXITCODE -eq 0) {
+          gh release upload $tag $env:PACKAGE_PATH --clobber
+        }
+        else {
+          gh release create $tag $env:PACKAGE_PATH --title $tag --notes "Windows x64 static build"
+        }
