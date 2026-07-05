@@ -43,6 +43,8 @@ jobs:
     - uses: microsoft/setup-msbuild@v2
 
     - name: Build static TSDuck
+      env:
+        _CL_: /WX-
       run: msbuild thirdparty\tsduck\scripts\msvc\tsduck.sln /m /t:tsducklib /p:Configuration=Release /p:Platform=x64
 
     - name: Build dantto4k
