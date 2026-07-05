@@ -61,12 +61,17 @@ jobs:
         Copy-Item "msvc\x64\Release\BonDriver_dantto4k.dll" $packageDir
         Copy-Item "ini\BonDriver_dantto4k.ini" $packageDir
 
-        Compress-Archive -Path "$packageDir\*" -DestinationPath "dist\dantto4k-windows-x64.zip" -Force
+        $version = "${{ github.ref_name }}" -replace '[^A-Za-z0-9._-]', '-'
+        $archiveName = "dantto4k-$version-windows-x64.zip"
+        $archivePath = "dist\$archiveName"
+        Compress-Archive -Path "$packageDir\*" -DestinationPath $archivePath -Force
+
+        "PACKAGE_PATH=$archivePath" >> $env:GITHUB_ENV
 
     - uses: actions/upload-artifact@v4
       with:
         name: dantto4k-windows-x64
-        path: dist\dantto4k-windows-x64.zip
+        path: dist\dantto4k
 
     - name: Publish GitHub release
       if: startsWith(github.ref, 'refs/tags/')
@@ -78,8 +83,8 @@ jobs:
         $tag = "${{ github.ref_name }}"
         gh release view $tag *> $null
         if ($LASTEXITCODE -eq 0) {
-          gh release upload $tag "dist\dantto4k-windows-x64.zip" --clobber
+          gh release upload $tag $env:PACKAGE_PATH --clobber
         }
         else {
-          gh release create $tag "dist\dantto4k-windows-x64.zip" --title $tag --notes "Windows x64 static build"
+          gh release create $tag $env:PACKAGE_PATH --title $tag --notes "Windows x64 static build"
         }
