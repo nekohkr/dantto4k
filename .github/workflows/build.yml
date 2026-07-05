@@ -41,8 +41,6 @@ jobs:
       with:
         python-version: "3.x"
     - uses: microsoft/setup-msbuild@v2
-      with:
-        vs-version: "[17.0,18.0)"
 
     - name: Build static TSDuck
       env:
