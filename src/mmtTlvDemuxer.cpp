@@ -864,7 +864,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream) {
 
             std::vector<uint8_t> message;
             message.resize(length);
-            stream.read(message.data(), length);
+            nstream.read(message.data(), length);
 
             if (assembler->assemble(message, signalingMessage.fragmentationIndicator, mmtp.packetSequenceNumber)) {
                 Common::ReadStream messageStream(assembler->data);
