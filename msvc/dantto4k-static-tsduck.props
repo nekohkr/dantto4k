@@ -42,9 +42,9 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(TSDuckOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">tscorelib.lib;tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscore.lib')">tscore.lib;tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">tscorelib.lib;tsducklib.lib;libcpmt.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscore.lib')">tscore.lib;tsducklib.lib;libcpmt.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">tsducklib.lib;libcpmt.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">/wholearchive:tscorelib.lib /wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="Exists('$(TSDuckOutDir)tscore.lib')">/wholearchive:tscore.lib /wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">/wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
