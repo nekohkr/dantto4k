@@ -1,5 +1,5 @@
 #pragma once
-#include <span>
+#include <vector>
 #include "stream.h"
 #include "mmtFragment.h"
 
@@ -16,7 +16,7 @@ public:
 	bool aggregateFlag;
 	uint8_t fragmentCounter;
 	uint32_t mpuSequenceNumber;
-	std::span<const uint8_t> payload;
+	std::vector<uint8_t> payload;
 };
 
 }

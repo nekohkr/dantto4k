@@ -3,7 +3,7 @@
 
 namespace MmtTlv {
 
-bool FragmentAssembler::assemble(std::span<const uint8_t> fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber) {
+bool FragmentAssembler::assemble(const std::vector<uint8_t>& fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber) {
     switch (fragmentationIndicator) {
     case FragmentationIndicator::NotFragmented:
         if (state == State::InFragment) {

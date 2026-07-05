@@ -4,7 +4,6 @@ namespace MmtTlv {
 
 bool DataUnit::unpack(Common::ReadStream& stream, bool timedFlag, bool aggregateFlag) {
 	try {
-		data = {};
 		if (timedFlag) {
 			if (aggregateFlag == 0) {
 				movieFragmentSequenceNumber = stream.getBe32U();
@@ -13,7 +12,8 @@ bool DataUnit::unpack(Common::ReadStream& stream, bool timedFlag, bool aggregate
 				priority = stream.get8U();
 				dependencyCounter = stream.get8U();
 
-				data = stream.readView(stream.leftBytes());
+				data.resize(stream.leftBytes());
+				stream.read(data.data(), stream.leftBytes());
 			}
 			else {
 				dataUnitLength = stream.getBe16U();
@@ -29,19 +29,22 @@ bool DataUnit::unpack(Common::ReadStream& stream, bool timedFlag, bool aggregate
 					return false;
 				}
 
-				data = stream.readView(dataUnitLength - 4 * 3 - 2);
+				data.resize(dataUnitLength - 4 * 3 - 2);
+				stream.read(data.data(), dataUnitLength - 4 * 3 - 2);
 			}
 		}
 		else {
 			if (aggregateFlag == 0) {
 				itemId = stream.getBe32U();
 
-				data = stream.readView(stream.leftBytes());
+				data.resize(stream.leftBytes());
+				stream.read(data.data(), stream.leftBytes());
 			}
 			else {
 				dataUnitLength = stream.getBe16U();
 
-				data = stream.readView(dataUnitLength);
+				data.resize(dataUnitLength);
+				stream.read(data.data(), dataUnitLength);
 			}
 		}
 	}

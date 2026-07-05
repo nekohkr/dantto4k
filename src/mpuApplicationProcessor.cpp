@@ -3,7 +3,7 @@
 
 namespace MmtTlv {
 
-std::optional<MfuData> MpuApplicationProcessor::process(MmtStream& mmtStream, std::span<const uint8_t> data, FragmentationIndicator fragmentationIndicator) {
+std::optional<MfuData> MpuApplicationProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) {
     Common::ReadStream stream(data);
     size_t size = stream.leftBytes();
     if (size == 0) {
