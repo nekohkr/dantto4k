@@ -42,13 +42,28 @@ jobs:
         python-version: "3.x"
     - uses: microsoft/setup-msbuild@v2
 
+    - name: Select MSVC toolset
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = "Stop"
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        $vcToolsVersion = Get-ChildItem "$vsPath\VC\Tools\MSVC" -Directory |
+          Sort-Object { [version]$_.Name } -Descending |
+          Select-Object -First 1 -ExpandProperty Name
+        if (-not $vcToolsVersion) {
+          throw "MSVC toolset was not found"
+        }
+        "VCToolsVersion=$vcToolsVersion" >> $env:GITHUB_ENV
+        Write-Host "Using MSVC toolset $vcToolsVersion"
+
     - name: Build static TSDuck
       env:
-        _CL_: /MT /WX-
-      run: msbuild thirdparty\tsduck\scripts\msvc\tsduck.sln /m /t:tsducklib /p:Configuration=Release /p:Platform=x64
+        _CL_: /D_USE_STD_VECTOR_ALGORITHMS=0 /MT /WX-
+      run: msbuild thirdparty\tsduck\scripts\msvc\tsduck.sln /m /t:tsducklib /p:Configuration=Release /p:Platform=x64 "/p:VCToolsVersion=$env:VCToolsVersion"
 
     - name: Build dantto4k
-      run: msbuild msvc\dantto4k.sln /m /p:Configuration=Release /p:Platform=x64
+      run: msbuild msvc\dantto4k.sln /m /p:Configuration=Release /p:Platform=x64 "/p:VCToolsVersion=$env:VCToolsVersion"
 
     - name: Package Windows x64
       shell: pwsh
