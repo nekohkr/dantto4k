@@ -2,7 +2,6 @@
 #include <vector>
 #include <optional>
 #include <memory>
-#include <span>
 #include "mmtp.h"
 #include "dataUnit.h"
 #include "mpu.h"
@@ -37,7 +36,7 @@ class MmtStream;
 class MpuProcessorBase {
 public:
 	virtual ~MpuProcessorBase() = default;
-	virtual std::optional<MfuData> process(MmtStream& mmtStream, std::span<const uint8_t> data, FragmentationIndicator fragmentationIndicator) { return std::nullopt; }
+	virtual std::optional<MfuData> process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) { return std::nullopt; }
 	virtual void clear() {}
 
 };

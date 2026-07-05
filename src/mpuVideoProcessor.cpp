@@ -9,7 +9,7 @@ constexpr uint8_t CRA_NUT = 0x15;
 constexpr uint8_t NAL_AUD = 0x23;
 constexpr uint32_t MAX_NAL_SIZE = 1024 * 1024;
 
-std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, std::span<const uint8_t> data, FragmentationIndicator fragmentationIndicator) {
+std::optional<MfuData> MpuVideoProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) {
     Common::ReadStream stream(data);
     MfuData mfuData;
 

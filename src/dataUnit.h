@@ -1,5 +1,5 @@
 #pragma once
-#include <span>
+#include <vector>
 #include "stream.h"
 
 namespace MmtTlv {
@@ -15,7 +15,7 @@ public:
 	uint8_t priority;
 	uint8_t dependencyCounter;
 	uint32_t itemId;
-	std::span<const uint8_t> data;
+	std::vector<uint8_t> data;
 };
 
 }

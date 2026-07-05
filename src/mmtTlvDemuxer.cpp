@@ -800,7 +800,9 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
         return;
     }
 
-    const auto data = stream.readView(stream.leftBytes());
+    std::vector<uint8_t> data(stream.leftBytes());
+    stream.read(data.data(), stream.leftBytes());
+
     const auto ret = mmtStream->mpuProcessor->process(*mmtStream, data, mpu.fragmentationIndicator);
     if (ret) {
         const auto& mfuData = ret.value();
@@ -862,7 +864,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream) {
 
             std::vector<uint8_t> message;
             message.resize(length);
-            nstream.read(message.data(), length);
+            stream.read(message.data(), length);
 
             if (assembler->assemble(message, signalingMessage.fragmentationIndicator, mmtp.packetSequenceNumber)) {
                 Common::ReadStream messageStream(assembler->data);

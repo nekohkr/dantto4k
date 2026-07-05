@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <span>
 #include <cstdint>
 #include "mmtFragment.h"
 
@@ -25,7 +24,7 @@ private:
 
 class FragmentAssembler {
 public:
-	bool assemble(std::span<const uint8_t> fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber);
+	bool assemble(const std::vector<uint8_t>& fragment, FragmentationIndicator fragmentationIndicator, uint32_t packetSequenceNumber);
 	void checkState(uint32_t packetSequenceNumber);
 	void clear();
 
