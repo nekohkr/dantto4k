@@ -18,8 +18,7 @@ bool Mpu::unpack(Common::ReadStream& stream)
 		fragmentCounter = stream.get8U();
 		mpuSequenceNumber = stream.getBe32U();
 
-		payload.resize(payloadLength - 6);
-		stream.read(payload.data(), payloadLength - 6);
+		payload = stream.readView(payloadLength - 6);
 
 	}
 	catch (const std::out_of_range&) {

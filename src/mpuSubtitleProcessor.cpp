@@ -3,7 +3,7 @@
 
 namespace MmtTlv {
 
-std::optional<MfuData> MpuSubtitleProcessor::process(MmtStream& mmtStream, const std::vector<uint8_t>& data, FragmentationIndicator fragmentationIndicator) {
+std::optional<MfuData> MpuSubtitleProcessor::process(MmtStream& mmtStream, std::span<const uint8_t> data, FragmentationIndicator fragmentationIndicator) {
     Common::ReadStream stream(data);
 
     uint16_t subsampleNumber = stream.getBe16U();

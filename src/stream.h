@@ -11,6 +11,7 @@ namespace Common {
 
 class ReadStream final {
 public:
+    explicit ReadStream(std::span<const uint8_t> data);
     explicit ReadStream(const std::vector<uint8_t>& data);
     explicit ReadStream(const std::vector<uint8_t>& data, size_t size);
     explicit ReadStream(ReadStream& stream, size_t size);
@@ -25,6 +26,19 @@ public:
     bool isEof() const { return size == pos; }
     size_t leftBytes() const { return size - pos; }
     size_t getPos() const { return pos; }
+
+    [[nodiscard]] std::span<const uint8_t> remaining() const noexcept {
+        return buffer.subspan(pos, size - pos);
+    }
+
+    std::span<const uint8_t> readView(size_t count) {
+        if (count > leftBytes()) {
+            throw std::out_of_range("Access out of bounds");
+        }
+        const auto view = buffer.subspan(pos, count);
+        pos += count;
+        return view;
+    }
 
     void seek(size_t pos) {
         if (size < pos) {
@@ -116,10 +130,12 @@ private:
         if (size < pos + sizeof(T)) {
             throw std::out_of_range("Access out of bounds");
         }
-        return *reinterpret_cast<const T*>(buffer.data() + pos);
+        T value{};
+        memcpy(&value, buffer.data() + pos, sizeof(T));
+        return value;
     }
 
-    const std::vector<uint8_t>& buffer;
+    std::span<const uint8_t> buffer;
     bool hasSize = false;
     mutable size_t size = 0;
     mutable size_t pos = 0;

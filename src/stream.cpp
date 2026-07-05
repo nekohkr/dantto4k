@@ -4,17 +4,18 @@ namespace MmtTlv {
     
 namespace Common {
 
-ReadStream::ReadStream(const std::vector<uint8_t>& buffer)
-    : buffer(buffer)
+ReadStream::ReadStream(std::span<const uint8_t> buffer)
+    : buffer(buffer), hasSize(true), size(buffer.size())
 {
-    this->hasSize = true;
-    this->size = buffer.size();
 }
+
+ReadStream::ReadStream(const std::vector<uint8_t>& buffer)
+    : ReadStream(std::span<const uint8_t>(buffer)) {}
 
 ReadStream::ReadStream(const std::vector<uint8_t>& buffer, size_t size)
     : buffer(buffer)
 {
-    if (buffer.size() < size) {
+    if (this->buffer.size() < size) {
         throw std::out_of_range("Access out of bounds");
     }
 
@@ -25,7 +26,7 @@ ReadStream::ReadStream(const std::vector<uint8_t>& buffer, size_t size)
 ReadStream::ReadStream(ReadStream& stream, size_t size)
     : buffer(stream.buffer)
 {
-    if (stream.buffer.size() < stream.pos + size) {
+    if (stream.size < stream.pos + size) {
         throw std::out_of_range("Access out of bounds");
     }
 
