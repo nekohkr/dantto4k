@@ -1,4 +1,5 @@
 .vs
 x64
+dist/
 BonRecTest
 dantto4k_dev.sln
