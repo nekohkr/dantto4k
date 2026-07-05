@@ -67,10 +67,11 @@ jobs:
         Compress-Archive -Path "$packageDir\*" -DestinationPath $archivePath -Force
 
         "PACKAGE_PATH=$archivePath" >> $env:GITHUB_ENV
+        "ARTIFACT_NAME=dantto4k-$version-windows-x64" >> $env:GITHUB_ENV
 
     - uses: actions/upload-artifact@v4
       with:
-        name: dantto4k-windows-x64
+        name: ${{ env.ARTIFACT_NAME }}
         path: dist\dantto4k
 
     - name: Publish GitHub release
