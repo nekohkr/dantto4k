@@ -8,19 +8,23 @@ bool MhShortEventDescriptor::unpack(Common::ReadStream& stream) {
             return false;
         }
 
+        Common::ReadStream nstream(stream, descriptorLength);
+
         uint8_t  eventNameLength;
         uint16_t textLength;
 
-        stream.read(language, 3);
+        nstream.read(language, 3);
         language[3] = '\0';
 
-        eventNameLength = stream.get8U();
+        eventNameLength = nstream.get8U();
         eventName.resize(eventNameLength);
-        stream.read(eventName.data(), eventNameLength);
+        nstream.read(eventName.data(), eventNameLength);
 
-        textLength = stream.getBe16U();
+        textLength = nstream.getBe16U();
         text.resize(textLength);
-        stream.read(text.data(), textLength);
+        nstream.read(text.data(), textLength);
+
+        stream.skip(descriptorLength);
     }
     catch (const std::out_of_range&) {
         return false;

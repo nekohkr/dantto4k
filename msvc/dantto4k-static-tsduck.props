@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Label="UserMacros">
+    <TSDuckRootDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\thirdparty\tsduck\'))</TSDuckRootDir>
+    <TSDuckMsvcDir>$(TSDuckRootDir)scripts\msvc\</TSDuckMsvcDir>
+    <TSDuckBinRootDir>$(TSDuckRootDir)bin\</TSDuckBinRootDir>
+    <TSDuckOutDir>$(TSDuckBinRootDir)$(Configuration)-$(Platform)\</TSDuckOutDir>
+  </PropertyGroup>
+
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(TSDuckMsvcDir)msvc-use-dtapi.props" Condition="Exists('$(TSDuckMsvcDir)msvc-use-dtapi.props')" />
+    <Import Project="$(TSDuckMsvcDir)msvc-use-vatek.props" Condition="Exists('$(TSDuckMsvcDir)msvc-use-vatek.props')" />
+    <Import Project="$(TSDuckMsvcDir)msvc-disable-srt.props" Condition="Exists('$(TSDuckMsvcDir)msvc-disable-srt.props')" />
+    <Import Project="$(TSDuckMsvcDir)msvc-disable-rist.props" Condition="Exists('$(TSDuckMsvcDir)msvc-disable-rist.props')" />
+  </ImportGroup>
+
+  <ItemGroup>
+    <DanttoTSDuckPublicHeaders Include="$(TSDuckRootDir)src\libtscore\**\*.h;$(TSDuckRootDir)src\libtsduck\**\*.h"
+                               Exclude="$(TSDuckRootDir)src\**\unix\**;
+                                        $(TSDuckRootDir)src\**\linux\**;
+                                        $(TSDuckRootDir)src\**\mac\**;
+                                        $(TSDuckRootDir)src\**\bsd\**;
+                                        $(TSDuckRootDir)src\**\freebsd\**;
+                                        $(TSDuckRootDir)src\**\netbsd\**;
+                                        $(TSDuckRootDir)src\**\openbsd\**;
+                                        $(TSDuckRootDir)src\**\dragonflybsd\**;
+                                        $(TSDuckRootDir)src\**\private\**;
+                                        $(TSDuckRootDir)src\**\__pycache__\**" />
+    <DanttoTSDuckPublicDirs Include="@(DanttoTSDuckPublicHeaders->'%(RootDir)%(Directory)'->Distinct())" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <DanttoTSDuckIncludeDirs>@(DanttoTSDuckPublicDirs)</DanttoTSDuckIncludeDirs>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(DanttoTSDuckIncludeDirs);$(TSDuckBinRootDir)include\;$(SolutionDir)..\thirdparty\asio\asio\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TSDUCK_STATIC_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(TSDuckOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">tscorelib.lib;tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="Exists('$(TSDuckOutDir)tscore.lib')">tscore.lib;tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">tsducklib.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="Exists('$(TSDuckOutDir)tscorelib.lib')">/wholearchive:tscorelib.lib /wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="Exists('$(TSDuckOutDir)tscore.lib')">/wholearchive:tscore.lib /wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="!Exists('$(TSDuckOutDir)tscorelib.lib') and !Exists('$(TSDuckOutDir)tscore.lib')">/wholearchive:tsducklib.lib %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+</Project>

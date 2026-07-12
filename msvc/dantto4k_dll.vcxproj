@@ -69,14 +69,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="dantto4k-static-tsduck.props" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)..\thirdparty\tsduck\include;$(SolutionDir)..\thirdparty\asio\asio\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\thirdparty\tsduck\lib\Debug-Win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)..\thirdparty\tsduck\include;$(SolutionDir)..\thirdparty\asio\asio\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\thirdparty\tsduck\lib\Release-Win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>BonDriver_dantto4k</TargetName>
@@ -126,17 +125,17 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_DEBUG;DANTTO4KDLL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TSDUCK_STATIC_LIBRARY;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_DEBUG;DANTTO4KDLL_EXPORTS;_WINDOWS;_USRDLL;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>tsduck.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -145,10 +144,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_TSDUCKDLL_USE;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NDEBUG;DANTTO4KDLL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TSDUCK_STATIC_LIBRARY;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NDEBUG;DANTTO4KDLL_EXPORTS;_WINDOWS;_USRDLL;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -157,7 +156,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>tsduck.lib;Winscard.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -176,7 +175,7 @@
     <ClCompile Include="../src/mhSimpleApplicationLocationDescriptor.cpp" />
     <ClCompile Include="../src/mhTransportProtocolDescriptor.cpp" />
     <ClCompile Include="../src/mpuApplicationProcessor.cpp" />
-    <ClCompile Include="../src/aribUtil.cpp" />
+    <ClCompile Include="../src/aribTextEncoder.cpp" />
     <ClCompile Include="../src/mpuAudioProcessor.cpp" />
     <ClCompile Include="../src/acasCard.cpp" />
     <ClCompile Include="../src/adtsConverter.cpp" />
@@ -262,7 +261,8 @@
     <ClCompile Include="../src/transmissionControlSignal.cpp" />
     <ClCompile Include="../src/mpuSubtitleProcessor.cpp" />
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
-    <ClCompile Include="../src/aribEncoder.cpp" />
+    <ClCompile Include="../src/aribCharsetTables.cpp" />
+    <ClCompile Include="../src/aribCharsetEncoder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/accessControlDescriptor.h" />
@@ -280,7 +280,7 @@
     <ClInclude Include="../src/mhSimpleApplicationLocationDescriptor.h" />
     <ClInclude Include="../src/mhTransportProtocolDescriptor.h" />
     <ClInclude Include="../src/mpuApplicationProcessor.h" />
-    <ClInclude Include="../src/aribUtil.h" />
+    <ClInclude Include="../src/aribTextEncoder.h" />
     <ClInclude Include="../src/mpuAudioProcessor.h" />
     <ClInclude Include="../src/acasCard.h" />
     <ClInclude Include="../src/adtsConverter.h" />
@@ -383,7 +383,8 @@
     <ClInclude Include="../src/mmtDescriptorBase.h" />
     <ClInclude Include="../src/mmtTlvDemuxer.h" />
     <ClInclude Include="../src/aesCtrCipher.h" />
-    <ClInclude Include="../src/aribEncoder.h" />
+    <ClInclude Include="../src/aribCharsetTables.h" />
+    <ClInclude Include="../src/aribCharsetEncoder.h" />
     <ClInclude Include="../src/progressReporter.h" />
     <ClInclude Include="../src/sha256.h" />
   </ItemGroup>
