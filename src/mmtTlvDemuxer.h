@@ -46,6 +46,7 @@ class MmtTlvDemuxer {
 public:
 	void setDemuxerHandler(DemuxerHandler& demuxerHandler);
 	void setCasHandler(std::unique_ptr<CasHandler> handler);
+	void setAssumeDescrambled(bool value);
 	DemuxStatus demux(Common::ReadStream& stream);
 	void clear();
 	void printStatistics() const;
@@ -89,6 +90,7 @@ private:
 	std::map<uint16_t, std::vector<uint8_t>> mfuData;
 	std::unique_ptr<CasHandler> casHandler;
 	DemuxerHandler* demuxerHandler = nullptr;
+	bool assumeDescrambled = false;
 	MmtTlvStatistics statistics;
 
 };
