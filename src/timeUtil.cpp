@@ -1,4 +1,5 @@
 #include "timeUtil.h"
+#include <chrono>
 #include <cstdint>
 #include <ctime>
 
@@ -44,6 +45,38 @@ struct tm EITConvertStartTime(uint64_t i_date) {
     tm.tm_isdst = 0;
 
     return tm;
+}
+
+bool EITConvertStartTimeToUnixTime(uint64_t i_date, uint64_t* p_unix_time) {
+    if (i_date == UNKNOWN_START_TIME || p_unix_time == nullptr) {
+        return false;
+    }
+
+    const struct tm startTime = EITConvertStartTime(i_date);
+    const std::chrono::year_month_day date{
+        std::chrono::year{startTime.tm_year + BASE_YEAR},
+        std::chrono::month{static_cast<unsigned>(startTime.tm_mon + 1)},
+        std::chrono::day{static_cast<unsigned>(startTime.tm_mday)}
+    };
+    if (!date.ok() || startTime.tm_hour < 0 || startTime.tm_hour > 23 ||
+        startTime.tm_min < 0 || startTime.tm_min > 59 ||
+        startTime.tm_sec < 0 || startTime.tm_sec > 59) {
+        return false;
+    }
+
+    constexpr std::chrono::hours JST_OFFSET{9};
+    const auto utcTime = std::chrono::sys_days{date} +
+        std::chrono::hours{startTime.tm_hour} +
+        std::chrono::minutes{startTime.tm_min} +
+        std::chrono::seconds{startTime.tm_sec} - JST_OFFSET;
+    const auto unixTime = std::chrono::duration_cast<std::chrono::seconds>(
+        utcTime.time_since_epoch()).count();
+    if (unixTime < 0) {
+        return false;
+    }
+
+    *p_unix_time = static_cast<uint64_t>(unixTime);
+    return true;
 }
 
 int EITConvertDuration(uint32_t i_duration) {
