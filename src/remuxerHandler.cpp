@@ -554,8 +554,10 @@ void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
     tsid = mhEit.tlvStreamId;
 
     if (mhEit.isPf() && mhEit.sectionNumber == 0 && !mhEit.events.empty()) {
-        std::tm startTime = EITConvertStartTime((mhEit.events.begin())->get()->startTime);
-        programStartTime = static_cast<uint64_t>(std::mktime(&startTime));
+        uint64_t startTime{};
+        if (EITConvertStartTimeToUnixTime((mhEit.events.begin())->get()->startTime, &startTime)) {
+            programStartTime = startTime;
+        }
     }
 
     ts::EIT tsEit(true, mhEit.isPf(), 0, mhEit.versionNumber, true, mhEit.serviceId, mhEit.tlvStreamId, mhEit.originalNetworkId);
