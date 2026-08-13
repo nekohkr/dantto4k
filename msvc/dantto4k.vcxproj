@@ -30,26 +30,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -115,8 +115,9 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TSDUCK_STATIC_LIBRARY;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_DEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,8 +134,9 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TSDUCK_STATIC_LIBRARY;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -165,7 +167,7 @@
     <ClCompile Include="../src/acasCard.cpp" />
     <ClCompile Include="../src/adtsConverter.cpp" />
     <ClCompile Include="../src/b24Color.cpp" />
-    <ClCompile Include="../src/b24SubtitleConvertor.cpp" />
+    <ClCompile Include="..\src\b24SubtitleConverter.cpp" />
     <ClCompile Include="../src/bonTuner.cpp" />
     <ClCompile Include="../src/caMessage.cpp" />
     <ClCompile Include="../src/casProxyClient.cpp" />
@@ -248,6 +250,10 @@
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
     <ClCompile Include="../src/aribCharsetTables.cpp" />
     <ClCompile Include="../src/aribCharsetEncoder.cpp" />
+    <ClCompile Include="..\src\ttml\b24_converter.cpp" />
+    <ClCompile Include="..\src\ttml\parser.cpp" />
+    <ClCompile Include="..\src\ttml\resolver.cpp" />
+    <ClCompile Include="..\src\ttml\style.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/accessControlDescriptor.h" />
@@ -271,7 +277,7 @@
     <ClInclude Include="../src/adtsConverter.h" />
     <ClInclude Include="../src/b24Color.h" />
     <ClInclude Include="../src/b24ControlSet.h" />
-    <ClInclude Include="../src/b24SubtitleConvertor.h" />
+    <ClInclude Include="..\src\b24SubtitleConverter.h" />
     <ClInclude Include="../src/bonDriverContext.h" />
     <ClInclude Include="../src/bonTuner.h" />
     <ClInclude Include="../src/caMessage.h" />
@@ -372,6 +378,13 @@
     <ClInclude Include="../src/aribCharsetEncoder.h" />
     <ClInclude Include="../src/progressReporter.h" />
     <ClInclude Include="../src/sha256.h" />
+    <ClInclude Include="..\src\ttml\ast.h" />
+    <ClInclude Include="..\src\ttml\b24_converter.h" />
+    <ClInclude Include="..\src\ttml\parser.h" />
+    <ClInclude Include="..\src\ttml\resolved.h" />
+    <ClInclude Include="..\src\ttml\resolver.h" />
+    <ClInclude Include="..\src\ttml\style.h" />
+    <ClInclude Include="..\src\ttml\string_utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

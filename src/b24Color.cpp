@@ -157,10 +157,10 @@ std::pair<uint8_t, uint8_t> findClosestColor(const ColorRGBA& color) {
 	uint32_t distance = 0xFFFFFFFF;
     for (uint8_t p = 0; p < 8; p++) {
         for (uint8_t i = 0; i < 16; i++) {
-            uint8_t r = color.r - kB24ColorCLUT[p][i].r;
-            uint8_t g = color.g - kB24ColorCLUT[p][i].g;
-            uint8_t b = color.b - kB24ColorCLUT[p][i].b;
-            uint8_t a = color.a - kB24ColorCLUT[p][i].a;
+            int32_t r = color.r - kB24ColorCLUT[p][i].r;
+            int32_t g = color.g - kB24ColorCLUT[p][i].g;
+            int32_t b = color.b - kB24ColorCLUT[p][i].b;
+            int32_t a = color.a - kB24ColorCLUT[p][i].a;
             uint32_t d = r * r + g * g + b * b + a * a;
             if (d < distance) {
                 distance = d;

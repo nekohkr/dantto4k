@@ -244,7 +244,7 @@
     <ClCompile Include="../src/pugixml.cpp">
       <Filter>dantto4k\xml</Filter>
     </ClCompile>
-    <ClCompile Include="../src/b24SubtitleConvertor.cpp">
+    <ClCompile Include="..\src\b24SubtitleConverter.cpp">
       <Filter>dantto4k\subtitle</Filter>
     </ClCompile>
     <ClCompile Include="../src/b24Color.cpp">
@@ -309,6 +309,18 @@
     </ClCompile>
     <ClCompile Include="../src/aribTextEncoder.cpp">
       <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\parser.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\style.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\resolver.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\b24_converter.cpp">
+      <Filter>dantto4k\ttml</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -594,7 +606,7 @@
     <ClInclude Include="../src/pugixml.hpp">
       <Filter>dantto4k\xml</Filter>
     </ClInclude>
-    <ClInclude Include="../src/b24SubtitleConvertor.h">
+    <ClInclude Include="..\src\b24SubtitleConverter.h">
       <Filter>dantto4k\subtitle</Filter>
     </ClInclude>
     <ClInclude Include="../src/ttml.h">
@@ -678,6 +690,27 @@
     <ClInclude Include="../src/aribTextEncoder.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ttml\parser.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\ast.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\style.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\resolver.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\string_utils.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\resolved.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\b24_converter.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dantto4k">
@@ -733,6 +766,9 @@
     </Filter>
     <Filter Include="dantto4k\cas">
       <UniqueIdentifier>{5dccb4d7-560f-4244-9d84-334de3cf19f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dantto4k\ttml">
+      <UniqueIdentifier>{84aaa3a8-9e4a-4085-9dc5-db67d16195cc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

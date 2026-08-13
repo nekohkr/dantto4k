@@ -313,8 +313,8 @@ public:
     std::optional<uint64_t> begin;
 };
 
-class B24SubtitleConvertor {
+class B24SubtitleConverter {
 public:
-    static bool convert(const std::string& input, std::list<B24SubtitleOutput>& output);
+    static bool convert(const std::string& input, std::list<B24SubtitleOutput>& output, B24::PESData::PESType pesType);
 
 };

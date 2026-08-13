@@ -37,9 +37,15 @@
 #include "timebase.h"
 #include "config.h"
 #include "ntp.h"
-#include "b24SubtitleConvertor.h"
+#include "b24SubtitleConverter.h"
+#include <algorithm>
+#include <atomic>
+#include <fstream>
 
 namespace {
+
+constexpr uint64_t SUBTITLE_PRELOAD_TIME = 90 * 1000;
+constexpr uint64_t SUBTITLE_MINIMUM_FUTURE_TIME = 90 * 200;
 
 int convertRunningStatus(int runningStatus) {
     switch (runningStatus) {
@@ -143,14 +149,50 @@ void RemuxerHandler::onAudioData(const MmtTlv::MmtStream& mmtStream, const MmtTl
 void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const struct MmtTlv::MfuData& mfuData) {
     std::string ttml(mfuData.data.begin(), mfuData.data.end());
     std::list<B24SubtitleOutput> output;
-    B24SubtitleConvertor::convert(ttml, output);
+    const auto pesType = mmtStream.getComponentTag() == 0x30
+        ? B24::PESData::PESType::Synchronized
+        : B24::PESData::PESType::Asynchronous;
+    B24SubtitleConverter::convert(ttml, output, pesType);
 
     if (output.empty()) {
         return;
     }
 
-    for (const auto& pesData : output) {
-        writeSubtitle(mmtStream, pesData);
+    if (mmtStream.getComponentTag() != 0x30) {
+        for (const auto& pesData : output) {
+            writeSubtitle(mmtStream, pesData, 0);
+        }
+        return;
+    }
+
+    const auto currentPts = lastPcr / 300;
+    const auto firstTimedOutput = std::find_if(output.begin(), output.end(),
+        [](const B24SubtitleOutput& subtitle) {
+            return subtitle.begin.has_value();
+        });
+    if (!subtitlePtsBase && firstTimedOutput != output.end()) {
+        subtitlePtsBase = programStartTime * 90000;
+
+        if (currentPts != 0) {
+            const auto firstPts = *subtitlePtsBase + *firstTimedOutput->begin * 90;
+            const auto minimumPts = currentPts + SUBTITLE_MINIMUM_FUTURE_TIME;
+            if (firstPts < minimumPts) {
+                *subtitlePtsBase += minimumPts - firstPts;
+            }
+        }
+    }
+
+    for (auto& pesData : output) {
+        const auto pts = pesData.begin
+            ? subtitlePtsBase.value_or(programStartTime * 90000) + *pesData.begin * 90
+            : currentPts == 0
+                ? 0
+                : currentPts + SUBTITLE_MINIMUM_FUTURE_TIME;
+        queueSubtitle(mmtStream, std::move(pesData), pts);
+    }
+
+    if (currentPts != 0) {
+        writePendingSubtitles(currentPts);
     }
 }
 
@@ -284,20 +326,48 @@ void RemuxerHandler::writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTl
     }
 }
 
-void RemuxerHandler::writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle) {
+void RemuxerHandler::queueSubtitle(const MmtTlv::MmtStream& mmtStream, B24SubtitleOutput subtitle, uint64_t pts) {
+    const auto position = std::upper_bound(
+        pendingSubtitles.begin(), pendingSubtitles.end(), pts,
+        [](uint64_t lhs, const PendingSubtitle& rhs) {
+            return lhs < rhs.pts;
+        });
+    pendingSubtitles.insert(position, PendingSubtitle{
+        .packetId = mmtStream.getPacketId(),
+        .pts = pts,
+        .subtitle = std::move(subtitle),
+    });
+}
+
+void RemuxerHandler::writePendingSubtitles(uint64_t pts) {
+    const auto preloadPts = pts + SUBTITLE_PRELOAD_TIME;
+    while (!pendingSubtitles.empty() && pendingSubtitles.front().pts <= preloadPts) {
+        auto pending = std::move(pendingSubtitles.front());
+        pendingSubtitles.pop_front();
+
+        const auto* stream = demuxer.getStream(pending.packetId);
+        if (!stream) {
+            continue;
+        }
+
+        writeSubtitle(*stream, pending.subtitle, pending.pts);
+    }
+}
+
+void RemuxerHandler::writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle, uint64_t pts) {
     std::vector<uint8_t> pesOutput;
 
     PESPacket pes;
     if (mmtStream.getComponentTag() == 0x30) {
-        uint64_t pts = subtitle.calcPts(programStartTime);
-        pts = std::max(pts, lastPcr / 300);
         if (pts == 0) {
             return;
         }
         pes.setPts(pts);
     }
 
-    pes.setStreamId(componentTagToStreamId(mmtStream.getComponentTag()));
+    pes.setStreamId(mmtStream.getComponentTag() == 0x30
+        ? STREAM_ID_PRIVATE_STREAM_1
+        : STREAM_ID_PRIVATE_STREAM_2);
     pes.setPayload(&subtitle.pesData);
     pes.setPayloadLength(subtitle.pesData.size());
     if (mmtStream.getComponentTag() == 0x30) {
@@ -388,7 +458,9 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         if (stream.second.getComponentTag() == 0x30) {
             pes.setPts(lastCaptionManagementDataPts);
         }
-        pes.setStreamId(componentTagToStreamId(stream.second.getComponentTag()));
+        pes.setStreamId(stream.second.getComponentTag() == 0x30
+            ? STREAM_ID_PRIVATE_STREAM_1
+            : STREAM_ID_PRIVATE_STREAM_2);
         pes.setPayload(&packedPesData);
         pes.setPayloadLength(packedPesData.size());
         if (stream.second.getComponentTag() == 0x30) {
@@ -1072,6 +1144,7 @@ void RemuxerHandler::onNit(const MmtTlv::Nit& nit) {
 }
 
 void RemuxerHandler::onNtp(const MmtTlv::NTPv4& ntp) {
+    const bool firstPcr = lastPcr == 0;
     auto& cc = mapCC[PCR_PID];
     ts::TSPacket packet;
     packet.init(PCR_PID, cc & 0xF, 0);
@@ -1085,7 +1158,21 @@ void RemuxerHandler::onNtp(const MmtTlv::NTPv4& ntp) {
 
     lastPcr = ntp.transmit_timestamp.toPcrValue();
 
-    writeCaptionManagementData(ntp.transmit_timestamp.toPcrValue() / 300);
+    const auto pts = ntp.transmit_timestamp.toPcrValue() / 300;
+    if (firstPcr && !pendingSubtitles.empty()) {
+        const auto minimumPts = pts + SUBTITLE_MINIMUM_FUTURE_TIME;
+        if (pendingSubtitles.front().pts < minimumPts) {
+            const auto ptsOffset = minimumPts - pendingSubtitles.front().pts;
+            for (auto& pending : pendingSubtitles) {
+                pending.pts += ptsOffset;
+            }
+            if (subtitlePtsBase) {
+                *subtitlePtsBase += ptsOffset;
+            }
+        }
+    }
+    writeCaptionManagementData(pts);
+    writePendingSubtitles(pts);
 }
 
 void RemuxerHandler::clear() {
@@ -1094,8 +1181,10 @@ void RemuxerHandler::clear() {
     mapPesPendingData.clear();
     mapPesPacketIndex.clear();
     mapPesState.clear();
+    pendingSubtitles.clear();
     tsid = -1;
     lastPcr = 0;
     lastCaptionManagementDataPts = 0;
     programStartTime = 0;
+    subtitlePtsBase.reset();
 }

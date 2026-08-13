@@ -1,8 +1,10 @@
 #pragma once
 #include "demuxerHandler.h"
-#include "b24SubtitleConvertor.h"
+#include "b24SubtitleConverter.h"
 #include "damt.h"
 #include <tsduck.h>
+#include <list>
+#include <optional>
 #include <unordered_map>
 #include <functional>
 
@@ -82,9 +84,16 @@ private:
 		Init,
 		InFragment,
 	};
+	struct PendingSubtitle {
+		uint16_t packetId;
+		uint64_t pts;
+		B24SubtitleOutput subtitle;
+	};
 
 	void writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& data);
-	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle);
+	void queueSubtitle(const MmtTlv::MmtStream& mmtStream, B24SubtitleOutput subtitle, uint64_t pts);
+	void writePendingSubtitles(uint64_t pts);
+	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle, uint64_t pts);
 	void writeCaptionManagementData(uint64_t pts);
 	MmtTlv::MmtTlvDemuxer& demuxer;
 	OutputCallback outputCallback;
@@ -93,10 +102,12 @@ private:
 	std::unordered_map<uint16_t, std::vector<uint8_t>> mapPesPendingData;
 	std::unordered_map<uint16_t, uint32_t> mapPesPacketIndex;
 	std::unordered_map<uint16_t, PesState> mapPesState;
+	std::list<PendingSubtitle> pendingSubtitles;
 	int tsid{-1};
 	uint64_t lastPcr{};
 	uint64_t lastCaptionManagementDataPts{};
 	uint64_t programStartTime{};
+	std::optional<uint64_t> subtitlePtsBase;
 	inline static const std::vector<uint8_t> ccis = { 0x43, 0x43, 0x49, 0x53, 0x01, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, };
 	ts::DuckContext duck;
 

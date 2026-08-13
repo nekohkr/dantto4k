@@ -9,31 +9,20 @@
 #include <list>
 #include <optional>
 #include <sstream>
+#include <string_view>
 
-class TTMLCssValueLength {
-public:
-    TTMLCssValueLength(float v, const std::string& u) : value(v), unit(u) {}
+struct TtmlStyleValueLength {
+    TtmlStyleValueLength(float v, const std::string& u) : value(v), unit(u) {}
 
     float value;
     std::string unit;
 
 };
 
-class TTMLCssValueColor {
-public:
-    TTMLCssValueColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
+struct TtmlStyleValueColor {
+    TtmlStyleValueColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
-    TTMLCssValueColor(const std::string& hex) {
-        if (hex.size() != 9 || hex[0] != '#') {
-            throw std::invalid_argument("Invalid color format. Expected format: #RRGGBBAA");
-        }
-
-        unsigned long value = std::stoul(hex.substr(1), nullptr, 16);
-        r = static_cast<uint8_t>((value >> 24) & 0xFF);
-        g = static_cast<uint8_t>((value >> 16) & 0xFF);
-        b = static_cast<uint8_t>((value >> 8) & 0xFF);
-        a = static_cast<uint8_t>(value & 0xFF);
-    }
+    static TtmlStyleValueColor parse(std::string_view text);
 
     uint8_t r;
     uint8_t g;
@@ -41,36 +30,39 @@ public:
     uint8_t a;
 };
 
-class TTMLCssValueKeyword {
-public:
-    TTMLCssValueKeyword(const std::string& k) : keyword(k) {}
+struct TtmlStyleValueKeyword {
+    TtmlStyleValueKeyword(const std::string& k) : keyword(k) {}
 
     std::string keyword;
 };
 
-class TTMLCssValueNumber {
-public:
-    TTMLCssValueNumber(float n) : number(n) {}
+struct TtmlStyleValueNumber {
+    TtmlStyleValueNumber(float n) : number(n) {}
 
     float number;
 };
 
-class TTMLCssValue {
+class TtmlStyleValue {
 public:
-    using ValueType = std::variant<TTMLCssValueLength, TTMLCssValueColor, TTMLCssValueKeyword, TTMLCssValueNumber>;
+    using ValueType = std::variant<TtmlStyleValueLength, TtmlStyleValueColor, TtmlStyleValueKeyword, TtmlStyleValueNumber>;
 
 private:
     ValueType value;
 
 public:
-    TTMLCssValue(TTMLCssValueLength length) : value(length) {}
-    TTMLCssValue(TTMLCssValueColor color) : value(color) {}
-    TTMLCssValue(TTMLCssValueKeyword keyword) : value(keyword) {}
-    TTMLCssValue(TTMLCssValueNumber number) : value(number) {}
+    TtmlStyleValue(TtmlStyleValueLength length) : value(length) {}
+    TtmlStyleValue(TtmlStyleValueColor color) : value(color) {}
+    TtmlStyleValue(TtmlStyleValueKeyword keyword) : value(keyword) {}
+    TtmlStyleValue(TtmlStyleValueNumber number) : value(number) {}
 
     template <typename T>
     T getValue() const {
         return std::get<T>(value);
+    }
+
+    template <typename T>
+    bool isValue() const {
+        return std::holds_alternative<T>(value);
     }
 
     template <typename T>
@@ -79,29 +71,55 @@ public:
     }
 };
 
-using TTMLCssValuePair = std::pair<TTMLCssValue, TTMLCssValue>;
+struct TtmlStyleFontSize {
+    TtmlStyleValueLength width;
+    TtmlStyleValueLength height;
+};
 
-class TTMLCssValueParser {
+struct TtmlStyleExtent {
+    TtmlStyleValueLength width;
+    TtmlStyleValueLength height;
+};
+
+struct TtmlStyleOrigin {
+    TtmlStyleValueLength x;
+    TtmlStyleValueLength y;
+};
+
+class TtmlStyleValueParser {
 public:
-    static TTMLCssValue parse(const std::string& input);
-    static TTMLCssValuePair parsePair(const std::string& input);
+    static TtmlStyleValue parse(const std::string& input);
+    static TtmlStyleFontSize parseFontSize(const std::string& input);
+    static std::pair<TtmlStyleValueLength, TtmlStyleValueLength> parseLengthPair(const std::string& input);
 
 };
 
 struct TTMLRegion {
     std::string id;
-    std::optional<std::pair<TTMLCssValue, TTMLCssValue>> extent;
-    std::optional<std::pair<TTMLCssValue, TTMLCssValue>> origin;
+    std::optional<TtmlStyleExtent> extent;
+    std::optional<TtmlStyleOrigin> origin;
 };
 
 struct TTMLStyle {
     std::string id;
-    std::optional<TTMLCssValuePair> fontSize;
-    std::optional<TTMLCssValue> lineHeight;
-    std::optional<TTMLCssValue> fontWeight;
-    std::optional<TTMLCssValue> fontStyle;
-    std::optional<TTMLCssValue> color;
-    std::optional<TTMLCssValue> backgroundColor;
+    std::optional<TtmlStyleFontSize> fontSize;
+    std::optional<TtmlStyleValue> lineHeight;
+    std::optional<TtmlStyleValue> letterSpacing;
+    std::optional<TtmlStyleValue> fontWeight;
+    std::optional<TtmlStyleValue> fontStyle;
+    std::optional<TtmlStyleValue> color;
+    std::optional<TtmlStyleValue> backgroundColor;
+    bool outlineSpecified = false;
+    std::optional<TtmlStyleValue> outlineColor;
+    std::optional<std::string> fontFamily;
+    std::optional<TtmlStyleValue> textDecoration;
+    std::optional<TtmlStyleValue> writingMode;
+    std::optional<TtmlStyleValue> opacity;
+    std::optional<std::string> border;
+    std::optional<TtmlStyleValue> animation;
+    std::optional<TtmlStyleValue> ruby;
+    std::optional<std::string> textShadow;
+    std::optional<TtmlStyleValue> overflow;
 };
 
 struct TTMLSpanTag {
