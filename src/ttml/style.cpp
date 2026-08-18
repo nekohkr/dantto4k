@@ -1,7 +1,7 @@
 #include "ttml/style.h"
 #include "ttml/string_utils.h"
+#include <cstddef>
 #include <span>
-#include <array>
 
 namespace arib {
 
@@ -9,8 +9,8 @@ namespace ttml {
 
 namespace {
 
-bool parse_hex_bytes(std::string_view input, std::span<uint8_t> output) {
-    if (input.size() > output.size() * 2) {
+bool hex_to_bytes(std::string_view input, std::span<uint8_t> output) {
+    if (input.size() % 2 != 0 || input.size() / 2 > output.size()) {
         return false;
     }
 
@@ -21,7 +21,8 @@ bool parse_hex_bytes(std::string_view input, std::span<uint8_t> output) {
         return -1;
     };
 
-    for (size_t i = 0; i < output.size(); ++i) {
+    const auto byte_count = input.size() / 2;
+    for (size_t i = 0; i < byte_count; ++i) {
         const int hi = hex(input[i * 2]);
         const int lo = hex(input[i * 2 + 1]);
 
@@ -47,21 +48,22 @@ std::optional<StyleColorValue> parse_color(std::string_view color_string) {
 	}
 
     StyleColorValue color;
-
-    // #RRGGBB
 	if (color_string.length() == 7) {
-        if (!parse_hex_bytes(color_string.substr(1), color.rgba)) {
+        // #RRGGBB
+		if (!hex_to_bytes(color_string.substr(1), color.rgba)) {
             return {};
         }
 
         color.rgba[3] = 0xFF;
 	}
-
-    // #RRGGBBAA
-    if (color_string.length() == 9) {
-        if (!parse_hex_bytes(color_string.substr(1), color.rgba)) {
+    else if (color_string.length() == 9) {
+        // #RRGGBBAA
+        if (!hex_to_bytes(color_string.substr(1), color.rgba)) {
             return {};
         }
+    }
+    else {
+		return {};
     }
 
     return color;
@@ -74,24 +76,10 @@ std::optional<double> parse_length(std::string_view value) {
     }
 
     value.remove_suffix(suffix.size());
-
-    if (value.empty()) {
-        return {};
-    }
-
-    std::string temp{ value };
-
-    char* end = nullptr;
-    const double result = std::strtod(temp.c_str(), &end);
-
-    if (end != temp.c_str() + temp.size()) {
-        return {};
-    }
-
-    return result;
+    return string_to_double(value);
 }
 
-std::optional<LengthPair> parse_length_pair(std::string_view length_string) {
+std::optional<LengthPair> parse_length_pair(std::string_view length_string, SingleLengthMode single_length_mode) {
     if (length_string.empty()) {
         return {};
     }
@@ -106,26 +94,27 @@ std::optional<LengthPair> parse_length_pair(std::string_view length_string) {
         return {};
     }
 
-    const auto width = parse_length(split[0]);
-    if (!width) {
+    const auto x = parse_length(split[0]);
+    if (!x) {
         return {};
     }
 
     if (split.size() == 1) {
-        return LengthPair{ *width, *width };
+        if (single_length_mode == SingleLengthMode::Reject) {
+            return {};
+        }
+        return LengthPair{ *x, *x };
     }
 
-    const auto height = parse_length(split[1]);
-    if (!height) {
+    const auto y = parse_length(split[1]);
+    if (!y) {
         return {};
     }
 
-    return LengthPair{ *width, *height };
+    return LengthPair{ *x, *y };
 }
 
 std::optional<StyleTextOutlineValue> parse_text_outline(std::string_view value_string) {
-    TextOutline text_outline;
-
     if (value_string.empty()) {
         return {};
     }
@@ -140,68 +129,37 @@ std::optional<StyleTextOutlineValue> parse_text_outline(std::string_view value_s
     }
 
     const auto split = split_by_whitespace(value_string);
-    if (split.size() == 1) {
-        const auto border_width = parse_length(split[0]);
-        if (!border_width) {
-            return {};
-        }
-
-        text_outline.border_width = *border_width;
-        return text_outline;
+    if (split.empty() || split.size() > 3) {
+        return {};
     }
-    else if (split.size() == 2) {
-        const auto color = parse_color(split[0]);
-        if (color) {
-            text_outline.color = *color;
 
-            const auto border_width = parse_length(split[1]);
-            if (!border_width) {
-                return {};
-            }
-
-            text_outline.border_width = *border_width;
-        }
-        else {
-            const auto border_width = parse_length(split[0]);
-            if (!border_width) {
-                return {};
-            }
-
-            text_outline.border_width = *border_width;
-
-            const auto blur_width = parse_length(split[1]);
-            if (!blur_width) {
-                return {};
-            }
-
-            text_outline.blur_width = *blur_width;
-        }
-        return text_outline;
-    }
-    else if (split.size() == 3) {
-        const auto color = parse_color(split[0]);
-        if (!color) {
-            return {};
-        }
+    TextOutline text_outline;
+    size_t length_index = 0;
+    if (const auto color = parse_color(split.front())) {
         text_outline.color = *color;
+        length_index = 1;
+    }
 
-        const auto border_width = parse_length(split[1]);
-        if (!border_width) {
-            return {};
-        }
+    const auto length_count = split.size() - length_index;
+    if (length_count == 0 || length_count > 2) {
+        return {};
+    }
 
-        text_outline.border_width = *border_width;
+    const auto border_width = parse_length(split[length_index]);
+    if (!border_width) {
+        return {};
+    }
+    text_outline.border_width = *border_width;
 
-        const auto blur_width = parse_length(split[2]);
+    if (length_count == 2) {
+        const auto blur_width = parse_length(split[length_index + 1]);
         if (!blur_width) {
             return {};
         }
-
         text_outline.blur_width = *blur_width;
-        return text_outline;
     }
 
-    return {};
+    return text_outline;
 }
 } // namespace ttml
 

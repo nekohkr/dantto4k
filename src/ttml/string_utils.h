@@ -1,13 +1,35 @@
 #pragma once
 
+#include <charconv>
+#include <cmath>
+#include <optional>
 #include <string_view>
 #include <vector>
 
-namespace arib::ttml {
+namespace arib {
+
+namespace ttml {
 
 constexpr std::string_view kWhitespace = " \t\r\n";
 
-inline std::vector<std::string_view> split_by_whitespace(std::string_view value) {
+[[nodiscard]] inline std::optional<double> string_to_double(std::string_view value) {
+    if (value.empty()) {
+        return {};
+    }
+
+    double result{};
+    const char* const begin = value.data();
+    const char* const end = begin + value.size();
+    const auto [parsed_end, error] = std::from_chars(begin, end, result);
+
+    if (error != std::errc{} || parsed_end != end || !std::isfinite(result)) {
+        return {};
+    }
+
+    return result;
+}
+
+[[nodiscard]] inline std::vector<std::string_view> split_by_whitespace(std::string_view value) {
     std::vector<std::string_view> result;
     auto start = value.find_first_not_of(kWhitespace);
 
@@ -25,4 +47,6 @@ inline std::vector<std::string_view> split_by_whitespace(std::string_view value)
     return result;
 }
 
-} // namespace arib::ttml
+} // namespace ttml
+
+} // namespace arib

@@ -385,6 +385,7 @@
     <ClInclude Include="..\src\ttml\resolver.h" />
     <ClInclude Include="..\src\ttml\style.h" />
     <ClInclude Include="..\src\ttml\string_utils.h" />
+    <ClInclude Include="..\src\ttml\sync_mode.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

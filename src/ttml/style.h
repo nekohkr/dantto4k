@@ -1,7 +1,9 @@
 #pragma once
+#include <array>
+#include <cstdint>
 #include <optional>
 #include <string>
-#include <array>
+#include <string_view>
 #include <variant>
 
 namespace arib {
@@ -13,21 +15,23 @@ struct None {};
 struct StyleColorValue {
     std::array<uint8_t, 4> rgba;
 
-    constexpr std::uint8_t r() const { return rgba[0]; }
-    constexpr std::uint8_t g() const { return rgba[1]; }
-    constexpr std::uint8_t b() const { return rgba[2]; }
-    constexpr std::uint8_t a() const { return rgba[3]; }
+    constexpr uint8_t r() const { return rgba[0]; }
+    constexpr uint8_t g() const { return rgba[1]; }
+    constexpr uint8_t b() const { return rgba[2]; }
+    constexpr uint8_t a() const { return rgba[3]; }
 
     friend constexpr bool operator==(const StyleColorValue&, const StyleColorValue&) = default;
 };
 
 struct LengthPair {
-    double width{};
-    double height{};
+    double x{};
+    double y{};
 };
 
-using StyleExtentValue = LengthPair;
-using StyleFontSizeValue = LengthPair;
+enum class SingleLengthMode {
+    Reject,
+    Repeat,
+};
 
 enum class StyleFontStyleValue {
     Normal,
@@ -63,26 +67,24 @@ enum class StyleWritingModeValue {
 struct StyleProperties {
     std::optional<StyleColorValue> background_color;
     std::optional<StyleColorValue> color;
-    std::optional<StyleExtentValue> extent;
+    std::optional<LengthPair> extent;
     std::optional<std::string> font_family;
-    std::optional<StyleFontSizeValue> font_size;
+    std::optional<LengthPair> font_size;
     std::optional<StyleFontStyleValue> font_style;
     std::optional<StyleFontWeightValue> font_weight;
     std::optional<StyleLineHeightValue> line_height;
-    std::optional<StyleExtentValue> origin;
+    std::optional<LengthPair> origin;
     std::optional<StyleTextDecorationValue> text_decoration;
     std::optional<StyleTextOutlineValue> text_outline;
     std::optional<StyleWritingModeValue> writing_mode;
-    std::optional<double> opacity;
     std::optional<double> letter_spacing;
     std::optional<std::string> ruby;
-    
 };
 
-std::optional<StyleColorValue> parse_color(std::string_view text);
-std::optional<double> parse_length(std::string_view value);
-std::optional<LengthPair> parse_length_pair(std::string_view length_string);
-std::optional<StyleTextOutlineValue> parse_text_outline(std::string_view value_string);
+[[nodiscard]] std::optional<StyleColorValue> parse_color(std::string_view text);
+[[nodiscard]] std::optional<double> parse_length(std::string_view value);
+[[nodiscard]] std::optional<LengthPair> parse_length_pair(std::string_view length_string, SingleLengthMode single_length_mode);
+[[nodiscard]] std::optional<StyleTextOutlineValue> parse_text_outline(std::string_view value_string);
 
 } // namespace ttml
 

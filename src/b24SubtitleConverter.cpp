@@ -1,4 +1,4 @@
-#include "b24SubtitleConverter.h"
+﻿#include "b24SubtitleConverter.h"
 #include "aribTextEncoder.h"
 #include "b24Color.h"
 #include "b24ControlSet.h"
@@ -83,24 +83,28 @@ void appendOrnamentOff(std::vector<uint8_t>& output) {
 }
 
 bool B24SubtitleConverter::convert(const std::string& input, std::list<B24SubtitleOutput>& output, B24::PESData::PESType pesType) {
-    std::string_view ttml_input = input;
-
-    auto parse_result = arib::ttml::parse(ttml_input);
+    const auto sync_mode = pesType == B24::PESData::PESType::Synchronized
+        ? arib::ttml::SyncMode::Sync
+        : arib::ttml::SyncMode::Async;
+    auto parse_result = arib::ttml::parse(input, sync_mode);
     if (parse_result.error) {
+#ifdef _DEBUG
         std::cerr << "[TTML] " << parse_result.error->message << std::endl;
+#endif
         return false;
     }
-    auto resolve_result = arib::ttml::resolve(*parse_result.document);
+    auto resolve_result = arib::ttml::resolve(*parse_result.document, sync_mode);
     if (resolve_result.error) {
+#ifdef _DEBUG
         std::cerr << "[TTML] " << resolve_result.error->message << std::endl;
+#endif
         return false;
     }
-    auto convert_result = arib::ttml::convert_to_b24(*resolve_result.document, 
-        pesType == B24::PESData::PESType::Synchronized
-            ? arib::ttml::PESType::Sync
-            : arib::ttml::PESType::Async);
+    auto convert_result = arib::ttml::convert_to_b24(*resolve_result.document, sync_mode);
     if (convert_result.error) {
+#ifdef _DEBUG
         std::cerr << "[TTML] " << convert_result.error->message << std::endl;
+#endif
         return false;
     }
 

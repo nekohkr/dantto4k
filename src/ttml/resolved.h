@@ -45,7 +45,7 @@ struct Division {
 };
 
 struct Document {
-    std::vector<Division> divisions;
+    std::optional<Division> division;
 };
 
 } // namespace arib:

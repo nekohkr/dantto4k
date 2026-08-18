@@ -705,6 +705,9 @@
     <ClInclude Include="..\src\ttml\string_utils.h">
       <Filter>dantto4k\ttml</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ttml\sync_mode.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\ttml\resolved.h">
       <Filter>dantto4k\ttml</Filter>
     </ClInclude>

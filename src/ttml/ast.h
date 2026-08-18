@@ -37,7 +37,6 @@ struct Span {
     Timing timing;
     std::optional<std::string> region;
     std::vector<std::string> style_refs;
-    StyleProperties inline_style;
     std::vector<SpanContent> content;
 };
 
@@ -45,8 +44,6 @@ struct Paragraph {
     std::optional<std::string> id;
     Timing timing;
     std::optional<std::string> region;
-    std::vector<std::string> style_refs;
-    StyleProperties inline_style;
     std::vector<Span> spans;
 };
 
@@ -58,7 +55,7 @@ struct Division {
 struct Document {
     std::vector<StyleDefinition> styles;
     std::vector<RegionDefinition> regions;
-    std::vector<Division> divisions;
+    std::optional<Division> division;
 };
 
 } // namespace ast

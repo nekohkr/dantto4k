@@ -1,15 +1,21 @@
 #pragma once
-#include "ttml/style.h"
 #include "ttml/ast.h"
+#include "ttml/sync_mode.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
 
 namespace arib {
 
 namespace ttml {
 
 struct SourceLocation {
-    std::size_t byte_offset{};
-    std::uint32_t line{};
-    std::uint32_t column{};
+    size_t byte_offset{};
+    uint32_t line{};
+    uint32_t column{};
 };
 
 struct ParseError {
@@ -21,12 +27,12 @@ struct ParseResult {
     std::optional<ast::Document> document;
     std::optional<ParseError> error;
 
-    bool has_error() const {
+    [[nodiscard]] bool has_error() const noexcept {
         return error.has_value();
     }
 };
 
-ParseResult parse(std::string_view xml);
+[[nodiscard]] ParseResult parse(std::string_view xml, SyncMode mode);
 
 } // namespace ttml
 
