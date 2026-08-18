@@ -182,7 +182,6 @@
     <ClCompile Include="../src/acasCard.cpp" />
     <ClCompile Include="../src/adtsConverter.cpp" />
     <ClCompile Include="../src/b24Color.cpp" />
-    <ClCompile Include="../src/b24SubtitleConvertor.cpp" />
     <ClCompile Include="../src/bonTuner.cpp" />
     <ClCompile Include="../src/caMessage.cpp" />
     <ClCompile Include="../src/casProxyClient.cpp" />
@@ -264,6 +263,7 @@
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
     <ClCompile Include="../src/aribCharsetTables.cpp" />
     <ClCompile Include="../src/aribCharsetEncoder.cpp" />
+    <ClCompile Include="..\src\b24SubtitleConverter.cpp" />
     <ClCompile Include="..\src\ttml\b24_converter.cpp" />
     <ClCompile Include="..\src\ttml\parser.cpp" />
     <ClCompile Include="..\src\ttml\resolver.cpp" />
@@ -291,7 +291,6 @@
     <ClInclude Include="../src/adtsConverter.h" />
     <ClInclude Include="../src/b24Color.h" />
     <ClInclude Include="../src/b24ControlSet.h" />
-    <ClInclude Include="../src/b24SubtitleConvertor.h" />
     <ClInclude Include="../src/bonDriverContext.h" />
     <ClInclude Include="../src/bonTuner.h" />
     <ClInclude Include="../src/caMessage.h" />
@@ -391,6 +390,7 @@
     <ClInclude Include="../src/aribCharsetEncoder.h" />
     <ClInclude Include="../src/progressReporter.h" />
     <ClInclude Include="../src/sha256.h" />
+    <ClInclude Include="..\src\b24SubtitleConverter.h" />
     <ClInclude Include="..\src\ttml\ast.h" />
     <ClInclude Include="..\src\ttml\b24_converter.h" />
     <ClInclude Include="..\src\ttml\parser.h" />
