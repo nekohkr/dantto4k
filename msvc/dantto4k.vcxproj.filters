@@ -250,9 +250,6 @@
     <ClCompile Include="../src/b24Color.cpp">
       <Filter>dantto4k\subtitle</Filter>
     </ClCompile>
-    <ClCompile Include="../src/ttml.cpp">
-      <Filter>dantto4k\subtitle</Filter>
-    </ClCompile>
     <ClCompile Include="../src/dllmain.cpp">
       <Filter>dantto4k</Filter>
     </ClCompile>
@@ -607,9 +604,6 @@
       <Filter>dantto4k\xml</Filter>
     </ClInclude>
     <ClInclude Include="..\src\b24SubtitleConverter.h">
-      <Filter>dantto4k\subtitle</Filter>
-    </ClInclude>
-    <ClInclude Include="../src/ttml.h">
       <Filter>dantto4k\subtitle</Filter>
     </ClInclude>
     <ClInclude Include="../src/b24Color.h">

@@ -130,6 +130,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -149,6 +150,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -213,7 +215,6 @@
     <ClCompile Include="../src/timeUtil.cpp" />
     <ClCompile Include="../src/tlvDescriptorFactory.cpp" />
     <ClCompile Include="../src/tlvTableFactory.cpp" />
-    <ClCompile Include="../src/ttml.cpp" />
     <ClCompile Include="../src/mpuVideoProcessor.cpp" />
     <ClCompile Include="../src/m2SectionMessage.cpp" />
     <ClCompile Include="../src/m2ShortSectionMessage.cpp" />
@@ -263,6 +264,10 @@
     <ClCompile Include="../src/videoComponentDescriptor.cpp" />
     <ClCompile Include="../src/aribCharsetTables.cpp" />
     <ClCompile Include="../src/aribCharsetEncoder.cpp" />
+    <ClCompile Include="..\src\ttml\b24_converter.cpp" />
+    <ClCompile Include="..\src\ttml\parser.cpp" />
+    <ClCompile Include="..\src\ttml\resolver.cpp" />
+    <ClCompile Include="..\src\ttml\style.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/accessControlDescriptor.h" />
@@ -326,7 +331,6 @@
     <ClInclude Include="../src/timeUtil.h" />
     <ClInclude Include="../src/tlvDescriptorFactory.h" />
     <ClInclude Include="../src/tlvTableFactory.h" />
-    <ClInclude Include="../src/ttml.h" />
     <ClInclude Include="../src/mpuVideoProcessor.h" />
     <ClInclude Include="../src/IBonDriver.h" />
     <ClInclude Include="../src/ip.h" />
@@ -387,6 +391,14 @@
     <ClInclude Include="../src/aribCharsetEncoder.h" />
     <ClInclude Include="../src/progressReporter.h" />
     <ClInclude Include="../src/sha256.h" />
+    <ClInclude Include="..\src\ttml\ast.h" />
+    <ClInclude Include="..\src\ttml\b24_converter.h" />
+    <ClInclude Include="..\src\ttml\parser.h" />
+    <ClInclude Include="..\src\ttml\resolved.h" />
+    <ClInclude Include="..\src\ttml\resolver.h" />
+    <ClInclude Include="..\src\ttml\string_utils.h" />
+    <ClInclude Include="..\src\ttml\style.h" />
+    <ClInclude Include="..\src\ttml\sync_mode.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -200,7 +200,6 @@
     <ClCompile Include="../src/timeUtil.cpp" />
     <ClCompile Include="../src/tlvDescriptorFactory.cpp" />
     <ClCompile Include="../src/tlvTableFactory.cpp" />
-    <ClCompile Include="../src/ttml.cpp" />
     <ClCompile Include="../src/mpuVideoProcessor.cpp" />
     <ClCompile Include="../src/m2SectionMessage.cpp" />
     <ClCompile Include="../src/m2ShortSectionMessage.cpp" />
@@ -317,7 +316,6 @@
     <ClInclude Include="../src/timeUtil.h" />
     <ClInclude Include="../src/tlvDescriptorFactory.h" />
     <ClInclude Include="../src/tlvTableFactory.h" />
-    <ClInclude Include="../src/ttml.h" />
     <ClInclude Include="../src/mpuVideoProcessor.h" />
     <ClInclude Include="../src/IBonDriver.h" />
     <ClInclude Include="../src/ip.h" />

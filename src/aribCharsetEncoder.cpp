@@ -73,7 +73,7 @@ const CharLookupTable& charLookupTable() {
     return table;
 }
 
-std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, CharsetCode candidate2) {
+std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, CharsetCode candidate2, EncodeMode encodeMode) {
     const auto& table = charLookupTable();
     auto it = table.find(c);
     if (it == table.end()) {
@@ -82,7 +82,7 @@ std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, Cha
 
     const auto& results = it->second;
     if (results.empty()) {
-        return std::nullopt;
+        return {};
     }
 
     if (results.size() == 1) {
@@ -90,44 +90,58 @@ std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, Cha
     }
 
     if (candidate1 != CharsetCode::None &&
-        candidate1 != CharsetCode::JISKanjiPlane1 &&
-        candidate1 != CharsetCode::JISKanjiPlane2) {
+        (encodeMode == EncodeMode::Caption || 
+            (candidate1 != CharsetCode::JISKanjiPlane1 &&
+            candidate1 != CharsetCode::JISKanjiPlane2))) {
         for (const auto& res : results) {
-            if (res.charset->code == candidate1) return res;
+            if (res.charset->code == candidate1) {
+                return res;
+            }
         }
     }
 
     if (candidate2 != CharsetCode::None &&
-        candidate2 != CharsetCode::JISKanjiPlane1 &&
-        candidate2 != CharsetCode::JISKanjiPlane2) {
+        (encodeMode == EncodeMode::Caption ||
+            (candidate2 != CharsetCode::JISKanjiPlane1 &&
+            candidate2 != CharsetCode::JISKanjiPlane2))) {
         for (const auto& res : results) {
-            if (res.charset->code == candidate2) return res;
+            if (res.charset->code == candidate2) {
+                return res;
+            }
         }
     }
+    
 
     return results[0];
 }
 
-std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, CharsetCode candidate1, CharsetCode candidate2) {
+std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, CharsetCode candidate1, CharsetCode candidate2, EncodeMode encodeMode) {
     const auto& table = charLookupTable();
     auto it1 = table.find(c1);
-    if (it1 == table.end()) return std::nullopt;
+    if (it1 == table.end()) {
+        return {};
+    }
     const auto& results1 = it1->second;
 
     auto it2 = table.find(c2);
-    if (it2 == table.end()) return std::nullopt;
+    if (it2 == table.end()) {
+        return {};
+    }
     const auto& results2 = it2->second;
 
     auto hasCharset = [](const std::vector<CharLookupResult>& list, const Charset* target) {
         for (const auto& res : list) {
-            if (res.charset == target) return true;
+            if (res.charset == target) {
+                return true;
+            }
         }
         return false;
     };
 
     if (candidate1 != CharsetCode::None &&
-        candidate1 != CharsetCode::JISKanjiPlane1 &&
-        candidate1 != CharsetCode::JISKanjiPlane2) {
+        (encodeMode == EncodeMode::Caption ||
+            (candidate1 != CharsetCode::JISKanjiPlane1 &&
+            candidate1 != CharsetCode::JISKanjiPlane2))) {
         const Charset* cs = findCharset(candidate1);
         if (cs != nullptr) {
             bool found1 = false;
@@ -147,8 +161,9 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
     }
 
     if (candidate2 != CharsetCode::None &&
-        candidate2 != CharsetCode::JISKanjiPlane1 &&
-        candidate2 != CharsetCode::JISKanjiPlane2) {
+        (encodeMode == EncodeMode::Caption ||
+            (candidate2 != CharsetCode::JISKanjiPlane1 &&
+            candidate2 != CharsetCode::JISKanjiPlane2))) {
         const Charset* cs = findCharset(candidate2);
         if (cs != nullptr) {
             bool found1 = false;
@@ -292,7 +307,7 @@ private:
 
             CharsetCode glCode = state.graphic[state.gl];
             CharsetCode grCode = state.graphic[state.gr];
-            auto find = findChar(c, glCode, grCode);
+            auto find = findChar(c, glCode, grCode, mode);
 
             if (!find) {
                 ++pos;
@@ -305,7 +320,7 @@ private:
                 // If the character is neither Hiragana nor Katakana nor AdditionalSymbol
                 if (!(c >= 0x3041 && c <= 0x3093) && !(c >= 0x30A1 && c <= 0x30F6) && find->charset->code != CharsetCode::AdditionalSymbols) {
                     // Check if the current and next characters belong to the same charset
-                    auto find2 = findCharsetBy2Char(c, state.u32[pos + 1], glCode, grCode);
+                    auto find2 = findCharsetBy2Char(c, state.u32[pos + 1], glCode, grCode, mode);
                     if (find2) {
                         find = find2;
                     }
@@ -420,13 +435,18 @@ private:
             }
         }
         else {
+            CharsetCode charsetCode = charset->code;
+            if (mode == EncodeMode::Caption && charsetCode == CharsetCode::JISKanjiPlane1) {
+                charsetCode = CharsetCode::Kanji;
+            }
+
             // charset is not in G0-G3
             if (charset->code == CharsetCode::JISX0201Katakana) {
-                setGraphicToCharset(1, charset->code);
+                setGraphicToCharset(1, charsetCode);
                 setGR(1);
             }
             else {
-                setGraphicToCharset(0, charset->code);
+                setGraphicToCharset(0, charsetCode);
                 setGL(0);
             }
         }
@@ -519,7 +539,7 @@ private:
     size_t getCharsetRunLength(CharsetCode charsetCode, size_t pos) {
         size_t count = 0;
         for (size_t i = pos; i < state.u32.size(); i++) {
-            auto result = findChar(state.u32[i], charsetCode, CharsetCode::None);
+            auto result = findChar(state.u32[i], charsetCode, CharsetCode::None, mode);
             if (!result) {
                 return count;
             }
@@ -536,7 +556,7 @@ private:
 
     const Charset* getNextCharset(CharsetCode currentCharsetCode, size_t pos) {
         for (size_t i = pos; i < state.u32.size(); i++) {
-            auto result = findChar(state.u32[i], currentCharsetCode, CharsetCode::None);
+            auto result = findChar(state.u32[i], currentCharsetCode, CharsetCode::None, mode);
             if (!result) {
                 return nullptr;
             }

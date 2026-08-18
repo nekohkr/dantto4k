@@ -472,10 +472,18 @@ private:
                     if (style.font_size) {
                         const double font_width = style.font_size->x;
                         const double font_height = style.font_size->y;
-                        uint32_t composition_width = static_cast<uint32_t>(std::max(1.0, std::round(font_width * kLayoutScale)));
-                        uint32_t composition_height = static_cast<uint32_t>(std::max(1.0, std::round(font_height * kLayoutScale)));
+                        uint32_t composition_width = 36;
+                        uint32_t composition_height = 36;
+						uint8_t character_size = B24ControlSet::NSZ;
+                        if (font_width == 72 && font_height == 144) {
+                            character_size = B24ControlSet::MSZ;
+                        }
+                        else {
+                            composition_width = static_cast<uint32_t>(std::max(1.0, std::round(font_width * kLayoutScale)));
+                            composition_height = static_cast<uint32_t>(std::max(1.0, std::round(font_height * kLayoutScale)));
+						}
                         set_character_composition(composition_width, composition_height);
-                        set_character_size(B24ControlSet::NSZ);
+                        set_character_size(character_size);
                     }
 
                     if (style.color) {
