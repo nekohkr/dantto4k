@@ -11,6 +11,7 @@
 #include <span>
 #include <utility>
 #include <vector>
+#include <cmath>
 
 namespace arib {
 
@@ -18,7 +19,20 @@ namespace ttml {
 
 namespace {
 
-constexpr double kLayoutScale = 0.25;
+constexpr double kB24LayoutWidth = 960.0;
+
+constexpr double sourceLayoutWidth(MmtTlv::SubtitleResolution resolution) {
+    switch (resolution) {
+    case MmtTlv::SubtitleResolution::Resolution2K:
+        return 1920.0;
+    case MmtTlv::SubtitleResolution::Resolution4K:
+        return 3840.0;
+    case MmtTlv::SubtitleResolution::Resolution8K:
+        return 7680.0;
+    }
+
+    return 3840.0;
+}
 
 struct StyledRun {
     std::string_view text;
@@ -272,8 +286,8 @@ private:
 
 class Encoder {
 public:
-    Encoder(const std::vector<SpanCue>& cues, SyncMode mode)
-        : cues_(cues), mode_(mode) {
+    Encoder(const std::vector<SpanCue>& cues, SyncMode mode, MmtTlv::SubtitleResolution resolution)
+        : cues_(cues), mode_(mode), layoutScale_(kB24LayoutWidth / sourceLayoutWidth(resolution)) {
     }
 
     B24ConvertResult run() {
@@ -456,31 +470,37 @@ private:
                 for (const auto& run : line.runs) {
                     const auto& style = *run.style;
                     if (style.letter_spacing) {
-                        const auto spacing = static_cast<uint32_t>(std::max(0.0, std::round(*style.letter_spacing * kLayoutScale)));
+                        const auto spacing = static_cast<uint32_t>(std::max(0.0, std::round(*style.letter_spacing * layoutScale_)));
                         set_character_spacing(spacing);
                     }
 
                     if (style.line_height && style.font_size) {
+                        const double font_width = style.font_size->x;
                         const double font_height = style.font_size->y;
                         const double line_height = std::holds_alternative<NormalLineHeight>(*style.line_height)
-                            ? font_height * 1.2
-                            : std::get<double>(*style.line_height);
-                        const auto spacing = static_cast<uint32_t>(std::max(0.0, std::round((line_height - font_height) * kLayoutScale)));
+                                ? font_height * 1.2
+                                : std::get<double>(*style.line_height);
+                        const double character_scale = font_width == 72 && font_height == 72 ? 0.5 : 1.0;
+                        const auto spacing = static_cast<uint32_t>(std::max(0.0, std::round(
+                                (line_height - font_height) * layoutScale_ / character_scale)));
                         set_line_spacing(spacing);
                     }
 
                     if (style.font_size) {
                         const double font_width = style.font_size->x;
                         const double font_height = style.font_size->y;
-                        uint32_t composition_width = 36;
-                        uint32_t composition_height = 36;
+                        uint32_t composition_width = static_cast<uint32_t>(std::round(144 * layoutScale_));
+                        uint32_t composition_height = static_cast<uint32_t>(std::round(144 * layoutScale_));
 						uint8_t character_size = B24ControlSet::NSZ;
                         if (font_width == 72 && font_height == 144) {
                             character_size = B24ControlSet::MSZ;
                         }
+                        else if (font_width == 72 && font_height == 72) {
+                            character_size = B24ControlSet::SSZ;
+                        }
                         else {
-                            composition_width = static_cast<uint32_t>(std::max(1.0, std::round(font_width * kLayoutScale)));
-                            composition_height = static_cast<uint32_t>(std::max(1.0, std::round(font_height * kLayoutScale)));
+                            composition_width = static_cast<uint32_t>(std::max(1.0, std::round(font_width * layoutScale_)));
+                            composition_height = static_cast<uint32_t>(std::max(1.0, std::round(font_height * layoutScale_)));
 						}
                         set_character_composition(composition_width, composition_height);
                         set_character_size(character_size);
@@ -574,18 +594,18 @@ private:
 
     void append_extent(const LengthPair& extent) {
         output_.push_back(B24ControlSet::CSI);
-        append_number(static_cast<uint32_t>(extent.x * kLayoutScale));
+        append_number(static_cast<uint32_t>(extent.x * layoutScale_));
         output_.push_back(0x3B);
-        append_number(static_cast<uint32_t>(extent.y * kLayoutScale));
+        append_number(static_cast<uint32_t>(extent.y * layoutScale_));
         output_.push_back(B24ControlSet::SP);
         output_.push_back(B24ControlSet::SDF);
     }
 
     void append_origin(const LengthPair& origin) {
         output_.push_back(B24ControlSet::CSI);
-        append_number(static_cast<int>(std::lround(origin.x * kLayoutScale)));
+        append_number(static_cast<int>(std::lround(origin.x * layoutScale_)));
         output_.push_back(0x3B);
-        append_number(static_cast<int>(std::lround(origin.y * kLayoutScale)));
+        append_number(static_cast<int>(std::lround(origin.y * layoutScale_)));
         output_.push_back(B24ControlSet::SP);
         output_.push_back(B24ControlSet::SDP);
     }
@@ -755,6 +775,7 @@ private:
 private:
     const std::vector<SpanCue>& cues_;
     SyncMode mode_;
+    double layoutScale_;
     std::vector<std::uint8_t> output_;
     uint8_t last_text_color_palette_{0};
     uint8_t last_text_color_index_{7};
@@ -775,7 +796,7 @@ private:
 
 } // namespace
 
-B24ConvertResult convert_to_b24(const resolved::Document& document, SyncMode mode) {
+B24ConvertResult convert_to_b24(const resolved::Document& document, SyncMode mode, MmtTlv::SubtitleResolution resolution) {
     auto collected = CueCollector{document, mode}.run();
     if (collected.error) {
         return {
@@ -784,7 +805,7 @@ B24ConvertResult convert_to_b24(const resolved::Document& document, SyncMode mod
         };
     }
 
-    return Encoder{collected.cues, mode}.run();
+    return Encoder{collected.cues, mode, resolution}.run();
 }
 
 } // namespace ttml

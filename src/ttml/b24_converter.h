@@ -2,6 +2,7 @@
 
 #include "ttml/resolved.h"
 #include "ttml/sync_mode.h"
+#include "additionalAribSubtitleInfo.h"
 
 #include <chrono>
 #include <cstdint>
@@ -32,9 +33,7 @@ struct B24ConvertResult {
     }
 };
 
-[[nodiscard]] B24ConvertResult convert_to_b24(
-    const resolved::Document& document,
-    SyncMode mode);
+[[nodiscard]] B24ConvertResult convert_to_b24(const resolved::Document& document, SyncMode mode, MmtTlv::SubtitleResolution resolution);
 
 } // namespace ttml
 

@@ -8,81 +8,7 @@
 #include <cmath>
 #include <vector>
 
-namespace {
-
-std::vector<std::string> splitByNull(const std::string& data) {
-    std::vector<std::string> tokens;
-    std::string current;
-    for (auto byte : data) {
-        if (byte == 0) {
-            tokens.push_back(current);
-            current.clear();
-        }
-        else {
-            current.push_back(static_cast<char>(byte));
-        }
-    }
-    if (!current.empty()) {
-        tokens.push_back(current);
-    }
-    return tokens;
-}
-
-void appendNumber(std::vector<uint8_t>& output, int n) {
-    if (n == 0) {
-        output.push_back(0x30);
-        return;
-    }
-    std::vector<uint8_t> temp;
-    while (n > 0) {
-        temp.push_back(static_cast<uint8_t>((n % 10) + 0x30));
-        n /= 10;
-    }
-    std::reverse(temp.begin(), temp.end());
-    output.insert(output.end(), temp.begin(), temp.end());
-}
-
-void appendCharacterComposition(std::vector<uint8_t>& output, uint32_t width, uint32_t height) {
-    output.push_back(B24ControlSet::CSI);
-    appendNumber(output, width);
-    output.push_back(0x3B);
-    appendNumber(output, height);
-    output.push_back(B24ControlSet::SP);
-    output.push_back(B24ControlSet::SSM);
-}
-
-void appendSpacing(std::vector<uint8_t>& output, uint32_t spacing, uint8_t control) {
-    output.push_back(B24ControlSet::CSI);
-    appendNumber(output, spacing);
-    output.push_back(B24ControlSet::SP);
-    output.push_back(control);
-}
-
-void appendTwoDigits(std::vector<uint8_t>& output, uint8_t value) {
-    output.push_back(static_cast<uint8_t>(0x30 + value / 10));
-    output.push_back(static_cast<uint8_t>(0x30 + value % 10));
-}
-
-void appendOrnament(std::vector<uint8_t>& output, uint8_t palette, uint8_t index) {
-    output.push_back(B24ControlSet::CSI);
-    output.push_back(0x31);
-    output.push_back(0x3B);
-    appendTwoDigits(output, palette);
-    appendTwoDigits(output, index);
-    output.push_back(B24ControlSet::SP);
-    output.push_back(B24ControlSet::ORN);
-}
-
-void appendOrnamentOff(std::vector<uint8_t>& output) {
-    output.push_back(B24ControlSet::CSI);
-    output.push_back(0x30);
-    output.push_back(B24ControlSet::SP);
-    output.push_back(B24ControlSet::ORN);
-}
-
-}
-
-bool B24SubtitleConverter::convert(const std::string& input, std::list<B24SubtitleOutput>& output, B24::PESData::PESType pesType) {
+bool B24SubtitleConverter::convert(const std::string& input, std::list<B24SubtitleOutput>& output, B24::PESData::PESType pesType, MmtTlv::SubtitleResolution resolution) {
     const auto sync_mode = pesType == B24::PESData::PESType::Synchronized
         ? arib::ttml::SyncMode::Sync
         : arib::ttml::SyncMode::Async;
@@ -100,7 +26,7 @@ bool B24SubtitleConverter::convert(const std::string& input, std::list<B24Subtit
 #endif
         return false;
     }
-    auto convert_result = arib::ttml::convert_to_b24(*resolve_result.document, sync_mode);
+    auto convert_result = arib::ttml::convert_to_b24(*resolve_result.document, sync_mode, resolution);
     if (convert_result.error) {
 #ifdef _DEBUG
         std::cerr << "[TTML] " << convert_result.error->message << std::endl;

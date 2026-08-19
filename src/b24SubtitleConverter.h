@@ -7,6 +7,8 @@
 #include <variant>
 #include <optional>
 #include <sstream>
+#include <cstdint>
+#include "additionalAribSubtitleInfo.h"
 
 namespace B24 {
     enum class DataUnitParameter : uint8_t {
@@ -98,7 +100,7 @@ namespace B24 {
             uint8_t languageTag{0};
             uint8_t dmf{0};
             uint8_t dc{0};
-            std::string languageCode;
+            std::array<char, 3> languageCode;
             uint8_t format{0};
             uint8_t tcs{0};
             uint8_t rollupMode{0};
@@ -301,19 +303,12 @@ public:
     B24SubtitleOutput(std::vector<uint8_t> pesData, std::optional<uint64_t> begin)
         : pesData(pesData), begin(begin) {}
 
-    uint64_t calcPts(uint64_t programStartTime) const {
-        if (!begin) {
-            return 0;
-        }
-        return (programStartTime * 1000 + *begin) * 90;
-    }
-
     std::vector<uint8_t> pesData;
     std::optional<uint64_t> begin;
 };
 
 class B24SubtitleConverter {
 public:
-    static bool convert(const std::string& input, std::list<B24SubtitleOutput>& output, B24::PESData::PESType pesType);
+    static bool convert(const std::string& input, std::list<B24SubtitleOutput>& output, B24::PESData::PESType pesType, MmtTlv::SubtitleResolution resolution);
 
 };

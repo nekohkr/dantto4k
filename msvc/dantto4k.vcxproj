@@ -167,6 +167,7 @@
     <ClCompile Include="../src/acasCard.cpp" />
     <ClCompile Include="../src/adtsConverter.cpp" />
     <ClCompile Include="../src/b24Color.cpp" />
+    <ClCompile Include="..\src\additionalAribSubtitleInfo.cpp" />
     <ClCompile Include="..\src\b24SubtitleConverter.cpp" />
     <ClCompile Include="../src/bonTuner.cpp" />
     <ClCompile Include="../src/caMessage.cpp" />
@@ -192,6 +193,7 @@
     <ClCompile Include="../src/mmtTableFactory.cpp" />
     <ClCompile Include="../src/multimediaServiceInformationDescriptor.cpp" />
     <ClCompile Include="../src/ntp.cpp" />
+    <ClCompile Include="../src/ntpTimestamp.cpp" />
     <ClCompile Include="../src/pesPacket.cpp" />
     <ClCompile Include="../src/pugixml.cpp" />
     <ClCompile Include="../src/relatedBroadcasterDescriptor.cpp" />
@@ -276,6 +278,7 @@
     <ClInclude Include="../src/adtsConverter.h" />
     <ClInclude Include="../src/b24Color.h" />
     <ClInclude Include="../src/b24ControlSet.h" />
+    <ClInclude Include="..\src\additionalAribSubtitleInfo.h" />
     <ClInclude Include="..\src\b24SubtitleConverter.h" />
     <ClInclude Include="../src/bonDriverContext.h" />
     <ClInclude Include="../src/bonTuner.h" />
@@ -307,6 +310,7 @@
     <ClInclude Include="../src/mmtTlvStatistics.h" />
     <ClInclude Include="../src/multimediaServiceInformationDescriptor.h" />
     <ClInclude Include="../src/ntp.h" />
+    <ClInclude Include="../src/ntpTimestamp.h" />
     <ClInclude Include="../src/pesPacket.h" />
     <ClInclude Include="../src/pugiconfig.hpp" />
     <ClInclude Include="../src/pugixml.hpp" />

@@ -73,6 +73,11 @@ const CharLookupTable& charLookupTable() {
     return table;
 }
 
+bool isCharsetAllowed(const CharLookupResult& result, EncodeMode encodeMode) {
+    return encodeMode != EncodeMode::Caption ||
+        result.charset->code != CharsetCode::AdditionalSymbols;
+}
+
 std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, CharsetCode candidate2, EncodeMode encodeMode) {
     const auto& table = charLookupTable();
     auto it = table.find(c);
@@ -85,16 +90,12 @@ std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, Cha
         return {};
     }
 
-    if (results.size() == 1) {
-        return results[0];
-    }
-
     if (candidate1 != CharsetCode::None &&
         (encodeMode == EncodeMode::Caption || 
             (candidate1 != CharsetCode::JISKanjiPlane1 &&
             candidate1 != CharsetCode::JISKanjiPlane2))) {
         for (const auto& res : results) {
-            if (res.charset->code == candidate1) {
+            if (isCharsetAllowed(res, encodeMode) && res.charset->code == candidate1) {
                 return res;
             }
         }
@@ -105,14 +106,18 @@ std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, Cha
             (candidate2 != CharsetCode::JISKanjiPlane1 &&
             candidate2 != CharsetCode::JISKanjiPlane2))) {
         for (const auto& res : results) {
-            if (res.charset->code == candidate2) {
+            if (isCharsetAllowed(res, encodeMode) && res.charset->code == candidate2) {
                 return res;
             }
         }
     }
-    
 
-    return results[0];
+    const auto result = std::find_if(results.begin(), results.end(), [encodeMode](const auto& value) {
+        return isCharsetAllowed(value, encodeMode);
+    });
+    return result != results.end()
+        ? std::optional<CharLookupResult>{*result}
+        : std::nullopt;
 }
 
 std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, CharsetCode candidate1, CharsetCode candidate2, EncodeMode encodeMode) {
@@ -129,9 +134,9 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
     }
     const auto& results2 = it2->second;
 
-    auto hasCharset = [](const std::vector<CharLookupResult>& list, const Charset* target) {
+    auto hasCharset = [encodeMode](const std::vector<CharLookupResult>& list, const Charset* target) {
         for (const auto& res : list) {
-            if (res.charset == target) {
+            if (isCharsetAllowed(res, encodeMode) && res.charset == target) {
                 return true;
             }
         }
@@ -147,7 +152,7 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
             bool found1 = false;
             CharLookupResult res1{};
             for (const auto& r : results1) {
-                if (r.charset == cs) {
+                if (isCharsetAllowed(r, encodeMode) && r.charset == cs) {
                     found1 = true;
                     res1 = r;
                     break;
@@ -169,7 +174,7 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
             bool found1 = false;
             CharLookupResult res1{};
             for (const auto& r : results1) {
-                if (r.charset == cs) {
+                if (isCharsetAllowed(r, encodeMode) && r.charset == cs) {
                     found1 = true;
                     res1 = r;
                     break;
@@ -183,7 +188,7 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
     }
 
     for (const auto& res1 : results1) {
-        if (hasCharset(results2, res1.charset)) {
+        if (isCharsetAllowed(res1, encodeMode) && hasCharset(results2, res1.charset)) {
             return res1;
         }
     }
@@ -435,18 +440,13 @@ private:
             }
         }
         else {
-            CharsetCode charsetCode = charset->code;
-            if (mode == EncodeMode::Caption && charsetCode == CharsetCode::JISKanjiPlane1) {
-                charsetCode = CharsetCode::Kanji;
-            }
-
             // charset is not in G0-G3
             if (charset->code == CharsetCode::JISX0201Katakana) {
-                setGraphicToCharset(1, charsetCode);
+                setGraphicToCharset(1, charset->code);
                 setGR(1);
             }
             else {
-                setGraphicToCharset(0, charsetCode);
+                setGraphicToCharset(0, charset->code);
                 setGL(0);
             }
         }
@@ -464,17 +464,22 @@ private:
             return;
         }
 
+        CharsetCode newCharsetCode = charsetCode;
+        if (mode == EncodeMode::Caption && charsetCode == CharsetCode::JISKanjiPlane1) {
+            newCharsetCode = CharsetCode::Kanji;
+        }
+
         state.output.push_back(ESC);
         if (charset->is2Byte == false) {
             state.output.push_back(0x28 + graphicIndex);
-            state.output.push_back(static_cast<uint8_t>(charsetCode));
+            state.output.push_back(static_cast<uint8_t>(newCharsetCode));
         }
         else {
             state.output.push_back(0x24);
             if (graphicIndex >= 1 && graphicIndex <= 3) {
                 state.output.push_back(0x29 + graphicIndex);
             }
-            state.output.push_back(static_cast<uint8_t>(charsetCode));
+            state.output.push_back(static_cast<uint8_t>(newCharsetCode));
         }
 
         state.graphic[graphicIndex] = static_cast<CharsetCode>(charsetCode);

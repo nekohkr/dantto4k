@@ -223,6 +223,9 @@
     <ClCompile Include="../src/ntp.cpp">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClCompile>
+    <ClCompile Include="../src/ntpTimestamp.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
     <ClCompile Include="../src/mhBroadcasterNameDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
@@ -246,6 +249,9 @@
     </ClCompile>
     <ClCompile Include="../src/b24Color.cpp">
       <Filter>dantto4k\subtitle</Filter>
+    </ClCompile>
+    <ClCompile Include="../src/additionalAribSubtitleInfo.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
     </ClCompile>
     <ClCompile Include="../src/dllmain.cpp">
       <Filter>dantto4k</Filter>
@@ -576,6 +582,9 @@
     <ClInclude Include="../src/ntp.h">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClInclude>
+    <ClInclude Include="../src/ntpTimestamp.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
     <ClInclude Include="../src/mhBroadcasterNameDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
@@ -605,6 +614,9 @@
     </ClInclude>
     <ClInclude Include="../src/b24Color.h">
       <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
+    <ClInclude Include="../src/additionalAribSubtitleInfo.h">
+      <Filter>mmttlv\mmt\structs</Filter>
     </ClInclude>
     <ClInclude Include="../src/b24ControlSet.h">
       <Filter>dantto4k\subtitle</Filter>
