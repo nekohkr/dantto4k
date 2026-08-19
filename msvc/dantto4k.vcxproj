@@ -134,7 +134,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TSDUCK_STATIC_LIBRARY;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>$(ProjectDir)../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
