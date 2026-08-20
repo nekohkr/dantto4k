@@ -9,7 +9,11 @@
 #include <vector>
 #include <algorithm>
 
-namespace arib::charset::detail {
+namespace arib {
+
+namespace charset {
+
+namespace detail {
 
 struct CharLookupResult {
     const Charset* charset;
@@ -73,11 +77,6 @@ const CharLookupTable& charLookupTable() {
     return table;
 }
 
-bool isCharsetAllowed(const CharLookupResult& result, EncodeMode encodeMode) {
-    return encodeMode != EncodeMode::Caption ||
-        result.charset->code != CharsetCode::AdditionalSymbols;
-}
-
 std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, CharsetCode candidate2, EncodeMode encodeMode) {
     const auto& table = charLookupTable();
     auto it = table.find(c);
@@ -90,12 +89,21 @@ std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, Cha
         return {};
     }
 
+    if (encodeMode == EncodeMode::Caption) {
+        const auto additionalSymbol = std::find_if(results.begin(), results.end(), [](const auto& result) {
+            return result.charset->code == CharsetCode::AdditionalSymbols;
+        });
+        if (additionalSymbol != results.end()) {
+            return *additionalSymbol;
+        }
+    }
+
     if (candidate1 != CharsetCode::None &&
         (encodeMode == EncodeMode::Caption || 
             (candidate1 != CharsetCode::JISKanjiPlane1 &&
             candidate1 != CharsetCode::JISKanjiPlane2))) {
         for (const auto& res : results) {
-            if (isCharsetAllowed(res, encodeMode) && res.charset->code == candidate1) {
+            if (res.charset->code == candidate1) {
                 return res;
             }
         }
@@ -106,18 +114,13 @@ std::optional<CharLookupResult> findChar(char32_t c, CharsetCode candidate1, Cha
             (candidate2 != CharsetCode::JISKanjiPlane1 &&
             candidate2 != CharsetCode::JISKanjiPlane2))) {
         for (const auto& res : results) {
-            if (isCharsetAllowed(res, encodeMode) && res.charset->code == candidate2) {
+            if (res.charset->code == candidate2) {
                 return res;
             }
         }
     }
 
-    const auto result = std::find_if(results.begin(), results.end(), [encodeMode](const auto& value) {
-        return isCharsetAllowed(value, encodeMode);
-    });
-    return result != results.end()
-        ? std::optional<CharLookupResult>{*result}
-        : std::nullopt;
+    return results.front();
 }
 
 std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, CharsetCode candidate1, CharsetCode candidate2, EncodeMode encodeMode) {
@@ -134,9 +137,9 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
     }
     const auto& results2 = it2->second;
 
-    auto hasCharset = [encodeMode](const std::vector<CharLookupResult>& list, const Charset* target) {
+    auto hasCharset = [](const std::vector<CharLookupResult>& list, const Charset* target) {
         for (const auto& res : list) {
-            if (isCharsetAllowed(res, encodeMode) && res.charset == target) {
+            if (res.charset == target) {
                 return true;
             }
         }
@@ -152,7 +155,7 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
             bool found1 = false;
             CharLookupResult res1{};
             for (const auto& r : results1) {
-                if (isCharsetAllowed(r, encodeMode) && r.charset == cs) {
+                if (r.charset == cs) {
                     found1 = true;
                     res1 = r;
                     break;
@@ -174,7 +177,7 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
             bool found1 = false;
             CharLookupResult res1{};
             for (const auto& r : results1) {
-                if (isCharsetAllowed(r, encodeMode) && r.charset == cs) {
+                if (r.charset == cs) {
                     found1 = true;
                     res1 = r;
                     break;
@@ -188,7 +191,7 @@ std::optional<CharLookupResult> findCharsetBy2Char(char32_t c1, char32_t c2, Cha
     }
 
     for (const auto& res1 : results1) {
-        if (isCharsetAllowed(res1, encodeMode) && hasCharset(results2, res1.charset)) {
+        if (hasCharset(results2, res1.charset)) {
             return res1;
         }
     }
@@ -366,6 +369,13 @@ private:
     }
 
     void selectCharset(const Charset* charset, size_t pos) {
+        if (mode == EncodeMode::Caption && charset->code == CharsetCode::AdditionalSymbols) {
+            charset = findCharset(CharsetCode::JISKanjiPlane1);
+            if (charset == nullptr) {
+                return;
+            }
+        }
+
         uint8_t graphicIndex = findGraphicByCharsetCode(charset->code);
 
         // Check single shift
@@ -608,9 +618,7 @@ private:
 
 };
 
-} // namespace arib::charset::detail
-
-namespace arib::charset {
+} // namespace detail
 
 std::string encode(std::string_view input, EncodeMode mode) {
     detail::Encoder encoder(mode);
@@ -623,4 +631,6 @@ std::string encode(std::u8string_view input, EncodeMode mode) {
     return encoder.encode(input);
 }
 
-} // namespace arib::charset
+} // namespace charset
+
+} // namespace arib

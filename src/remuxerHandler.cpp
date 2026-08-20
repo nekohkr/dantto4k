@@ -44,9 +44,6 @@
 
 namespace {
 
-constexpr uint64_t SUBTITLE_PRELOAD_TIME = 90 * 1000;
-constexpr uint64_t SUBTITLE_MINIMUM_FUTURE_TIME = 90 * 200;
-
 int convertRunningStatus(int runningStatus) {
     switch (runningStatus) {
     case 0:
@@ -181,7 +178,7 @@ void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const st
 	}
 
     const auto referencePts = subtitleInfo->referenceStartTime.toPtsValue();
-    for (auto& pesData : output) {
+    for (const auto& pesData : output) {
         if (!pesData.begin) {
             continue;
         }
@@ -189,11 +186,7 @@ void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const st
         if (pts < 0 || (currentPts != 0 && static_cast<uint64_t>(pts) < currentPts)) {
             continue;
         }
-        queueSubtitle(mmtStream, std::move(pesData), static_cast<uint64_t>(pts));
-    }
-
-    if (currentPts != 0) {
-        writePendingSubtitles(currentPts);
+        writeSubtitle(mmtStream, pesData, static_cast<uint64_t>(pts));
     }
 }
 
@@ -324,34 +317,6 @@ void RemuxerHandler::writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTl
             // and usually remaining data is small (less than a TS payload), this move is cheap.
             pendingData.erase(pendingData.begin(), pendingData.begin() + offset);
         }
-    }
-}
-
-void RemuxerHandler::queueSubtitle(const MmtTlv::MmtStream& mmtStream, B24SubtitleOutput subtitle, uint64_t pts) {
-    const auto position = std::upper_bound(
-        pendingSubtitles.begin(), pendingSubtitles.end(), pts,
-        [](uint64_t lhs, const PendingSubtitle& rhs) {
-            return lhs < rhs.pts;
-        });
-    pendingSubtitles.insert(position, PendingSubtitle{
-        .packetId = mmtStream.getPacketId(),
-        .pts = pts,
-        .subtitle = std::move(subtitle),
-    });
-}
-
-void RemuxerHandler::writePendingSubtitles(uint64_t pts) {
-    const auto preloadPts = pts + SUBTITLE_PRELOAD_TIME;
-    while (!pendingSubtitles.empty() && pendingSubtitles.front().pts <= preloadPts) {
-        auto pending = std::move(pendingSubtitles.front());
-        pendingSubtitles.pop_front();
-
-        const auto* stream = demuxer.getStream(pending.packetId);
-        if (!stream) {
-            continue;
-        }
-
-        writeSubtitle(*stream, pending.subtitle, pending.pts);
     }
 }
 
@@ -1134,7 +1099,6 @@ void RemuxerHandler::onNit(const MmtTlv::Nit& nit) {
 }
 
 void RemuxerHandler::onNtp(const MmtTlv::NTPv4& ntp) {
-    const bool firstPcr = lastPcr == 0;
     auto& cc = mapCC[PCR_PID];
     ts::TSPacket packet;
     packet.init(PCR_PID, cc & 0xF, 0);
@@ -1149,13 +1113,7 @@ void RemuxerHandler::onNtp(const MmtTlv::NTPv4& ntp) {
     lastPcr = ntp.transmit_timestamp.toPcrValue();
 
     const auto pts = static_cast<uint64_t>(ntp.transmit_timestamp.toPtsValue());
-    if (firstPcr) {
-        while (!pendingSubtitles.empty() && pendingSubtitles.front().pts < pts) {
-            pendingSubtitles.pop_front();
-        }
-    }
     writeCaptionManagementData(pts);
-    writePendingSubtitles(pts);
 }
 
 void RemuxerHandler::clear() {
@@ -1164,7 +1122,6 @@ void RemuxerHandler::clear() {
     mapPesPendingData.clear();
     mapPesPacketIndex.clear();
     mapPesState.clear();
-    pendingSubtitles.clear();
     tsid = -1;
     lastPcr = 0;
     lastCaptionManagementDataPts = 0;

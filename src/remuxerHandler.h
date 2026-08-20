@@ -3,7 +3,6 @@
 #include "b24SubtitleConverter.h"
 #include "damt.h"
 #include <tsduck.h>
-#include <list>
 #include <optional>
 #include <unordered_map>
 #include <functional>
@@ -84,15 +83,7 @@ private:
 		Init,
 		InFragment,
 	};
-	struct PendingSubtitle {
-		uint16_t packetId;
-		uint64_t pts;
-		B24SubtitleOutput subtitle;
-	};
-
 	void writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& data);
-	void queueSubtitle(const MmtTlv::MmtStream& mmtStream, B24SubtitleOutput subtitle, uint64_t pts);
-	void writePendingSubtitles(uint64_t pts);
 	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle,
 		std::optional<uint64_t> pts = std::nullopt);
 	void writeCaptionManagementData(uint64_t pts);
@@ -103,7 +94,6 @@ private:
 	std::unordered_map<uint16_t, std::vector<uint8_t>> mapPesPendingData;
 	std::unordered_map<uint16_t, uint32_t> mapPesPacketIndex;
 	std::unordered_map<uint16_t, PesState> mapPesState;
-	std::list<PendingSubtitle> pendingSubtitles;
 	int tsid{-1};
 	uint64_t lastPcr{};
 	uint64_t lastCaptionManagementDataPts{};
