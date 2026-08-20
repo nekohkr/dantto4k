@@ -14,10 +14,16 @@ Usage:
                                 Specify the smart card reader to use
       --customWinscardDLL arg   Specify the path to a winscard.dll
       --disableADTSConversion   Disable ADTS conversion
+      --frontend-descrambled    Assume the input stream was already
+                                descrambled by the frontend, and only
+                                remux MMT/TLV to MPEG-2 TS
       --no-progress             Disable progress display
       --no-stats                Disable packet statistics
       --help                    Show help
 ```
+
+フロントエンド側で既に復号済みの MMTS を MPEG-2 TS に変換するだけの場合は、
+`--frontend-descrambled` を指定します。このモードではスマートカードを初期化しません。
 
 ### BonDriver_dantto4k.dll
 リアルタイムで復号化とMPEG-2 TSへの変換を行うBonDriverです。

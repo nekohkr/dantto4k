@@ -29,6 +29,7 @@ struct Args {
     bool listSmartCardReader{false};
     bool noProgress{false};
     bool noStats{false};
+    bool frontendDescrambled{false};
 };
 
 Args parseArguments(int argc, char* argv[]) {
@@ -47,6 +48,7 @@ Args parseArguments(int argc, char* argv[]) {
             ("customWinscardDLL", "Specify the path to a winscard.dll", cxxopts::value<std::string>())
 #endif
             ("disableADTSConversion", "Disable ADTS conversion", cxxopts::value<bool>()->default_value("false"))
+            ("frontend-descrambled", "Assume the input stream was already descrambled by the frontend and only remux MMT/TLV to MPEG-2 TS", cxxopts::value<bool>()->default_value("false"))
             ("no-progress", "Disable progress display", cxxopts::value<bool>()->default_value("false"))
             ("no-stats", "Disable packet statistics", cxxopts::value<bool>()->default_value("false"))
             ("help", "Show help");
@@ -102,6 +104,9 @@ Args parseArguments(int argc, char* argv[]) {
 
         if (result["disableADTSConversion"].count()) {
             args.disableADTSConversion = result["disableADTSConversion"].as<bool>();
+        }
+        if (result["frontend-descrambled"].count()) {
+            args.frontendDescrambled = result["frontend-descrambled"].as<bool>();
         }
         if (result["no-progress"].count()) {
             args.noProgress = result["no-progress"].as<bool>();
@@ -232,25 +237,28 @@ int main(int argc, char* argv[]) {
     }
 
     demuxer.setDemuxerHandler(handler);
+    demuxer.setAssumeDescrambled(args.frontendDescrambled);
 
-    try {
-        // Create ACAS handler and initialize the smart card
-        std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
-        std::unique_ptr<ISmartCard> smartCard;
-        if (args.casProxyHost.empty()) {
-            smartCard = std::make_unique<LocalSmartCard>();
+    if (!args.frontendDescrambled) {
+        try {
+            // Create ACAS handler and initialize the smart card
+            std::unique_ptr<AcasHandler> acasHandler = std::make_unique<AcasHandler>();
+            std::unique_ptr<ISmartCard> smartCard;
+            if (args.casProxyHost.empty()) {
+                smartCard = std::make_unique<LocalSmartCard>();
+            }
+            else {
+                smartCard = std::make_unique<RemoteSmartCard>(args.casProxyHost, args.casProxyPort);
+            }
+
+            smartCard->setSmartCardReaderName(args.smartCardReaderName);
+            acasHandler->setSmartCard(std::move(smartCard));
+            demuxer.setCasHandler(std::move(acasHandler));
         }
-        else {
-            smartCard = std::make_unique<RemoteSmartCard>(args.casProxyHost, args.casProxyPort);
+        catch (const std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+            return 1;
         }
-        
-        smartCard->setSmartCardReaderName(args.smartCardReaderName);
-        acasHandler->setSmartCard(std::move(smartCard));
-        demuxer.setCasHandler(std::move(acasHandler));
-    }
-    catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
     }
 
     std::vector<uint8_t> inputBuffer;
@@ -282,7 +290,7 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
-        
+
         auto consumed = inputBuffer.size() - stream.leftBytes();
         if (consumed > 0) {
             progressReporter.update(consumed);

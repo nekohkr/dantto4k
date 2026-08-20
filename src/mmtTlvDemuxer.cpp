@@ -44,6 +44,10 @@ void MmtTlvDemuxer::setCasHandler(std::unique_ptr<CasHandler> handler) {
     casHandler = std::move(handler);
 }
 
+void MmtTlvDemuxer::setAssumeDescrambled(bool value) {
+    assumeDescrambled = value;
+}
+
 DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream) {
     size_t cur = stream.getPos();
 
@@ -110,11 +114,11 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream) {
         if (!compressedIPPacket.unpack(tlvDataStream)) {
             break;
         }
-        
+
         if (!mmtp.unpack(tlvDataStream)) {
             break;
         }
-        
+
         auto mmtStat = statistics.getMmtStat(mmtp.packetId);
         if (mmtStat->count == 0) {
             mmtStat->lastPacketSequenceNumber = mmtp.packetSequenceNumber;
@@ -145,11 +149,13 @@ DemuxStatus MmtTlvDemuxer::demux(Common::ReadStream& stream) {
         if (mmtp.extensionHeaderScrambling.has_value()) {
             if (mmtp.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::ODD ||
                 mmtp.extensionHeaderScrambling->encryptionFlag == EncryptionFlag::EVEN) {
-                if (!casHandler) {
-                    return DemuxStatus::WattingForEcm;
-                }
-                if (!casHandler->decrypt(mmtp)) {
-                    return DemuxStatus::WattingForEcm;
+                if (!assumeDescrambled) {
+                    if (!casHandler) {
+                        return DemuxStatus::WattingForEcm;
+                    }
+                    if (!casHandler->decrypt(mmtp)) {
+                        return DemuxStatus::WattingForEcm;
+                    }
                 }
             }
         }
@@ -213,7 +219,7 @@ void MmtTlvDemuxer::processCaMessage(Common::ReadStream& stream) {
     if (!message.unpack(stream)) {
         return;
     }
-    
+
     processMmtTable(stream);
 }
 
@@ -231,7 +237,7 @@ void MmtTlvDemuxer::processDataTransmissionMessage(Common::ReadStream& stream) {
     if (!message.unpack(stream)) {
         return;
     }
-    
+
     processMmtTable(stream);
 }
 
@@ -279,7 +285,7 @@ void MmtTlvDemuxer::processMmtTable(Common::ReadStream& stream) {
         processEcm(*static_cast<Ecm*>(table.get()));
         break;
     }
-    
+
     if (demuxerHandler) {
         switch (tableId) {
         case MmtTableId::Ecm_0:
@@ -532,7 +538,7 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
             {
                 const auto* mmtDescriptor = static_cast<const MhAudioComponentDescriptor*>(descriptor.get());
                 mmtStream->mhAudioComponentDescriptor = *mmtDescriptor;
-                
+
                 statistics.getMmtStat(mmtStream->packetId)->audioComponentType = mmtDescriptor->componentType;
                 statistics.getMmtStat(mmtStream->packetId)->audioSamplingRate = mmtDescriptor->samplingRate;
                 break;
@@ -581,7 +587,7 @@ void MmtTlvDemuxer::processMpuTimestampDescriptor(const MpuTimestampDescriptor& 
         }
 
         if (mmtStream.mpuTimestamps.size() >= 100) {
-            auto minElement = std::min_element(mmtStream.mpuTimestamps.begin(), mmtStream.mpuTimestamps.end(), 
+            auto minElement = std::min_element(mmtStream.mpuTimestamps.begin(), mmtStream.mpuTimestamps.end(),
                 [](const auto& lhs, const auto& rhs) {
                     return lhs.mpuSequenceNumber < rhs.mpuSequenceNumber;
                 });
