@@ -506,6 +506,18 @@ private:
                         set_character_size(character_size);
                     }
 
+                    if (!style.text_outline || std::holds_alternative<None>(*style.text_outline)) {
+                        set_ornament_off();
+                    }
+                    else {
+                        const auto& text_outline = std::get<TextOutline>(*style.text_outline);
+                        const auto color = text_outline.color.value_or(
+                            style.color.value_or(StyleColorValue{ { 255, 255, 255, 255 } }));
+                        const auto [palette, index] = findClosestColor(ColorRGBA{
+                            color.r(), color.g(), color.b(), color.a()});
+                        set_ornament(palette, index);
+                    }
+
                     if (style.color) {
                         set_text_color(*style.color);
                     }
@@ -526,18 +538,6 @@ private:
                     }
                     set_font(font);
 
-                    if (!style.text_outline || std::holds_alternative<None>(*style.text_outline)) {
-                        set_ornament_off();
-                    }
-                    else {
-                        const auto& text_outline = std::get<TextOutline>(*style.text_outline);
-                        const auto color = text_outline.color.value_or(
-                            style.color.value_or(StyleColorValue{ { 255, 255, 255, 255 } }));
-                        const auto [palette, index] = findClosestColor(ColorRGBA{
-                            color.r(), color.g(), color.b(), color.a()
-                        });
-                        set_ornament(palette, index);
-                    }
 
                     if (!aps) {
                         append_aps(0, 0);
@@ -687,8 +687,13 @@ private:
         output_.push_back(B24ControlSet::COL);
         output_.push_back(0x20);
         output_.push_back(static_cast<uint8_t>(0x40 | palette));
-        output_.push_back(B24ControlSet::COL);
-        output_.push_back(static_cast<uint8_t>(0x40 | index));
+        if (index <= 7) {
+            output_.push_back(static_cast<uint8_t>(B24ControlSet::BKF + index));
+        }
+        else {
+            output_.push_back(B24ControlSet::COL);
+            output_.push_back(static_cast<uint8_t>(0x40 | index));
+        }
 
         last_text_color_palette_ = palette;
         last_text_color_index_ = index;
