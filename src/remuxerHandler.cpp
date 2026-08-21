@@ -183,10 +183,10 @@ void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const st
             continue;
         }
         const auto pts = referencePts + static_cast<int64_t>(*pesData.begin * 90);
-        if (pts < 0 || (currentPts != 0 && static_cast<uint64_t>(pts) < currentPts)) {
+        if (pts < 0) {
             continue;
         }
-        writeSubtitle(mmtStream, pesData, static_cast<uint64_t>(pts));
+        writeSubtitle(mmtStream, pesData, std::max(static_cast<uint64_t>(pts), currentPts));
     }
 }
 
