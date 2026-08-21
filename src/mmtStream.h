@@ -7,6 +7,7 @@
 #include "videoComponentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
 #include "mpuProcessorBase.h"
+#include "additionalAribSubtitleInfo.h"
 
 namespace MmtTlv {
 
@@ -46,6 +47,18 @@ public:
 	const std::vector<MpuExtendedTimestampDescriptor::Entry>& getMpuExtendedTimestamps() const { return mpuExtendedTimestamps; }
     const TimeBase& getTimeBase() const { return timeBase; }
 
+	const std::optional<AdditionalAribSubtitleInfo>& additionalAribSubtitleInfo() const noexcept {
+		return subtitleInfo;
+	}
+
+	bool isClosedCaption() const {
+		return assetType == AssetType::stpp && componentTag >= 0x30 && componentTag <= 0x37;
+	}
+
+	bool isSuperimposition() const {
+		return assetType == AssetType::stpp && componentTag >= 0x38 && componentTag <= 0x3F;
+	}
+
 private:
 	friend class MmtTlvDemuxer;
 
@@ -63,6 +76,7 @@ private:
 	std::optional<MhAudioComponentDescriptor> mhAudioComponentDescriptor;
 	std::vector<MpuTimestampDescriptor::Entry> mpuTimestamps;
 	std::vector<MpuExtendedTimestampDescriptor::Entry> mpuExtendedTimestamps;
+	std::optional<AdditionalAribSubtitleInfo> subtitleInfo;
 	TimeBase timeBase{0, 0};
 
 };

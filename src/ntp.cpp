@@ -1,7 +1,6 @@
 #include "ntp.h"
 
-bool MmtTlv::NTPv4::unpack(Common::ReadStream& stream)
-{
+bool MmtTlv::NTPv4::unpack(Common::ReadStream& stream) {
 	try {
 		uint8_t uint8 = stream.get8U();
 		leap_indicator = uint8 & 0b11000000;
@@ -28,20 +27,6 @@ bool MmtTlv::NTPv4::unpack(Common::ReadStream& stream)
 		if (!transmit_timestamp.unpack(stream)) {
 			return false;
 		}
-	}
-	catch (const std::out_of_range&) {
-		return false;
-	}
-
-	return true;
-}
-
-
-bool MmtTlv::NtpTimestamp::unpack(Common::ReadStream& stream)
-{
-	try {
-		seconds = stream.getBe32U();
-		fraction = stream.getBe32U();
 	}
 	catch (const std::out_of_range&) {
 		return false;

@@ -24,14 +24,15 @@
 #include "mhStreamIdentificationDescriptor.h"
 #include "videoComponentDescriptor.h"
 #include "mhAudioComponentDescriptor.h"
+#include "mhDataComponentDescriptor.h"
 #include "ipv6.h"
 #include "ntp.h"
 #include "dataTransmissionMessage.h"
 #include "caMessage.h"
 #include "damt.h"
-#include <algorithm>
 #include "ddmt.h"
 #include "dcct.h"
+#include <algorithm>
 
 namespace MmtTlv {
 
@@ -502,6 +503,10 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
             continue;
         }
 
+		if (asset.assetType == AssetType::stpp) {
+			mmtStream->subtitleInfo.reset();
+		}
+
         for (const auto& descriptor : asset.descriptors.list) {
             switch (descriptor->getDescriptorTag()) {
             case MpuTimestampDescriptor::kDescriptorTag:
@@ -536,6 +541,17 @@ void MmtTlvDemuxer::processMmtPackageTable(const Mpt& mpt) {
 
                 statistics.getMmtStat(mmtStream->packetId)->audioComponentType = mmtDescriptor->componentType;
                 statistics.getMmtStat(mmtStream->packetId)->audioSamplingRate = mmtDescriptor->samplingRate;
+                break;
+            }
+            case MhDataComponentDescriptor::kDescriptorTag:
+            {
+                const auto* mmtDescriptor = static_cast<const MhDataComponentDescriptor*>(descriptor.get());
+				if (asset.assetType == AssetType::stpp && mmtDescriptor->dataComponentId == 0x0020) {
+					AdditionalAribSubtitleInfo subtitleInfo;
+					Common::ReadStream stream(mmtDescriptor->additionalDataComponentInfo);
+					subtitleInfo.unpack(stream);
+					mmtStream->subtitleInfo = std::move(subtitleInfo);
+                }
                 break;
             }
             }
@@ -809,7 +825,7 @@ void MmtTlvDemuxer::processMfuData(Common::ReadStream& stream) {
     std::vector<uint8_t> data(stream.leftBytes());
     stream.read(data.data(), stream.leftBytes());
 
-    const auto ret = mmtStream->mpuProcessor->process(*mmtStream, data, mpu.fragmentationIndicator);
+    auto ret = mmtStream->mpuProcessor->process(*mmtStream, data, mpu.fragmentationIndicator);
     if (ret) {
         const auto& mfuData = ret.value();
         auto* mmtStream = getStreamByIdx(mfuData.streamIndex);
@@ -870,7 +886,7 @@ void MmtTlvDemuxer::processSignalingMessages(Common::ReadStream& stream) {
 
             std::vector<uint8_t> message;
             message.resize(length);
-            stream.read(message.data(), length);
+            nstream.read(message.data(), length);
 
             if (assembler->assemble(message, signalingMessage.fragmentationIndicator, mmtp.packetSequenceNumber)) {
                 Common::ReadStream messageStream(assembler->data);

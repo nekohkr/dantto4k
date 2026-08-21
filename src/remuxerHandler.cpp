@@ -37,7 +37,10 @@
 #include "timebase.h"
 #include "config.h"
 #include "ntp.h"
-#include "b24SubtitleConvertor.h"
+#include "b24SubtitleConverter.h"
+#include <algorithm>
+#include <atomic>
+#include <fstream>
 
 namespace {
 
@@ -141,16 +144,49 @@ void RemuxerHandler::onAudioData(const MmtTlv::MmtStream& mmtStream, const MmtTl
 }
 
 void RemuxerHandler::onSubtitleData(const MmtTlv::MmtStream& mmtStream, const struct MmtTlv::MfuData& mfuData) {
+    const auto& subtitleInfo = mmtStream.additionalAribSubtitleInfo();
+    if (!subtitleInfo) {
+        return;
+    }
+
+    // ARIB-TTML
+    if (subtitleInfo->subtitleFormat != 0) {
+        return;
+    }
+
+    const bool synchronized = mmtStream.isClosedCaption();
+    if ((!synchronized && !mmtStream.isSuperimposition()) ||
+        (!synchronized && subtitleInfo->tmd != 0b1111)) {
+        return;
+    }
+
     std::string ttml(mfuData.data.begin(), mfuData.data.end());
     std::list<B24SubtitleOutput> output;
-    B24SubtitleConvertor::convert(ttml, output);
+    const auto pesType = synchronized ? B24::PESData::PESType::Synchronized : B24::PESData::PESType::Asynchronous;
+    B24SubtitleConverter::convert(ttml, output, pesType, subtitleInfo->resolution);
 
     if (output.empty()) {
         return;
     }
 
+	const auto currentPts = lastPcr / 300;
+	if (subtitleInfo->tmd == 0b1111) {
+		for (const auto& pesData : output) {
+			writeSubtitle(mmtStream, pesData, currentPts);
+		}
+		return;
+	}
+
+    const auto referencePts = subtitleInfo->referenceStartTime.toPtsValue();
     for (const auto& pesData : output) {
-        writeSubtitle(mmtStream, pesData);
+        if (!pesData.begin) {
+            continue;
+        }
+        const auto pts = referencePts + static_cast<int64_t>(*pesData.begin * 90);
+        if (pts < 0) {
+            continue;
+        }
+        writeSubtitle(mmtStream, pesData, std::max(static_cast<uint64_t>(pts), currentPts));
     }
 }
 
@@ -284,23 +320,27 @@ void RemuxerHandler::writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTl
     }
 }
 
-void RemuxerHandler::writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle) {
-    std::vector<uint8_t> pesOutput;
-
-    PESPacket pes;
-    if (mmtStream.getComponentTag() == 0x30) {
-        uint64_t pts = subtitle.calcPts(programStartTime);
-        pts = std::max(pts, lastPcr / 300);
-        if (pts == 0) {
-            return;
-        }
-        pes.setPts(pts);
+void RemuxerHandler::writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle, std::optional<uint64_t> pts) {
+    const auto& subtitleInfo = mmtStream.additionalAribSubtitleInfo();
+    if (!subtitleInfo) {
+        return;
     }
 
-    pes.setStreamId(componentTagToStreamId(mmtStream.getComponentTag()));
+    const bool synchronized = mmtStream.isClosedCaption();
+    if (!synchronized && !mmtStream.isSuperimposition()) {
+        return;
+    }
+
+    std::vector<uint8_t> pesOutput;
+    PESPacket pes;
+    if (synchronized && pts) {
+        pes.setPts(*pts);
+    }
+
+    pes.setStreamId(synchronized ? STREAM_ID_PRIVATE_STREAM_1 : STREAM_ID_PRIVATE_STREAM_2);
     pes.setPayload(&subtitle.pesData);
     pes.setPayloadLength(subtitle.pesData.size());
-    if (mmtStream.getComponentTag() == 0x30) {
+    if (synchronized) {
         pes.setPrivateData(&ccis);
         pes.setStuffingByteLength(1);
     }
@@ -355,43 +395,40 @@ void RemuxerHandler::writeCaptionManagementData(uint64_t pts) {
         if (stream.second.getAssetType() != MmtTlv::AssetType::stpp) {
             continue;
         }
+        const auto& subtitleInfo = stream.second.additionalAribSubtitleInfo();
+		if (!subtitleInfo) {
+			continue;
+		}
 
         B24::CaptionManagementData captionManagementData;
         B24::CaptionManagementData::Language language;
-        language.languageCode = "jpn";
+        language.languageCode = subtitleInfo->languageCode;
         language.format = 0b1000;
-        if (stream.second.getComponentTag() == 0x30) {
-            language.dmf = 0b1010;
-        }
-        else {
-            language.dmf = 0;
-        }
+        language.dmf = subtitleInfo->dmf;
 
         captionManagementData.languages.push_back(language);
         B24::DataGroup dataGroup;
         dataGroup.setGroupData(captionManagementData);
 
         B24::PESData pesData(dataGroup);
-        if (stream.second.getComponentTag() == 0x30) {
-            pesData.SetPESType(B24::PESData::PESType::Synchronized);
+        const bool synchronized = stream.second.isClosedCaption();
+        if (!synchronized && !stream.second.isSuperimposition()) {
+            continue;
         }
-        else {
-            pesData.SetPESType(B24::PESData::PESType::Asynchronous);
-        }
+        pesData.SetPESType(synchronized ? B24::PESData::PESType::Synchronized : B24::PESData::PESType::Asynchronous);
 
         std::vector<uint8_t> packedPesData;
-
         pesData.pack(packedPesData);
 
         std::vector<uint8_t> pesOutput;
         PESPacket pes;
-        if (stream.second.getComponentTag() == 0x30) {
+        if (synchronized) {
             pes.setPts(lastCaptionManagementDataPts);
         }
-        pes.setStreamId(componentTagToStreamId(stream.second.getComponentTag()));
+        pes.setStreamId(synchronized ? STREAM_ID_PRIVATE_STREAM_1 : STREAM_ID_PRIVATE_STREAM_2);
         pes.setPayload(&packedPesData);
         pes.setPayloadLength(packedPesData.size());
-        if (stream.second.getComponentTag() == 0x30) {
+        if (synchronized) {
             pes.setPrivateData(&ccis);
             pes.setStuffingByteLength(1);
         }
@@ -552,13 +589,6 @@ void RemuxerHandler::onMhBit(const MmtTlv::MhBit& mhBit) {
 
 void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
     tsid = mhEit.tlvStreamId;
-
-    if (mhEit.isPf() && mhEit.sectionNumber == 0 && !mhEit.events.empty()) {
-        uint64_t startTime{};
-        if (EITConvertStartTimeToUnixTime((mhEit.events.begin())->get()->startTime, &startTime)) {
-            programStartTime = startTime;
-        }
-    }
 
     ts::EIT tsEit(true, mhEit.isPf(), 0, mhEit.versionNumber, true, mhEit.serviceId, mhEit.tlvStreamId, mhEit.originalNetworkId);
     for (const auto& mhEvent : mhEit.events) {
@@ -877,12 +907,7 @@ void RemuxerHandler::onMpt(const MmtTlv::Mpt& mpt) {
                 else if (asset.assetType == MmtTlv::AssetType::stpp) {
                     ts::DataComponentDescriptor descriptor;
                     descriptor.data_component_id = 0x0008;
-                    if (mmtStream->getComponentTag() == 0x30) {
-                        descriptor.additional_data_component_info.push_back(0x3D);
-                    }
-                    else {
-                        descriptor.additional_data_component_info.push_back(0x3C);
-                    }
+                    descriptor.additional_data_component_info.push_back(mmtStream->isClosedCaption() ? 0x3D : 0x3C);
                     stream.descs.add(duck, descriptor);
                 }
 
@@ -1087,7 +1112,8 @@ void RemuxerHandler::onNtp(const MmtTlv::NTPv4& ntp) {
 
     lastPcr = ntp.transmit_timestamp.toPcrValue();
 
-    writeCaptionManagementData(ntp.transmit_timestamp.toPcrValue() / 300);
+    const auto pts = static_cast<uint64_t>(ntp.transmit_timestamp.toPtsValue());
+    writeCaptionManagementData(pts);
 }
 
 void RemuxerHandler::clear() {
@@ -1099,5 +1125,4 @@ void RemuxerHandler::clear() {
     tsid = -1;
     lastPcr = 0;
     lastCaptionManagementDataPts = 0;
-    programStartTime = 0;
 }

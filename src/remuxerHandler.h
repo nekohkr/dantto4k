@@ -1,8 +1,9 @@
 #pragma once
 #include "demuxerHandler.h"
-#include "b24SubtitleConvertor.h"
+#include "b24SubtitleConverter.h"
 #include "damt.h"
 #include <tsduck.h>
+#include <optional>
 #include <unordered_map>
 #include <functional>
 
@@ -82,9 +83,9 @@ private:
 		Init,
 		InFragment,
 	};
-
 	void writeStream(const MmtTlv::MmtStream& mmtStream, const MmtTlv::MfuData& mfuData, const std::vector<uint8_t>& data);
-	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle);
+	void writeSubtitle(const MmtTlv::MmtStream& mmtStream, const B24SubtitleOutput& subtitle,
+		std::optional<uint64_t> pts = std::nullopt);
 	void writeCaptionManagementData(uint64_t pts);
 	MmtTlv::MmtTlvDemuxer& demuxer;
 	OutputCallback outputCallback;
@@ -96,7 +97,6 @@ private:
 	int tsid{-1};
 	uint64_t lastPcr{};
 	uint64_t lastCaptionManagementDataPts{};
-	uint64_t programStartTime{};
 	inline static const std::vector<uint8_t> ccis = { 0x43, 0x43, 0x49, 0x53, 0x01, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, };
 	ts::DuckContext duck;
 

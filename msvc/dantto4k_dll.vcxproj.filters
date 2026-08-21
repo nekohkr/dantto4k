@@ -223,6 +223,9 @@
     <ClCompile Include="../src/ntp.cpp">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClCompile>
+    <ClCompile Include="../src/ntpTimestamp.cpp">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClCompile>
     <ClCompile Include="../src/mhBroadcasterNameDescriptor.cpp">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClCompile>
@@ -244,14 +247,11 @@
     <ClCompile Include="../src/pugixml.cpp">
       <Filter>dantto4k\xml</Filter>
     </ClCompile>
-    <ClCompile Include="../src/b24SubtitleConvertor.cpp">
-      <Filter>dantto4k\subtitle</Filter>
-    </ClCompile>
     <ClCompile Include="../src/b24Color.cpp">
       <Filter>dantto4k\subtitle</Filter>
     </ClCompile>
-    <ClCompile Include="../src/ttml.cpp">
-      <Filter>dantto4k\subtitle</Filter>
+    <ClCompile Include="../src/additionalAribSubtitleInfo.cpp">
+      <Filter>mmttlv\mmt\structs</Filter>
     </ClCompile>
     <ClCompile Include="../src/dllmain.cpp">
       <Filter>dantto4k</Filter>
@@ -309,6 +309,21 @@
     </ClCompile>
     <ClCompile Include="../src/aribTextEncoder.cpp">
       <Filter>dantto4k</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\b24_converter.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\parser.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\resolver.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ttml\style.cpp">
+      <Filter>dantto4k\ttml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\b24SubtitleConverter.cpp">
+      <Filter>dantto4k\subtitle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -567,6 +582,9 @@
     <ClInclude Include="../src/ntp.h">
       <Filter>mmttlv\tlv\structs</Filter>
     </ClInclude>
+    <ClInclude Include="../src/ntpTimestamp.h">
+      <Filter>mmttlv\tlv\structs</Filter>
+    </ClInclude>
     <ClInclude Include="../src/mhBroadcasterNameDescriptor.h">
       <Filter>mmttlv\mmt\descriptors</Filter>
     </ClInclude>
@@ -594,14 +612,11 @@
     <ClInclude Include="../src/pugixml.hpp">
       <Filter>dantto4k\xml</Filter>
     </ClInclude>
-    <ClInclude Include="../src/b24SubtitleConvertor.h">
-      <Filter>dantto4k\subtitle</Filter>
-    </ClInclude>
-    <ClInclude Include="../src/ttml.h">
-      <Filter>dantto4k\subtitle</Filter>
-    </ClInclude>
     <ClInclude Include="../src/b24Color.h">
       <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
+    <ClInclude Include="../src/additionalAribSubtitleInfo.h">
+      <Filter>mmttlv\mmt\structs</Filter>
     </ClInclude>
     <ClInclude Include="../src/b24ControlSet.h">
       <Filter>dantto4k\subtitle</Filter>
@@ -678,6 +693,33 @@
     <ClInclude Include="../src/aribTextEncoder.h">
       <Filter>dantto4k</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ttml\b24_converter.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\parser.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\resolved.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\resolver.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\string_utils.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\style.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\sync_mode.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ttml\ast.h">
+      <Filter>dantto4k\ttml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\b24SubtitleConverter.h">
+      <Filter>dantto4k\subtitle</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dantto4k">
@@ -733,6 +775,9 @@
     </Filter>
     <Filter Include="dantto4k\cas">
       <UniqueIdentifier>{5dccb4d7-560f-4244-9d84-334de3cf19f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dantto4k\ttml">
+      <UniqueIdentifier>{e31c2a9a-285e-49f0-bf5f-da6ccd870531}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
