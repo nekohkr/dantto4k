@@ -712,6 +712,13 @@ void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
     ts::BinaryTable table;
     tsEit.serialize(duck, table);
 
+    // One MH-EIT section carries one set of section numbers. If the events did
+    // not fit into a single TS section, every section would go out claiming the
+    // same section_number and a receiver would keep only one of them.
+    if (table.sectionCount() > 1) {
+        return;
+    }
+
     auto& cc = mapCC[ts::PID_EIT];
     ts::OneShotPacketizer packetizer(duck, ts::PID_EIT);
     for (size_t i = 0; i < table.sectionCount(); i++) {
@@ -724,6 +731,14 @@ void RemuxerHandler::onMhEit(const MmtTlv::MhEit& mhEit) {
         }
         section.get()->setSectionNumber(mhEit.sectionNumber);
         section.get()->setLastSectionNumber(mhEit.lastSectionNumber);
+        if (!mhEit.isPf()) {
+            // TSDuck leaves segment_last_section_number at zero unless the
+            // sections are reorganized, and a schedule section outside its own
+            // segment is discarded by receivers. Carry over what MH-EIT said.
+            // (EIT payload: transport_stream_id, original_network_id,
+            //  segment_last_section_number, last_table_id)
+            section.get()->setUInt8(4, mhEit.segmentLastSectionNumber);
+        }
 
         packetizer.addSection(section);
         ts::TSPacketVector packets;
