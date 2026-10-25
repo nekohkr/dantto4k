@@ -2,6 +2,10 @@
 #include <array>
 #include <vector>
 #include <cstdint>
+#include <cstring>
+
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+#define DANTTO4K_HAS_AESNI_INTRINSICS 1
 #include <immintrin.h>
 #include <tmmintrin.h>
 #include <stdexcept>
@@ -10,7 +14,11 @@
 #else
 #include <cpuid.h>
 #endif
+#else
+#define DANTTO4K_HAS_AESNI_INTRINSICS 0
+#endif
 
+#if DANTTO4K_HAS_AESNI_INTRINSICS
 class AESCtrCipher {
 public:
     AESCtrCipher() = default;
@@ -197,3 +205,4 @@ private:
     std::array<uint8_t, 16> iv;
     __m128i roundKeys[11];
 };
+#endif

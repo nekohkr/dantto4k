@@ -15,7 +15,12 @@ PCSC_INC = $(shell pkg-config --cflags-only-I libpcsclite)
 PCSC_LIB = $(shell pkg-config --libs libpcsclite)
 
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -maes -msse4.1 $(TSDUCK_INC) $(PCSC_INC) -I$(SRC_DIR) -Ithirdparty/asio/asio/include
+TARGET_ARCH := $(firstword $(subst -, ,$(shell $(CXX) -dumpmachine)))
+AESNI_FLAGS =
+ifneq ($(filter x86_64 amd64 i386 i486 i586 i686,$(TARGET_ARCH)),)
+AESNI_FLAGS = -maes -msse4.1
+endif
+CXXFLAGS = -std=c++20 -Wall $(AESNI_FLAGS) $(TSDUCK_INC) $(PCSC_INC) -I$(SRC_DIR) -Ithirdparty/asio/asio/include
 LDFLAGS = $(TSDUCK_LIB) $(PCSC_LIB)
 
 EXEC = $(OBJ_DIR)/$(PROJECT_NAME)
