@@ -6,7 +6,9 @@
 AcasHandler::AcasHandler() {
     acasCard = std::make_unique<AcasCard>();
     workerThread = std::thread(&AcasHandler::worker, this);
+#if DANTTO4K_HAS_AESNI_INTRINSICS
     hasAESNI = AESCtrCipher::hasAESNI();
+#endif
 }
 
 AcasHandler::~AcasHandler() {
@@ -50,6 +52,7 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
     memcpy(iv.data(), &packetIdBe, 2);
     memcpy(iv.data() + 2, &packetSequenceNumberBe, 4);
 
+#if DANTTO4K_HAS_AESNI_INTRINSICS
     if (hasAESNI) { [[likely]]
         if (lastKey != *key) { [[unlikely]]
             aes.setKey(*key);
@@ -58,7 +61,9 @@ bool AcasHandler::decrypt(MmtTlv::Mmtp& mmtp) {
         aes.setIv(iv);
         aes.decrypt(mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8), mmtp.payload.data() + 8);
     }
-    else {
+    else
+#endif
+    {
         struct AES_ctx ctx;
         AES_init_ctx_iv(&ctx, (*key).data(), iv.data());
         AES_CTR_xcrypt_buffer(&ctx, mmtp.payload.data() + 8, static_cast<int>(mmtp.payload.size() - 8));
